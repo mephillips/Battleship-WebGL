@@ -97,31 +97,14 @@ Battleship = {
 	__width : null,
 	__height : null,
 
-	init : function() {
-		this.__canvas = document.getElementById(this.__canvasId);
-		this.__canvas.width = 640;
-		this.__canvas.height = 480;
-
-		this.__gl = this.__initGL();
-		if (this.__gl) {
-			this.__framerate = new Framerate("framerate");
-			this.__animate();
-		}
+	init : function(gl, canvas) {
+		this.__gl = gl;
+		this.__canvas = canvas;
+		this.__initGL(gl);
+		this.__animate();
 	},
 
-	__initGL : function() {
-		// Initialize
-		var gl = initWebGL(
-			// The id of the Canvas Element
-			this.__canvasId,
-			// The ids of the vertex and fragment shaders
-			"vshader", "fshader",
-			// The vertex attribute names used by the shaders.
-			// The order they appear here corresponds to their index
-			// used later.
-			[ "vNormal", "vColor", "vPosition"],
-			// The clear color and depth values
-			[ 0, 0, 0.5, 1 ], 10000);
+	__initGL : function(gl) {
 		gl.__mvs = [];
 		gl.pushMatrix = function() {
 			this.__mvs.push(new J3DIMatrix4(this.mvMatrix));
@@ -156,7 +139,7 @@ Battleship = {
 		gl.enable(gl.TEXTURE_2D);
 
 		// Load an image to use. Returns a WebGLTexture object
-		spiritTexture = loadImageTexture(gl, "images/spirit.jpg");
+		spiritTexture = gl.loadImageTexture("images/spirit.jpg");
 
 		// Create some matrices to use later and save their locations in the shaders
 		gl.mvMatrix = new J3DIMatrix4();
@@ -175,12 +158,11 @@ Battleship = {
 	},
 
 	__reshape : function(gl) {
-		var canvas = document.getElementById(this.__canvasId);
-		if (canvas.width === this.__width && canvas.height === this.__height)
+		if (this.__canvas.width === this.__width && this.__canvas.height === this.__height)
 			return;
 
-		this.__width = canvas.width;
-		this.__height = canvas.height;
+		this.__width = this.__canvas.width;
+		this.__height = this.__canvas.height;
 
 		// Set the viewport and projection matrix for the scene
 		gl.viewport(0, 0, this.__width, this.__height);
@@ -232,9 +214,6 @@ Battleship = {
 		}
 		this.__cone.draw(gl);
 	*/	
-
-		// Show the framerate
-		this.__framerate.snapshot();
 	},
 
 	__createDisk : function(radius) {
