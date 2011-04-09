@@ -56,8 +56,24 @@ function main() {
 
 		gl.enable(gl.DEPTH_TEST);
 		gl.enable(gl.BLEND);
+		gl.enable(gl.TEXTURE_2D);
 		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+		// Enable all of the vertex attribute arrays.
+		gl.enableVertexAttribArray(0);
+		gl.enableVertexAttribArray(1);
+		gl.enableVertexAttribArray(2);
+
 		Battleship.init(gl, canvas);
+
+		var animateLoop = function() {
+			try {
+				Battleship.draw();
+				window.requestAnimFrame(animateLoop, canvas);
+			} catch (e) {
+				console.log('animateLoop', e);
+			}
+		}
+		animateLoop();
 	}
 }

@@ -99,7 +99,35 @@ webgl_ext = {
 	 * Add helper methods to the given webgl context 
 	 */
 	extend : function(gl) {
+		// Create modle matrices
+		gl.mvMatrix = new J3DIMatrix4();
+		gl.u_normalMatrixLoc = gl.getUniformLocation(gl.program, "u_normalMatrix");
+
+		gl.normalMatrix = new J3DIMatrix4();
+		gl.u_modelViewProjMatrixLoc = gl.getUniformLocation(gl.program, "u_modelViewProjMatrix");
+
+		gl.mvpMatrix = new J3DIMatrix4();
+		gl.perspectiveMatrix = new J3DIMatrix4();
+
+		// Add methods
 		gl.loadImageTexture = function(url) { return webgl_ext.loadImageTexture(this, url); };
+		gl.setMatrixUniforms = function(url) { return webgl_ext.setMatrixUniforms(this); };
+	},
+
+	/** 
+	 * I don't quite get this yet
+	 */
+	setMatrixUniforms : function(gl) {
+		// Construct the normal matrix from the model-view matrix and pass it in
+		gl.normalMatrix.load(gl.mvMatrix);
+		gl.normalMatrix.invert();
+		gl.normalMatrix.transpose();
+		gl.normalMatrix.setUniform(gl, gl.u_normalMatrixLoc, false);
+
+		// Construct the model-view * projection matrix and pass it in
+		gl.mvpMatrix.load(gl.perspectiveMatrix);
+		gl.mvpMatrix.multiply(gl.mvMatrix);
+		gl.mvpMatrix.setUniform(gl, gl.u_modelViewProjMatrixLoc, false);
 	},
 
 	/**
