@@ -207,23 +207,37 @@ Battleship = {
 		gl.mvMatrix.makeIdentity();
 
 		gl.mvMatrix.translate(0, 0, -50);
+		gl.mvMatrix.rotate(-5, 10, 0);
 		gl.setMatrixUniforms();
 		if (!this.__disk) {
-			this.__disk = this.__createDisk(gl, 10);
+			this.__disk = this.__createDisk(10);
+			this.__disk.store(gl);
 		}
 		gl.bindTexture(gl.TEXTURE_2D, spiritTexture);
-		//this.__drawDisk(gl, this.__disk);
 		this.__disk.draw(gl);
+		gl.bindTexture(gl.TEXTURE_2D, null);
 
-		// Bind the texture to use
-		//this.__disk.draw(gl);
-		//this.__box.draw(gl);
+	/*
+		if (!this.__sphere) {
+			this.__sphere = this.__createSolidSphere(5, 10, 10);
+			this.__sphere.store(gl);
+		}
+		this.__sphere.draw(gl);
+	*/	
+
+	/*
+		if (!this.__cone) {
+			this.__cone = this.__createSolidCone(10, 5, 10, 10);
+			this.__cone.store(gl);
+		}
+		this.__cone.draw(gl);
+	*/	
 
 		// Show the framerate
 		this.__framerate.snapshot();
 	},
 
-	__createDisk : function(gl, radius) {
+	__createDisk : function(radius) {
 		var detail = 5;
 		var NUM_POINTS = detail*10;
 
@@ -231,7 +245,7 @@ Battleship = {
 
 		o.begin(GLObject.GL_TRIANGLE_FAN);
 		o.setNormal(0.0, 0.0, 1.0);
-		o.setTexCoord(0.5, 0,5);
+		o.setTexCoord(0.5, 0.5);
 		o.vertex(0.0, 0.0, 0.0);
 		var i;
 		for (i = 0; i <= NUM_POINTS; ++i) {
@@ -243,108 +257,171 @@ Battleship = {
 			o.vertex(x, y, 0.0);
 		}
 		o.end();
-//		o.store(gl);
-
-		var detail = 5;
-		var NUM_POINTS = detail*10;
-
-		var vertices = [];
-		var normals = [];
-		var texCoords = [];
-		var indices = [];
-		
-		normals.push(0.0); normals.push(0.0); normals.push(1.0);
-		texCoords.push(0.5); texCoords.push(0.5);
-		vertices.push(0.0); vertices.push(0.0); vertices.push(0.0);
-		var i;
-		for (i = 0; i <= NUM_POINTS; ++i) {
-			normals.push(0.0);
-			normals.push(0.0);
-			normals.push(1.0);
-			texCoords.push(0.5 + 0.5*Math.cos(2.0*i*Math.PI/NUM_POINTS));
-			texCoords.push(0.5 + 0.5*Math.sin(2.0*i*Math.PI/NUM_POINTS));
-			var x = radius * Math.cos(2.0*i*Math.PI/NUM_POINTS);
-			var y = radius * Math.sin(2.0*i*Math.PI/NUM_POINTS);
-			vertices.push(x);
-			vertices.push(y);
-			vertices.push(0.0);
-		}
-
-		for (i = 0; i < NUM_POINTS; ++i) {
-			indices.push(0);
-			indices.push(i);
-			indices.push(i + 1);
-		}
-		indices.push(0);
-		indices.push(NUM_POINTS);
-		indices.push(1);
-
-	/*
-		vertices = Float32Array(vertices);
-		normals = Float32Array(normals);
-		texCoords = Float32Array(texCoords);
-		indices = Uint8Array(indices);
-		*/
-
-	/*
-		var retval = { };
-
-		retval.normalObject = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, retval.normalObject);
-		gl.bufferData(gl.ARRAY_BUFFER, normals, gl.STATIC_DRAW);
-
-		retval.texCoordObject = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, retval.texCoordObject);
-		gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
-
-		retval.vertexObject = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, retval.vertexObject);
-		gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-		gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
-		retval.indexObject = gl.createBuffer();
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, retval.indexObject);
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
-		gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-
-		retval.numIndices = indices.length;
-		*/
-
-		//return retval;
-//		o._vertices = vertices;
-//		o._normals = normals;
-		o._texCoords = texCoords;
-//		o._indices = indices;
-		o.store(gl);
-
-		//0, 0, 1, 0, 1, 2, 0, 2, 3 ... 0 49 50 0 50 1
 
 		return o;
 	},
 
-	__drawDisk : function(gl, obj) {
-        // Set up all the vertex attributes for vertices, normals and texCoords
-        gl.bindBuffer(gl.ARRAY_BUFFER, obj.vertexObject);
-        gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
+	/*
+	 * Draws a solid sphere
+	 */
+	__createSolidSphere : function(radius, slices, stacks) {
+		var o = new GLObject();
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, obj.normalObject);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+		var i,j;
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, obj.texCoordObject);
-        gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+		// Adjust z and radius as stacks are drawn.
+		var z0,z1;
+		var r0,r1;
 
-        // Bind the index array
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, obj.indexObject);
+		// Pre-computed circle
 
-        // Draw the cube
-        gl.drawElements(gl.TRIANGLES, obj.numIndices, gl.UNSIGNED_BYTE, 0);
+		var sint1 = []; var cost1 = [];
+		var sint2 = []; var cost2 = [];
+
+		fghCircleTable(sint1,cost1,-slices);
+		fghCircleTable(sint2,cost2,stacks*2);
+
+		// The top stack is covered with a triangle fan
+
+		z0 = 1.0;
+		z1 = cost2[(stacks>0)?1:0];
+		r0 = 0.0;
+		r1 = sint2[(stacks>0)?1:0];
+
+		o.begin(GLObject.GL_TRIANGLE_FAN);
+			o.setNormal(0,0,1);
+			o.vertex(0,0,radius);
+
+			for (j=slices; j>=0; j--)
+			{
+				o.setNormal(cost1[j]*r1,        sint1[j]*r1,        z1       );
+				o.vertex(cost1[j]*r1*radius, sint1[j]*r1*radius, z1*radius);
+			}
+		o.end();	
+
+		// Cover each stack with a quad strip, except the top and bottom stacks
+		for( i=1; i<stacks-1; i++ )
+		{
+			z0 = z1; z1 = cost2[i+1];
+			r0 = r1; r1 = sint2[i+1];
+
+			o.begin(GLObject.GL_QUAD_STRIP);
+				for(j=0; j<=slices; j++)
+				{
+					o.setNormal(cost1[j]*r1,        sint1[j]*r1,        z1       );
+					o.vertex(cost1[j]*r1*radius, sint1[j]*r1*radius, z1*radius);
+					o.setNormal(cost1[j]*r0,        sint1[j]*r0,        z0       );
+					o.vertex(cost1[j]*r0*radius, sint1[j]*r0*radius, z0*radius);
+				}
+			o.end();	
+		}
+
+		// The bottom stack is covered with a triangle fan
+		z0 = z1;
+		r0 = r1;
+		o.begin(GLObject.GL_TRIANGLE_FAN);
+			o.setNormal(0,0,-1);
+			o.vertex(0,0,-radius);
+
+			for (j=0; j<=slices; j++)
+			{
+				o.setNormal(cost1[j]*r0,        sint1[j]*r0,        z0       );
+				o.vertex(cost1[j]*r0*radius, sint1[j]*r0*radius, z0*radius);
+			}
+		o.end();
+
+		return o;
 	},
 
 	__createBox : function(gl) {
 		var o = new GLObject();
 		o.addBox(0, 0, 0, 10, 10, 10);
 		o.store(gl);
+		return o;
+	},
+
+	/*
+	 * Draws a solid cone
+	 */
+	__createSolidCone : function( base, height, slices, stacks )
+	{
+		var o = new GLObject();
+
+		var i,j;
+
+		/* Step in z and radius as stacks are drawn. */
+
+		var z0,z1;
+		var r0,r1;
+
+		var zStep = height / ( ( stacks > 0 ) ? stacks : 1 );
+		var rStep = base / ( ( stacks > 0 ) ? stacks : 1 );
+
+		/* Scaling factors for vertex normals */
+
+		var cosn = ( height / Math.sqrt ( height * height + base * base ));
+		var sinn = ( base   / Math.sqrt ( height * height + base * base ));
+
+		/* Pre-computed circle */
+
+		var sint = [];
+		var cost = [];
+
+		fghCircleTable(sint,cost,-slices);
+
+		/* Cover the circular base with a triangle fan... */
+
+		z0 = 0.0;
+		z1 = zStep;
+
+		r0 = base;
+		r1 = r0 - rStep;
+
+		o.begin(GLObject.GL_TRIANGLE_FAN);
+
+			o.setNormal(0.0,0.0,-1.0);
+			o.vertex(0.0,0.0, z0 );
+
+			for (j=0; j<=slices; j++)
+				o.vertex(cost[j]*r0, sint[j]*r0, z0);
+
+		o.end();
+
+		/* Cover each stack with a quad strip, except the top stack */
+
+		for( i=0; i<stacks-1; i++ )
+		{
+			o.begin(GLObject.GL_QUAD_STRIP);
+
+				for(j=0; j<=slices; j++)
+				{
+					o.setNormal(cost[j]*sinn, sint[j]*sinn, cosn);
+					o.vertex(cost[j]*r0,   sint[j]*r0,   z0  );
+					o.vertex(cost[j]*r1,   sint[j]*r1,   z1  );
+				}
+
+				z0 = z1; z1 += zStep;
+				r0 = r1; r1 -= rStep;
+
+			o.end();
+		}
+
+		/* The top stack is covered with individual triangles */
+
+		o.begin(GLObject.GL_TRIANGLES);
+
+			o.setNormal(cost[0]*sinn, sint[0]*sinn, cosn);
+
+			for (j=0; j<slices; j++)
+			{
+				o.vertex(cost[j+0]*r0,   sint[j+0]*r0,   z0    );
+				o.vertex(0,              0,              height);
+				o.setNormal(cost[j+1]*sinn, sint[j+1]*sinn, cosn  );
+				o.vertex(cost[j+1]*r0,   sint[j+1]*r0,   z0    );
+			}
+
+		o.end();
+
 		return o;
 	},
 
@@ -439,7 +516,7 @@ GLObject.prototype.end = function() {
 	var newVertex = totalVertex - this._startI;
 	switch (this._type) {
 		case GLObject.GL_QUADS:
-			for (i = this._startI; i < this._vertices.length; ++i) {
+			for (i = this._startI; i < newVertex; ++i) {
 				if (count == 3) {
 					this.i.push(i - 3);
 					this.i.push(i - 1);
@@ -452,20 +529,16 @@ GLObject.prototype.end = function() {
 			}
 		break;	
 		case GLObject.GL_TRIANGLES:
-			for (i = this._startI; i < this._vertices.length; ++i) {
+			for (i = this._startI; i < newVertex; ++i) {
 				this._indices.push(i);
 			}
 		break;
 		case GLObject.GL_TRIANGLE_FAN:
-			console.log(this._startI, newVertex, totalVertex, this._vertices.length);
 			for (i = this._startI; i < newVertex - 1; ++i) {
 				this._indices.push(this._startI);
 				this._indices.push(i);
 				this._indices.push(i + 1);
 			}
-			this._indices.push(this._startI);
-			this._indices.push(totalVertex - 1);
-			this._indices.push(this._startI + 1);
 		break;
 	}
 	this._type = null;
@@ -549,14 +622,10 @@ GLObject.prototype.addBox = function(x, y, z, w, h, d) {
 },
 
 GLObject.prototype.store = function(gl) {
-	console.log('GLObject.store numNormals: %i, numVertixes: %i, numIndices: %i\n\tnormals: %o\n\tvertexes %o\n\ttexCoords: %o\n\tindices: %o',
+	console.log('GLObject.store numNormals: %i, numVertixes: %i, numIndices: %i',
 		this._normals.length,
 		this._vertices.length,
-		this._indices.length,
-		this._normals,
-		this._vertices,
-		this._texCoords,
-		this._indices );
+		this._indices.length );
 
 	this._normalObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._normalObject);
@@ -581,8 +650,6 @@ GLObject.prototype.store = function(gl) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 	this._numIndices = this._indices.length;
 	this._indices = [];
-
-	console.log(this._numIndices, this._normalObject, this._vertexObject, this._texCoordObject, this._indexObject);
 };
 
 GLObject.prototype.draw = function(gl) {
