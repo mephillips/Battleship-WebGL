@@ -71,14 +71,9 @@ Battleship = {
 
 	main : function() {
 		var canvas = document.getElementById('battleship');
-		var gl = webgl_ext.initWebGL(
-			canvas,
-			'script/vshader.vs',
-			'script/fshader.fs',
-			[ 'vNormal', 'vColor', 'vPosition'] );
+		var gl = webgl_ext.initWebGL(canvas, 'script/vshader.vs', 'script/fshader.fs' );
 		if (!gl) { return; }
 
-		webgl_ext.extend(gl);
 		gl.clearDepth(10000);
 		gl.enable(gl.DEPTH_TEST);
 		gl.enable(gl.BLEND);

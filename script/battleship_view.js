@@ -125,7 +125,7 @@ Battleship.View = {
 
 	init : function() {
 		this._curr_menu = null;
-		this._userTranslate = [ 0, 0, -50 ];
+		this._userTranslate = [ 0, 0, 0 ];
 		this._userRotate = [ 0, 0, 0 ];
 		this._gameTranslate = [ 0, 0, 0 ];
 		this._gameRotate = [ 0, 0, 0 ];
@@ -227,23 +227,6 @@ Battleship.View = {
 	},
 
 	_initGL : function(gl) {
-		gl._mvs = [];
-		gl.pushMatrix = function() {
-			this._mvs.push(new J3DIMatrix4(this.mvMatrix));
-		}
-		gl.popMatrix = function() {
-			if (this._mvs.length > 0) {
-				this.mvMatrix.load(this._mvs.pop());
-			}
-			this.setMatrixUniforms();
-		}
-		if (!gl) {
-			return;
-		}
-
-		// Set some uniform variables for the shaders
-		gl.uniform3f(gl.getUniformLocation(gl.program, "lightDir"), 0, 0, 1);
-		gl.uniform1i(gl.getUniformLocation(gl.program, "sampler2d"), 0);
 
 		// Load an image to use. Returns a WebGLTexture object
 		spiritTexture = gl.loadImageTexture("images/spirit.jpg");
@@ -259,12 +242,12 @@ Battleship.View = {
 
 			// Set the viewport and projection matrix for the scene
 			gl.viewport(0, 0, this._width, this._height);
-			gl.perspectiveMatrix = new J3DIMatrix4();
-			gl.perspectiveMatrix.perspective(30, this._width/this._height, 30.0, 500);
-			gl.perspectiveMatrix.lookat(0, 0, 7, 0, 0, 0, 0, 1, 0);
+			gl.setPerspective(30, this._width/this._height, 30.0, 500);
 		}
 
-		gl.mvMatrix.makeIdentity();
+		gl.identity();
+
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 			gl.clearColor(0.0, 0.0, 0.4, 1.0);
 		if (this._curr_menu) {
@@ -273,7 +256,7 @@ Battleship.View = {
 			//gl.clearColor(0.0, 0.0, 0.0, 1.0);
 		}
 
-		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		gl.translate(0, 0, -50);
 	},
 
 	draw : function() {
@@ -281,19 +264,21 @@ Battleship.View = {
 
 		this.set_perspective(gl);
 
+		gl.uniform1i(gl.samplerUniform, 0);
+		gl.uniform1i(gl.useLightingUniform, false);
+
 		// Translation
 		if (!this._curr_menu)
 		{
 			//user rotation
-			gl.mvMatrix.rotate(this._userRotate[0], 0, 0);
-			gl.mvMatrix.rotate(0, this._userRotate[1], 0);
-			gl.mvMatrix.rotate(0, 0, this._userRotate[2]);
-			gl.mvMatrix.translate(
+			gl.rotate(this._userRotate[0], 0, 0);
+			gl.rotate(0, this._userRotate[1], 0);
+			gl.rotate(0, 0, this._userRotate[2]);
+			gl.translate(
 				this._userTranslate[0],
 				this._userTranslate[1],
 				this._userTranslate[2]);
 		}
-		gl.setMatrixUniforms();
 
 		switch (Battleship.Model.get_test())
 		{
@@ -306,16 +291,15 @@ Battleship.View = {
 		if (this._do_lines) {
 			if (!this._lines) {
 				this._lines = this._createLines();
-				console.log(gl.getError());
 			}
-			this._lines.draw(gl);
+			gl.draw(this._lines);
 		}
 
 		if (!this._disk) {
 			this._disk = glprimitive.disk(10, 5);
 		}
 		gl.bindTexture(gl.TEXTURE_2D, spiritTexture);
-		this._disk.draw(gl);
+		gl.draw(this._disk);
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	},
 

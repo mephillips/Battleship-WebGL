@@ -131,13 +131,13 @@ GLObject.prototype.draw = function(gl) {
 
 	// Set up all the vertex attributes for vertices, normals and texCoords
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexObject);
-	gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
+	gl.vertexAttribPointer(gl.vertexAttribPointer, 3, gl.FLOAT, false, 0, 0);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._normalObject);
-	gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+	gl.vertexAttribPointer(gl.vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._texCoordObject);
-	gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 0, 0);
+	gl.vertexAttribPointer(gl.textureCoordAttribute, 2, gl.FLOAT, false, 0, 0);
 
 	// Bind the index array
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexObject);

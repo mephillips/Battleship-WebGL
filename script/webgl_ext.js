@@ -4,7 +4,7 @@
  * Provides helper methods related to webgl. Most methods can be used on their
  * own or as extension methods on the webgl context.
  *
- * Copyright (C) 2011 by Matthew Phillips 
+ * Copyright (C) 2011 by Matthew Phillips
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,121 +35,142 @@ webgl_ext = {
 	 * @param canvas		A dom element represeting the canvas to initilize.
 	 * @param vshaderUrl	Url to the vertex shader script.
 	 * @param fshaderUrl	Url to the fragment shader script.
-	 * @param attributes	An array of shader attributes to bind
-	 *
-	 * Based off the one found at:
-	 * https://cvs.khronos.org/svn/repos/registry/trunk/public/webgl/sdk/demos/webkit/SpiritBox.html
 	 *
 	 */
-	initWebGL : function(canvas, vshaderUrl, fshaderUrl, attributes) {
+	initWebGL : function(canvas, vshaderUrl, fshaderUrl) {
 		var gl = WebGLUtils.setupWebGL(canvas);
 		if (!gl) {
-			console.log('setupWebGL failed');
+			console.log('initWebGL failed');
 			return null;
 		}
 
-		// create our shaders
-		var vertexShader = this._loadShader(gl, gl.VERTEX_SHADER, vshaderUrl);
-		var fragmentShader = this._loadShader(gl, gl.FRAGMENT_SHADER, fshaderUrl);
-		if (!vertexShader || !fragmentShader) {
-			console.log('One or more shaders failed to load');
+		var program = this._loadShadersUrl(gl, vshaderUrl, fshaderUrl);
+		if (!program) {
 			return null;
 		}
+		this._loadShaderParameters(gl, program);
+		gl.program = program;
 
-		// Create the program object
-		gl.program = gl.createProgram();
-		if (!gl.program) {
-			console.log('Failed to create program');
-			return null;
-		}
+		// Create modle matrices
+		gl.mvMatrix = new J3DIMatrix4();
+		gl.mvChanged = true;
+		gl.perspectiveMatrix = new J3DIMatrix4();
 
-		// Attach our two shaders to the program
-		gl.attachShader(gl.program, vertexShader);
-		gl.attachShader(gl.program, fragmentShader);
-
-		// Bind attributes
-		var i;
-		for (i = 0; i < attributes.length; ++i) {
-			gl.bindAttribLocation(gl.program, i, attributes[i]);
-		}
-
-		// Link the program
-		gl.linkProgram(gl.program);
-
-		// Check the link status
-		var linked = gl.getProgramParameter(gl.program, gl.LINK_STATUS);
-		if (!linked) {
-			// something went wrong with the link
-			var error = gl.getProgramInfoLog(gl.program);
-			console.log('Error in program linking: ', error);
-
-			gl.deleteProgram(gl.program);
-			gl.deleteProgram(fragmentShader);
-			gl.deleteProgram(vertexShader);
-
-			return null;
-		}
-
-		gl.useProgram(gl.program);
+		// Add methods
+		gl.loadImageTexture = this.loadImageTexture;
+		gl.setMatrixUniforms = this.setMatrixUniforms;
+		gl.setPerspective = this.setPerspective;
+		gl.identity = this.identity;
+		gl.translate = this.translate;
+		gl.rotate = this.rotate;
+		gl.scale = this.scale;
+		gl.pushMatrix = this.pushMatrix;
+		gl.popMatrix = this.popMatrix;
+		gl.draw = this.draw;
 
 		return gl;
 	},
 
 	/**
-	 * Add helper methods to the given webgl context 
+	 * Set the perspective matrix.
 	 */
-	extend : function(gl) {
-		// Create modle matrices
-		gl.mvMatrix = new J3DIMatrix4();
-		gl.u_normalMatrixLoc = gl.getUniformLocation(gl.program, "u_normalMatrix");
-
-		gl.normalMatrix = new J3DIMatrix4();
-		gl.u_modelViewProjMatrixLoc = gl.getUniformLocation(gl.program, "u_modelViewProjMatrix");
-
-		gl.mvpMatrix = new J3DIMatrix4();
-		gl.perspectiveMatrix = new J3DIMatrix4();
-
-		// Add methods
-		gl.loadImageTexture = function(url) { return webgl_ext.loadImageTexture(this, url); };
-		gl.setMatrixUniforms = function(url) { return webgl_ext.setMatrixUniforms(this); };
+	setPerspective : function(fovy, aspect, zNear, zFar) {
+		this.perspectiveMatrix.perspective(fovy, aspect, zNear, zFar);
+		this.perspectiveMatrix.setUniform(this, this.pMatrixUniform, false);
 	},
 
-	/** 
-	 * I don't quite get this yet
+	/**
+	 * Push the current model view matrix onto the stack for reuse later
 	 */
-	setMatrixUniforms : function(gl) {
-		// Construct the normal matrix from the model-view matrix and pass it in
-		gl.normalMatrix.load(gl.mvMatrix);
-		gl.normalMatrix.invert();
-		gl.normalMatrix.transpose();
-		gl.normalMatrix.setUniform(gl, gl.u_normalMatrixLoc, false);
+	pushMatrix : function() {
+		this.mvStack.push(new J3DIMatrix4(this.mvMatrix));
+	},
 
-		// Construct the model-view * projection matrix and pass it in
-		gl.mvpMatrix.load(gl.perspectiveMatrix);
-		gl.mvpMatrix.multiply(gl.mvMatrix);
-		gl.mvpMatrix.setUniform(gl, gl.u_modelViewProjMatrixLoc, false);
+	/**
+	 * Restore a previous pushed modle view matrix
+	 */
+	popMatrix : function() {
+		if (this.mvStack.length > 0) {
+			this.mvMatrix.load(this.mvStack.pop());
+			this.mvChanged = true;
+		}
+	},
+
+	/**
+	 * Restore the model view matrix to the identity
+	 */
+	identity : function() {
+		this.mvMatrix.makeIdentity();
+		this.mvChanged = true;
+	},
+
+	/**
+	 * Translate the model view matrix
+	 */
+	translate : function(x, y, z) {
+		this.mvMatrix.translate(x, y, z);
+		this.mvChanged = true;
+	},
+
+	/**
+	 * Rotate the model view matrix
+	 */
+	rotate : function(x, y, z) {
+		this.mvMatrix.rotate(x, y, z);
+		this.mvChanged = true;
+	},
+
+	/**
+	 * Scale the model view matrix
+	 */
+	scale : function(x, y, z) {
+		this.mvMatrix.scale(x, y, z);
+		this.mvChanged = true;
+	},
+
+	/**
+	 *	Update shader program with current modle view matrix.
+	 */
+	setMatrixUniforms : function() {
+		if (this.mvChanged) {
+			this.mvMatrix.setUniform(this, this.mvMatrixUniform, false);
+
+			var normalMatrix = new J3DIMatrix4(this.mvMatrix);
+			normalMatrix.invert();
+			normalMatrix.transpose();
+			normalMatrix.setUniform(this, this.nMatrixUniform, false);
+
+			this.mvChanged = false;
+		}
+	},
+
+	/**
+	 * Draw the given globject
+	 */
+	draw : function(globject) {
+		this.setMatrixUniforms();
+		globject.draw(this);
 	},
 
 	/**
 	 * Create a new WebGLTexture using the image at the given url.
-	 * 
-	 * @param gl	The webgl context.
+	 *
 	 * @param url	URL to a source image.
 	 */
-	loadImageTexture : function(gl, url) {
-		var texture = gl.createTexture();
+	loadImageTexture : function(url) {
+		var texture = this.createTexture();
 		var image = new Image();
 		image.texture = texture;
-		image.gl = gl;
-		image.onload = this._loadImageTexture;
+		image.gl = this;
+		image.onload = webgl_ext._loadImageTexture;
 		image.src = url;
 		return texture;
 	},
 
 	/**
-	 * @private
-	 *
 	 * This function will be called with an image as the context
+	 *
+	 * @private
 	 */
 	_loadImageTexture : function() {
 		try {
@@ -170,15 +191,93 @@ webgl_ext = {
 	},
 
 	/**
-	 * @private
+	 * Load the vertex and fragment shader scripts
 	 *
+	 * @param gl			A webgl context
+	 * @param vshasderUrl	Url to vshader script
+	 * @param fshasderUrl	Url to fshader script
+	 *
+	 * @private
+	 */
+	_loadShadersUrl : function(gl, vshaderUrl, fshaderUrl) {
+		// create our shaders
+		var vertexShader = this._loadShaderUrl(gl, gl.VERTEX_SHADER, vshaderUrl);
+		var fragmentShader = this._loadShaderUrl(gl, gl.FRAGMENT_SHADER, fshaderUrl);
+		if (!vertexShader || !fragmentShader) {
+			console.log('One or more shaders failed to load');
+			return null;
+		}
+
+		// Create the program object
+		var program = gl.createProgram();
+		if (!program) {
+			console.log('Failed to create program');
+			return null;
+		}
+
+		// Attach our two shaders to the program
+		gl.attachShader(program, vertexShader);
+		gl.attachShader(program, fragmentShader);
+
+		// Link the program
+		gl.linkProgram(program);
+
+		// Check the link status
+		var linked = gl.getProgramParameter(program, gl.LINK_STATUS);
+		if (!linked) {
+			// something went wrong with the link
+			var error = gl.getProgramInfoLog(program);
+			console.log('Error in program linking: ', error);
+
+			gl.deleteProgram(program);
+			gl.deleteProgram(fragmentShader);
+			gl.deleteProgram(vertexShader);
+
+			return null;
+		}
+
+		gl.useProgram(program);
+
+		return program;
+	},
+
+	/**
+	 * Get references to all of the shader parameters and store them for later
+	 * use.
+	 *
+	 * @private
+	 */
+	_loadShaderParameters : function(gl, program) {
+		gl.vertexPositionAttribute = gl.getAttribLocation(program, "aVertexPosition");
+		gl.enableVertexAttribArray(gl.vertexPositionAttribute);
+
+		gl.vertexNormalAttribute = gl.getAttribLocation(program, "aVertexNormal");
+		gl.enableVertexAttribArray(gl.vertexNormalAttribute);
+
+		gl.textureCoordAttribute = gl.getAttribLocation(program, "aTextureCoord");
+		gl.enableVertexAttribArray(gl.textureCoordAttribute);
+
+
+		gl.pMatrixUniform = gl.getUniformLocation(program, "uPMatrix");
+		gl.mvMatrixUniform = gl.getUniformLocation(program, "uMVMatrix");
+		gl.nMatrixUniform = gl.getUniformLocation(program, "uNMatrix");
+		gl.samplerUniform = gl.getUniformLocation(program, "uSampler");
+		gl.useLightingUniform = gl.getUniformLocation(program, "uUseLighting");
+		gl.ambientColorUniform = gl.getUniformLocation(program, "uAmbientColor");
+		gl.lightingDirectionUniform = gl.getUniformLocation(program, "uLightingDirection");
+		gl.directionalColorUniform = gl.getUniformLocation(program, "uDirectionalColor");
+	},
+
+	/**
 	 * Load a shader with the given type using the soucre at the given url
 	 *
 	 * @param gl			The webgl graphics context.
 	 * @param shaderType	The webgl shadder type (ex gl.VERTEX_SHADER).
 	 * @param url			The url to the shader script.
+	 *
+	 * @private
 	 */
-	_loadShader : function(gl, shaderType, url)
+	_loadShaderUrl : function(gl, shaderType, url)
 	{
 		var shader = null;
 
@@ -212,4 +311,4 @@ webgl_ext = {
 
 		return shader;
 	}
-}
+};

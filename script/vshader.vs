@@ -1,18 +1,30 @@
-		uniform mat4 u_modelViewProjMatrix;
-		uniform mat4 u_normalMatrix;
-		uniform vec3 lightDir;
+attribute vec3 aVertexPosition;
+attribute vec3 aVertexNormal;
+attribute vec2 aTextureCoord;
 
-		attribute vec3 vNormal;
-		attribute vec4 vTexCoord;
-		attribute vec4 vPosition;
+uniform mat4 uMVMatrix;
+uniform mat4 uPMatrix;
+uniform mat3 uNMatrix;
 
-		varying float v_Dot;
-		varying vec2 v_texCoord;
+uniform vec3 uAmbientColor;
 
-		void main()
-		{
-			gl_Position = u_modelViewProjMatrix * vPosition;
-			v_texCoord = vTexCoord.st;
-			vec4 transNormal = u_normalMatrix * vec4(vNormal, 1);
-			v_Dot = max(dot(transNormal.xyz, lightDir), 0.0);
-		}
+uniform vec3 uLightingDirection;
+uniform vec3 uDirectionalColor;
+
+uniform bool uUseLighting;
+
+varying vec2 vTextureCoord;
+varying vec3 vLightWeighting;
+
+void main(void) {
+	gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);
+	vTextureCoord = aTextureCoord;
+
+	if (!uUseLighting) {
+		vLightWeighting = vec3(1.0, 1.0, 1.0);
+	} else {
+		vec3 transformedNormal = uNMatrix * aVertexNormal;
+		float directionalLightWeighting = max(dot(transformedNormal, uLightingDirection), 0.0);
+		vLightWeighting = uAmbientColor + uDirectionalColor * directionalLightWeighting;
+	}
+}
