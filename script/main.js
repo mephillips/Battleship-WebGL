@@ -3,10 +3,7 @@
  *
  * Contains main initilization logic and user input logic.
  *
- * Provides helper methods related to webgl. Most methods can be used on their
- * own or as extension methods on the webgl context.
- *
- * Copyright (C) 2011 by Matthew Phillips 
+ * Copyright (C) 2011 by Matthew Phillips
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -79,41 +76,47 @@ Battleship = {
 			'script/vshader.vs',
 			'script/fshader.fs',
 			[ 'vNormal', 'vColor', 'vPosition'] );
-		if (gl) {
-			webgl_ext.extend(gl);
-			gl.clearDepth(10000);
-			gl.enable(gl.DEPTH_TEST);
-			gl.enable(gl.BLEND);
-			gl.enable(gl.TEXTURE_2D);
-			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+		if (!gl) { return; }
 
-			// Enable the vertex attribute arrays that will be used throughout
-			// the app
-			gl.enableVertexAttribArray(0);
-			gl.enableVertexAttribArray(1);
-			gl.enableVertexAttribArray(2);
+		webgl_ext.extend(gl);
+		gl.clearDepth(10000);
+		gl.enable(gl.DEPTH_TEST);
+		gl.enable(gl.BLEND);
+		//gl.enable(gl.TEXTURE_2D);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-			// Set up input event listeners
-			canvas.onmouseup = this.mouseup.bind(this);
-			canvas.onmousedown = this.mousedown.bind(this);
-			canvas.onmousemove = this.motion.bind(this);
+		// Enable the vertex attribute arrays that will be used throughout
+		// the app
+		gl.enableVertexAttribArray(0);
+		gl.enableVertexAttribArray(1);
+		gl.enableVertexAttribArray(2);
 
-			// Setup implementation specific methods
-			Battleship.View.refresh = this.view_refresh;
+		// Set up input event listeners
+		canvas.onmouseup = this.mouseup.bind(this);
+		canvas.onmousedown = this.mousedown.bind(this);
+		canvas.onmousemove = this.motion.bind(this);
 
-			Battleship.Logic.init();
-			Battleship.View.init(gl, canvas);
+		// Setup implementation specific methods
+		Battleship.View.refresh = this.view_refresh;
+		Battleship.View.set_context(gl, canvas);
 
-			var animateLoop = function() {
-				try {
-					Battleship.View.draw();
-					window.requestAnimFrame(animateLoop, canvas);
-				} catch (e) {
-					console.log('animateLoop', e);
-				}
+		// Game parameters
+		var do_test = parseInt(this._getQueryArg('do_test', '0'), 10) || 0;
+		Battleship.Model.set_test(do_test);
+		var do_lines = (this._getQueryArg('do_lines', 'false') === 'true');
+		Battleship.View._do_lines = do_lines;
+
+		Battleship.Logic.init();
+
+		var animateLoop = function() {
+			try {
+				Battleship.View.draw();
+				window.requestAnimFrame(animateLoop, canvas);
+			} catch (e) {
+				console.log('animateLoop', e);
 			}
-			animateLoop();
 		}
+		animateLoop();
 	},
 
 	_getQueryArg : function(key, def) {

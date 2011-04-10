@@ -1,6 +1,8 @@
 GLObject = function() {
+	this._stored = false;
+
 	// The current drawing type
-	this._type = null; 
+	this._type = null;
 	// The current normal
 	this._normal = [0, 0, 0];
 	this._texCoord = [0, 0];
@@ -21,6 +23,7 @@ GLObject = function() {
 GLObject.GL_QUADS = 'quads';
 GLObject.GL_TRIANGLES = 'tri';
 GLObject.GL_TRIANGLE_FAN = 'trifan';
+GLObject.GL_LINES = 'lines';
 
 GLObject.prototype.setNormal = function(x,y,z) {
 	this._normal = [ x, y, z ];
@@ -53,7 +56,14 @@ GLObject.prototype.end = function() {
 					++count;
 				}
 			}
-		break;	
+		break;
+		case GLObject.GL_LINES:
+			for (i = this._startI; i < newVertex - 1; ++i) {
+				this._indices.push(i);
+				this._indices.push(i);
+				this._indices.push(i + 1);
+			}
+		break;
 		case GLObject.GL_TRIANGLES:
 			for (i = this._startI; i < newVertex; ++i) {
 				this._indices.push(i);
@@ -80,72 +90,6 @@ GLObject.prototype.vertex = function(x, y, z) {
 	this._vertices.push(y);
 	this._vertices.push(z);
 }
-
-GLObject.prototype.addBox = function(x, y, z, w, h, d) {
-	var s = 1.0/(h + w);
-	var t = 1.0/(d + h);
-
-	//Back
-	this.setNormal(0, 0, -1);
-	this.setTexCoord(1, 1); 
-	this.vertex(x, y + h, z);
-	this.setTexCoord(h*s, 1);
-	this.vertex(x + w, y + h, z);
-	this.setTexCoord(h*s, d*t);
-	this.vertex(x + w, y, z);
-	this.setTexCoord(1, d*t);
-	this.vertex(x, y, z);
-	//Front
-	this.setNormal(0, 0, 1);
-	this.setTexCoord(h*s, 1);
-	this.vertex(x, y, z + d);
-	this.setTexCoord(1, 1);
-	this.vertex(x + w, y, z + d);
-	this.setTexCoord(1, d*t);
-	this.vertex(x + w, y + h, z + d);
-	this.setTexCoord(h*s, d*t);
-	this.vertex(x, y + h, z + d);
-	//Left
-	this.setNormal(-1, 0, 0);
-	this.setTexCoord(0, 0);
-	this.vertex(x, y, z);
-	this.setTexCoord(0, d*t);
-	this.vertex(x, y, z + d);
-	this.setTexCoord(h*s, d*t);
-	this.vertex(x, y + h, z + d);
-	this.setTexCoord(h*s, 0);
-	this.vertex(x, y + h, z);
-	//Right
-	this.setNormal(1, 0, 0);
-	this.setTexCoord(h*s, 0);
-	this.vertex(x + w, y, z + d);
-	this.setTexCoord(h*s, d*t);
-	this.vertex(x + w, y, z);
-	this.setTexCoord(0, d*t);
-	this.vertex(x + w, y + h, z);
-	this.setTexCoord(0, 0);
-	this.vertex(x + w, y + h, z + d);
-	//Top
-	this.setNormal(0, 1, 0);
-	this.setTexCoord(h*s, 0);
-	this.vertex(x, y + h, z); 
-	this.setTexCoord(h*s, d*t);
-	this.vertex(x, y + h, z + d);
-	this.setTexCoord(1, d*t);
-	this.vertex(x + w, y + h, z +d);
-	this.setTexCoord(1, 0);
-	this.vertex(x + w, y + h, z);
-	//Bottom
-	this.setNormal(0, -1, 0);
-	this.setTexCoord(h*s, d*t);
-	this.vertex(x + w, y, z);
-	this.setTexCoord(h*s, 0);
-	this.vertex(x + w, y, z + d);
-	this.setTexCoord(1, 0);
-	this.vertex(x, y, z + d);
-	this.setTexCoord(1, d*t);
-	this.vertex(x, y, z);
-},
 
 GLObject.prototype.store = function(gl) {
 	console.log('GLObject.store numNormals: %i, numVertixes: %i, numIndices: %i',
@@ -176,9 +120,15 @@ GLObject.prototype.store = function(gl) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 	this._numIndices = this._indices.length;
 	this._indices = [];
+
+	this._stored = true;
 };
 
 GLObject.prototype.draw = function(gl) {
+	if (!this._stored) {
+		this.store(gl);
+	}
+
 	// Set up all the vertex attributes for vertices, normals and texCoords
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexObject);
 	gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);

@@ -1,3 +1,29 @@
+/**
+ * @fileOverview
+ *
+ * Contains rendering portion of the Battleship game.
+ *
+ * Copyright (C) 2011 by Matthew Phillips
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 /** Increaseing this value will move the two players boards apart */
 BOARD_GAP = 0;
 
@@ -89,25 +115,33 @@ LIGHT_Y = (ROOM_HEIGHT/2.0);
 LIGHT_Z = 0;
 
 Battleship.View = {
-	__canvasId : 'battleship',
+	_canvas : null,
+	_gl : null,
 
-	__canvas : null,
-	__gl : null,
+	_width : null,
+	_height : null,
 
-	__width : null,
-	__height : null,
+	_do_lines : false,
 
-	init : function(gl, canvas) {
-		this.__gl = gl;
-		this.__canvas = canvas;
-
+	init : function() {
 		this._curr_menu = null;
 		this._userTranslate = [ 0, 0, -50 ];
 		this._userRotate = [ 0, 0, 0 ];
 		this._gameTranslate = [ 0, 0, 0 ];
 		this._gameRotate = [ 0, 0, 0 ];
 
-		this.__initGL(gl);
+		this._initGL(this._gl);
+	},
+
+	/**
+	 * Provides the graphics context and canvas to the view
+	 *
+	 * @param gl		A webgl graphics context
+	 * @param canvas	A canvas DOM element
+	 */
+	set_context : function(gl, canvas) {
+		this._gl = gl;
+		this._canvas = canvas;
 	},
 
 	/** Gets the current size of the window
@@ -117,7 +151,7 @@ Battleship.View = {
 	 *  @return	An object { width, height }
 	 */
 	getsize : function() {
-		return { width : this.__canvas.width, height : this.__canvas.height };
+		return { width : this._canvas.width, height : this._canvas.height };
 	},
 
 	/** Translates the view
@@ -192,14 +226,14 @@ Battleship.View = {
 		}
 	},
 
-	__initGL : function(gl) {
-		gl.__mvs = [];
+	_initGL : function(gl) {
+		gl._mvs = [];
 		gl.pushMatrix = function() {
-			this.__mvs.push(new J3DIMatrix4(this.mvMatrix));
+			this._mvs.push(new J3DIMatrix4(this.mvMatrix));
 		}
 		gl.popMatrix = function() {
-			if (this.__mvs.length > 0) {
-				this.mvMatrix.load(this.__mvs.pop());
+			if (this._mvs.length > 0) {
+				this.mvMatrix.load(this._mvs.pop());
 			}
 			this.setMatrixUniforms();
 		}
@@ -218,31 +252,32 @@ Battleship.View = {
 	},
 
 	set_perspective : function(gl) {
-		if (this.__canvas.width !== this.__width && this.__canvas.height !== this.__height) {
+		if (this._canvas.width !== this._width && this._canvas.height !== this._height) {
 
-			this.__width = this.__canvas.width;
-			this.__height = this.__canvas.height;
+			this._width = this._canvas.width;
+			this._height = this._canvas.height;
 
 			// Set the viewport and projection matrix for the scene
-			gl.viewport(0, 0, this.__width, this.__height);
+			gl.viewport(0, 0, this._width, this._height);
 			gl.perspectiveMatrix = new J3DIMatrix4();
-			gl.perspectiveMatrix.perspective(30, this.__width/this.__height, 30.0, 500);
+			gl.perspectiveMatrix.perspective(30, this._width/this._height, 30.0, 500);
 			gl.perspectiveMatrix.lookat(0, 0, 7, 0, 0, 0, 0, 1, 0);
 		}
 
 		gl.mvMatrix.makeIdentity();
 
-		if (this._curr_menu) {
 			gl.clearColor(0.0, 0.0, 0.4, 1.0);
+		if (this._curr_menu) {
+			//gl.clearColor(0.0, 0.0, 0.4, 1.0);
 		} else {
-			gl.clearColor(0.0, 0.0, 0.0, 1.0);
+			//gl.clearColor(0.0, 0.0, 0.0, 1.0);
 		}
 
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 	},
 
 	draw : function() {
-		var gl = this.__gl;
+		var gl = this._gl;
 
 		this.set_perspective(gl);
 
@@ -260,12 +295,44 @@ Battleship.View = {
 		}
 		gl.setMatrixUniforms();
 
-		if (!this.__disk) {
-			this.__disk = glprimitive.disk(10, 5);
-			this.__disk.store(gl);
+		switch (Battleship.Model.get_test())
+		{
+			//case TEST_PRIMITIVE:
+				//glprimitive_test(4.0, 15);
+			//break;
+		}
+
+		// Draw axis
+		if (this._do_lines) {
+			if (!this._lines) {
+				this._lines = this._createLines();
+				console.log(gl.getError());
+			}
+			this._lines.draw(gl);
+		}
+
+		if (!this._disk) {
+			this._disk = glprimitive.disk(10, 5);
 		}
 		gl.bindTexture(gl.TEXTURE_2D, spiritTexture);
-		this.__disk.draw(gl);
+		this._disk.draw(gl);
 		gl.bindTexture(gl.TEXTURE_2D, null);
+	},
+
+	_createLines : function() {
+		// TODO: I need to implement lines
+		var o = new GLObject();
+		o.begin(GLObject.GL_TRIANGLES);
+		o.vertex(0.0, 50.0, 0.0);
+		o.vertex(0.1, 0.0, 0.0);
+		o.vertex(0.0, -50.0, 0.0);
+		o.vertex(-50.0, 0.0, 0.0);
+		o.vertex(0.0, 0.1, 0.0);
+		o.vertex(50, 0.0, 0.0);
+		o.vertex(0.0, 0.0, 50.0);
+		o.vertex(0.0, 0.1, 0.0);
+		o.vertex(0.0, 0.0, -50.0);
+		o.end();
+		return o;
 	}
 };
