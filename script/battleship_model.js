@@ -24,6 +24,17 @@
  * THE SOFTWARE.
  */
 Battleship.Model = {
+	NUM_TEST_TYPES : 10,
+	TEST_NONE : "None",
+	TEST_PRIMITIVE : "Primitive",
+	TEST_CLOCK : "Clock",
+	TEST_MUG : "Mug",
+	TEST_PEG : "Peg",
+	TEST_SHIPS : "Ships",
+	TEST_FONT : "Font",
+	TEST_FOG : "Fog",
+	TEST_LSYSTEM : "Lsystem",
+	TEST_ROCKET : "Rocket",
 
 	init : function() {
 		this._do_test = 0;

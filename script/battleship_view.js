@@ -24,96 +24,9 @@
  * THE SOFTWARE.
  */
 
-/** Increaseing this value will move the two players boards apart */
-BOARD_GAP = 0;
-
-/** How far up on the board to draw the vertical grid */
-GRID_TOP_Y = 2.0;  	// - For the normal on the diagonl stuff. This 
-/** How far out fromt he origin to draw the vertical gird */
-GRID_TOP_Z = 0.5;
-/** How far up on the board to draw the horizontal grid */
-GRID_BOTTOM_Y = -1.5; 
-/** How far out fromt he origin to draw the horizonal gird */
-GRID_BOTTOM_Z = 2.0;  	// - And this should be equal
-
-/** The depth of grid blocks */
-BLOCK_DEPTH = 0.8;
-/** The heigh/width of grid blocks */
-BLOCK_DIM = 0.9;
-/** Grid blocks are drawn with some space around them, this value is how
- *  height/wide they are including that space.
- */
-BLOCK_REAL_DIM = 1.0;
-
-/** Width of the overhang at the top of the game */
-BORDER_TOP_WIDTH = 1.5;
-/** Amount of space between top of grid and top of game */
-BORDER_TOP_GAP = 0.5;
-/** Amount of space between front of horizontal grid and front of game */
-BORDER_BOTTOM_GAP = 0;
-/** Width of the cubes that make up the border */
-BORDER_WIDTH = 0.2;
-
-/** The width of the slots at the side of the board */
-SLOT_WIDTH = 4;
-/** The height (along z) of thelarger slot on the right side of the board */
-SLOT_HEIGHT = 6;
-
-/** Length of wide part of a peg */
-PEG_LEN_1 = BLOCK_DEPTH; 
-/** Length of the skinny part of a peg */
-PEG_LEN_2 = (BLOCK_DEPTH - 0.2);
-/** Diameter of the wide part of a peg */
-PEG_DIAM_1 = 0.3;
-/** Diameter of the skinny part of a peg */
-PEG_DIAM_2 = 0.15;
-
-/** The height of a ships Hull */
-SHIP_HULL_HEIGHT = 0.4;
-/** The diameter of the ships hull */
-SHIP_HULL_DIAM = 0.15;
-/** The height of a ships deck */
-SHIP_DECK_HEIGHT = 0.2;
-
-/** The left of the screen, for writting font */
-FONT_X0 = -16;
-/** The right of the screen, for writting font */
-FONT_X1 = 16;
-/** The top of the screen, for writting font */
-FONT_Y0 = 11;
-/** The bottom of the screen, for writting font */
-FONT_Y1 = -12;
-
-/** The width of the picture frame */
-PICTURE_FRAME_R = 0.5;
-/** The width/height of the picture */
-PICTURE_DIM = 4;
-
-/** The width of the table the game board sits on */
-TABLE_WIDTH = 30;
-/** The height of the table the game board sits on */
-TABLE_HEIGHT = 1.0; 
-/** The depth of the table the game board sits on */
-TABLE_DEPTH = 26; 
-/** The top o the table */
-TABLE_TOP = (-(BLOCK_DEPTH/2.0+BORDER_WIDTH) + GRID_BOTTOM_Y);
-
-/** The size of the room width/depth the game is being played in */
-ROOM_DIM = 60; 
-
-/** The size of the room height the game is being played in */
-ROOM_HEIGHT = 55;
-
-/** The height of the fog cube */
-FOG_HEIGHT = (PEG_LEN_2);
-
-/** X Location of light used to cast shadows */
-LIGHT_X = 0; 
-/** Y Location of light used to cast shadows */
-LIGHT_Y = (ROOM_HEIGHT/2.0);
-/** Z Location of light used to cast shadows */
-LIGHT_Z = 0;
-
+ /**
+  * @namespace
+  */
 Battleship.View = {
 	_canvas : null,
 	_gl : null,
@@ -129,8 +42,6 @@ Battleship.View = {
 		this._userRotate = [ 0, 0, 0 ];
 		this._gameTranslate = [ 0, 0, 0 ];
 		this._gameRotate = [ 0, 0, 0 ];
-
-		this._initGL(this._gl);
 	},
 
 	/**
@@ -226,14 +137,6 @@ Battleship.View = {
 		}
 	},
 
-	_initGL : function(gl) {
-
-		// Load an image to use. Returns a WebGLTexture object
-		spiritTexture = gl.loadImageTexture("images/spirit.jpg");
-
-		return gl;
-	},
-
 	set_perspective : function(gl) {
 		if (this._canvas.width !== this._width && this._canvas.height !== this._height) {
 
@@ -245,17 +148,18 @@ Battleship.View = {
 			gl.setPerspective(30, this._width/this._height, 30.0, 500);
 		}
 
-		gl.identity();
-
+		gl.clearColor(0.0, 0.0, 0.4, 1.0);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-			gl.clearColor(0.0, 0.0, 0.4, 1.0);
-		if (this._curr_menu) {
-			//gl.clearColor(0.0, 0.0, 0.4, 1.0);
-		} else {
-			//gl.clearColor(0.0, 0.0, 0.0, 1.0);
-		}
+		// Lighting
+		gl.uniform1i(gl.samplerUniform, 0);
+		gl.uniform1i(gl.showSpecularHighlightsUniform, true);
+		gl.uniform1i(gl.useTexturesUniform, false);
+		gl.uniform1i(gl.useLightingUniform, true);
+		gl.setAmbientColor(0.2, 0.2, 0.2);
+		gl.setLightPositon(0.0, 1.0, 0.0);
 
+		gl.identity();
 		gl.translate(0, 0, -50);
 	},
 
@@ -263,9 +167,6 @@ Battleship.View = {
 		var gl = this._gl;
 
 		this.set_perspective(gl);
-
-		gl.uniform1i(gl.samplerUniform, 0);
-		gl.uniform1i(gl.useLightingUniform, false);
 
 		// Translation
 		if (!this._curr_menu)
@@ -280,13 +181,6 @@ Battleship.View = {
 				this._userTranslate[2]);
 		}
 
-		switch (Battleship.Model.get_test())
-		{
-			//case TEST_PRIMITIVE:
-				//glprimitive_test(4.0, 15);
-			//break;
-		}
-
 		// Draw axis
 		if (this._do_lines) {
 			if (!this._lines) {
@@ -295,12 +189,24 @@ Battleship.View = {
 			gl.draw(this._lines);
 		}
 
+		switch (Battleship.Model.get_test())
+		{
+			case Battleship.Model.TEST_PRIMITIVE:
+				glprimitive.test(gl, 4.0, 15);
+			break;
+		}
+
+		/*
 		if (!this._disk) {
 			this._disk = glprimitive.disk(10, 5);
 		}
-		gl.bindTexture(gl.TEXTURE_2D, spiritTexture);
+		if (!this._spiritTexture) {
+			this._spiritTexture = gl.loadImageTexture("images/spirit.jpg");
+		}
+		gl.bindTexture(gl.TEXTURE_2D, this._spiritTexture);
 		gl.draw(this._disk);
 		gl.bindTexture(gl.TEXTURE_2D, null);
+		*/
 	},
 
 	_createLines : function() {

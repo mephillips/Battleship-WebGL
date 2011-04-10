@@ -4,7 +4,7 @@ GLObject = function() {
 	// The current drawing type
 	this._type = null;
 	// The current normal
-	this._normal = [0, 0, 0];
+	this._normal = [1, 0, 0];
 	this._texCoord = [0, 0];
 
 	// Hold arrays of things while we are drawing
@@ -142,6 +142,33 @@ GLObject.prototype.draw = function(gl) {
 	// Bind the index array
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexObject);
 
-	// Draw 
+	// Draw
 	gl.drawElements(gl.TRIANGLES, this._numIndices, gl.UNSIGNED_BYTE, 0);
+}
+
+GLObject.prototype.destroy = function(gl) {
+	this._normals = null;
+	this._texCoords = null;
+	this._vertices = null;
+	this._indices = null;
+
+	this._texCoord = null;
+	this._normal = null;
+
+	if (this._vertexObject) {
+		gl.deleteBuffer(this._vertexObject);
+		this._vertexObject = null;
+	}
+	if (this._normalObject) {
+		gl.deleteBuffer(this._normalObject);
+		this._normalObject = null;
+	}
+	if (this._texCoordObject) {
+		gl.deleteBuffer(this._texCoordObject);
+		this._texCoordObject = null;
+	}
+	if (this._indexObject) {
+		gl.deleteBuffer(this._indexObject);
+		this._indexObject = null;
+	}
 }

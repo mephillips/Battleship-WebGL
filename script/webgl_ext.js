@@ -67,6 +67,11 @@ webgl_ext = {
 		gl.pushMatrix = this.pushMatrix;
 		gl.popMatrix = this.popMatrix;
 		gl.draw = this.draw;
+		gl.setLightPositon = this.setLightPositon;
+		gl.setAmbientColor = this.setAmbientColor;
+		gl.setDiffuseColor = this.setDiffuseColor;
+		gl.setSpecularColor = this.setSpecularColor;
+		gl.setMaterialShininess = this.setMaterialShininess;
 
 		return gl;
 	},
@@ -150,6 +155,22 @@ webgl_ext = {
 	draw : function(globject) {
 		this.setMatrixUniforms();
 		globject.draw(this);
+	},
+
+	setLightPositon : function(x, y, z) {
+		this.uniform3f(this.pointLightingLocationUniform, x, y, z);
+	},
+	setAmbientColor : function(x, y, z) {
+		this.uniform3f(this.ambientColorUniform, x, y, z);
+	},
+	setDiffuseColor : function(x, y, z) {
+		this.uniform3f(this.pointLightingDiffuseColorUniform, x, y, z);
+	},
+	setSpecularColor : function(x, y, z) {
+		this.uniform3f(this.pointLightingSpecularColorUniform, x, y, z);
+	},
+	setMaterialShininess : function(s) {
+		this.uniform1f(this.materialShininessUniform, s);
 	},
 
 	/**
@@ -262,10 +283,14 @@ webgl_ext = {
 		gl.mvMatrixUniform = gl.getUniformLocation(program, "uMVMatrix");
 		gl.nMatrixUniform = gl.getUniformLocation(program, "uNMatrix");
 		gl.samplerUniform = gl.getUniformLocation(program, "uSampler");
+		gl.materialShininessUniform = gl.getUniformLocation(program, "uMaterialShininess");
+		gl.showSpecularHighlightsUniform = gl.getUniformLocation(program, "uShowSpecularHighlights");
+		gl.useTexturesUniform = gl.getUniformLocation(program, "uUseTextures");
 		gl.useLightingUniform = gl.getUniformLocation(program, "uUseLighting");
 		gl.ambientColorUniform = gl.getUniformLocation(program, "uAmbientColor");
-		gl.lightingDirectionUniform = gl.getUniformLocation(program, "uLightingDirection");
-		gl.directionalColorUniform = gl.getUniformLocation(program, "uDirectionalColor");
+		gl.pointLightingLocationUniform = gl.getUniformLocation(program, "uPointLightingLocation");
+		gl.pointLightingSpecularColorUniform = gl.getUniformLocation(program, "uPointLightingSpecularColor");
+		gl.pointLightingDiffuseColorUniform = gl.getUniformLocation(program, "uPointLightingDiffuseColor");
 	},
 
 	/**

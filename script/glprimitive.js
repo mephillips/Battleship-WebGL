@@ -37,18 +37,52 @@
 /**
  * @namespace
  */
-glprimitive = {	
+glprimitive = {
+	_detail : 5,
+
+	set_detail : function(detail) { this._detail = detail; },
+	get_detail : function() { return this._detail; },
+
+	test : function(gl, r, d) {
+		if (!this._testObj) {
+			var o = new GLObject();
+
+			var oldd = this.get_detail();
+			this.set_detail(d);
+		//	glprimitive_torus(r/2.0, r/2.0);
+		//	gl.translate(-2*r, 2*r, 0);
+		//	glprimitive_cone(2.0, 4, 4);
+		//	gl.translate(4*r, 0, 0);
+		//	glprimitive_cylinder(4, 4);
+		//	gl.translate(0, -4*r, 0);
+			this.disk(o, 4);
+		//	glTranslatef(-4*r, 0, 0);
+		//	glprimitive_sphere(4);
+			this._testObj = o;
+			this.set_detail(oldd);
+		}
+
+		gl.setDiffuseColor( 1.0, 0.0, 0.0 );
+		gl.setSpecularColor( 0.1, 0.1, 0.1 );
+		gl.setMaterialShininess( 1.0 );
+
+		gl.translate(-2*r, 2*r, 0);
+	//	glprimitive_cone(2.0, 4, 4);
+		gl.translate(4*r, 0, 0);
+	//	glprimitive_cylinder(4, 4);
+		gl.translate(0, -4*r, 0);
+		gl.draw(this._testObj);
+	},
+
 	/**
 	 * Draw a disk with the given radius
 	 *
+	 * @param o			A GLObject to write the disk data into.
 	 * @param radius	The radius of the disk to draw.
-	 * @param detail	Controls how many tringles to use when drawing the disk.
 	 *
 	 */
-	disk : function(radius, detail) {
-		var NUM_POINTS = detail*10;
-
-		var o = new GLObject();
+	disk : function(o, radius) {
+		var NUM_POINTS = this._detail*10;
 
 		o.begin(GLObject.GL_TRIANGLE_FAN);
 		o.setNormal(0.0, 0.0, 1.0);
