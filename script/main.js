@@ -27,53 +27,106 @@
  * THE SOFTWARE.
  */
 
-function _getQueryArg(key, def) {
-	var value;
+/**
+ * @namespace
+ */
+Battleship = {
+	View : {},
+	Logic : {},
 
-	var regex = new RegExp(key + '=([^&]*)');
-	var match = regex.exec(window.location.search);
-	if (match) {
-		value = unescape(match[1]);
-	} else {
-		value = def;
-	}
+	mouseup : function(evt) { this.mouse(true, evt); },
 
-	return value;
-}
+	mousedown : function(evt) { this.mouse(false, evt); },
 
-function main() {
-    var canvas = document.getElementById('battleship');
-	var gl = webgl_ext.initWebGL(
-		canvas,
-		'script/vshader.vs',
-		'script/fshader.fs',
-		[ 'vNormal', 'vColor', 'vPosition'] );
-	if (gl) {
-		webgl_ext.extend(gl);
-
-		gl.clearColor(0, 0, 0.5, 1);
-		gl.clearDepth(10009);
-
-		gl.enable(gl.DEPTH_TEST);
-		gl.enable(gl.BLEND);
-		gl.enable(gl.TEXTURE_2D);
-		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-		// Enable all of the vertex attribute arrays.
-		gl.enableVertexAttribArray(0);
-		gl.enableVertexAttribArray(1);
-		gl.enableVertexAttribArray(2);
-
-		Battleship.init(gl, canvas);
-
-		var animateLoop = function() {
-			try {
-				Battleship.draw();
-				window.requestAnimFrame(animateLoop, canvas);
-			} catch (e) {
-				console.log('animateLoop', e);
-			}
+	mouse : function(up, evt) {
+		evt = evt || window.event;
+		var button = evt.which;
+		var mods = {
+			alt : evt.altKey,
+			ctrl : evt.ctrlKey,
+			shift : evt.shiftKey,
+			meta : evt.metaKey
+		};
+		var x = evt.clientX;
+		var y = evt.clientY;
+		if (up) {
+			Battleship.Logic.mouse_up(button, mods, x, y);
+		} else {
+			Battleship.Logic.mouse_down(button, mods, x, y);
 		}
-		animateLoop();
+	},
+
+	motion : function(evt) {
+		evt = evt || window.event;
+		Battleship.Logic.mouse_move(evt.clientX, evt.clientY);
+	},
+
+	/** Foreces redraw (implementation dependent)
+	 *
+	 *  This function should be implement in the main file corrispoding
+	 *  to a particualr gui frontend.
+	 *
+	 *  This fuction causes the window to redraw.
+	 *
+	 */
+	view_refresh : function() {
+	},
+
+	main : function() {
+		var canvas = document.getElementById('battleship');
+		var gl = webgl_ext.initWebGL(
+			canvas,
+			'script/vshader.vs',
+			'script/fshader.fs',
+			[ 'vNormal', 'vColor', 'vPosition'] );
+		if (gl) {
+			webgl_ext.extend(gl);
+			gl.clearDepth(10000);
+			gl.enable(gl.DEPTH_TEST);
+			gl.enable(gl.BLEND);
+			gl.enable(gl.TEXTURE_2D);
+			gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+			// Enable the vertex attribute arrays that will be used throughout
+			// the app
+			gl.enableVertexAttribArray(0);
+			gl.enableVertexAttribArray(1);
+			gl.enableVertexAttribArray(2);
+
+			// Set up input event listeners
+			canvas.onmouseup = this.mouseup.bind(this);
+			canvas.onmousedown = this.mousedown.bind(this);
+			canvas.onmousemove = this.motion.bind(this);
+
+			// Setup implementation specific methods
+			Battleship.View.refresh = this.view_refresh;
+
+			Battleship.Logic.init();
+			Battleship.View.init(gl, canvas);
+
+			var animateLoop = function() {
+				try {
+					Battleship.View.draw();
+					window.requestAnimFrame(animateLoop, canvas);
+				} catch (e) {
+					console.log('animateLoop', e);
+				}
+			}
+			animateLoop();
+		}
+	},
+
+	_getQueryArg : function(key, def) {
+		var value;
+
+		var regex = new RegExp(key + '=([^&]*)');
+		var match = regex.exec(window.location.search);
+		if (match) {
+			value = unescape(match[1]);
+		} else {
+			value = def;
+		}
+
+		return value;
 	}
-}
+};
