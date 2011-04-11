@@ -1,9 +1,9 @@
 /**
  * @fileOverview
  *
- * Contains functions for creating drawing primitives. 
+ * Contains functions for creating drawing primitives.
  *
- * Copyright (C) 2011 by Matthew Phillips 
+ * Copyright (C) 2011 by Matthew Phillips
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -38,40 +38,35 @@
  * @namespace
  */
 glprimitive = {
-	_detail : 5,
-
-	set_detail : function(detail) { this._detail = detail; },
-	get_detail : function() { return this._detail; },
-
 	test : function(gl, r, d) {
 		if (!this._testObj) {
-			var o = new GLObject();
+			this._testObj = {
+				cone : new GLObject('glprimitive_test_cone'),
+				cylinder : new GLObject('glprimitive_test_cylinder'),
+				disk : new GLObject('glprimitive_test_disk'),
+				sphere : new GLObject('glprimitive_test_sphere')
+			};
 
-			var oldd = this.get_detail();
-			this.set_detail(d);
 		//	glprimitive_torus(r/2.0, r/2.0);
 		//	gl.translate(-2*r, 2*r, 0);
-		//	glprimitive_cone(2.0, 4, 4);
-		//	gl.translate(4*r, 0, 0);
-		//	glprimitive_cylinder(4, 4);
-		//	gl.translate(0, -4*r, 0);
-			this.disk(o, 4);
-		//	glTranslatef(-4*r, 0, 0);
-		//	glprimitive_sphere(4);
-			this._testObj = o;
-			this.set_detail(oldd);
+			this.cone(this._testObj.cone, r, r/2, d/2, d/2);
+			this.cylinder(this._testObj.cylinder, r, r, d/2, d/2);
+			this.disk(this._testObj.disk, r, d);
+			this.sphere(this._testObj.sphere, r, d, d/2);
 		}
 
 		gl.setDiffuseColor( 1.0, 0.0, 0.0 );
-		gl.setSpecularColor( 0.1, 0.1, 0.1 );
+		gl.setSpecularColor( 0.5, 0.0, 0.0 );
 		gl.setMaterialShininess( 1.0 );
 
 		gl.translate(-2*r, 2*r, 0);
-	//	glprimitive_cone(2.0, 4, 4);
+		gl.draw(this._testObj.cone);
 		gl.translate(4*r, 0, 0);
-	//	glprimitive_cylinder(4, 4);
+		gl.draw(this._testObj.cylinder);
 		gl.translate(0, -4*r, 0);
-		gl.draw(this._testObj);
+		gl.draw(this._testObj.disk);
+		gl.translate(-4*r, 0, 0);
+		gl.draw(this._testObj.sphere);
 	},
 
 	/**
@@ -79,10 +74,12 @@ glprimitive = {
 	 *
 	 * @param o			A GLObject to write the disk data into.
 	 * @param radius	The radius of the disk to draw.
+	 * @param detail	The number of tringles to use when drawing.
 	 *
 	 */
-	disk : function(o, radius) {
-		var NUM_POINTS = this._detail*10;
+	disk : function(o, radius, detail) {
+		var detail = detail || this._detail;
+		var NUM_POINTS = detail*10;
 
 		o.begin(GLObject.GL_TRIANGLE_FAN);
 		o.setNormal(0.0, 0.0, 1.0);
@@ -103,12 +100,20 @@ glprimitive = {
 	},
 
 	/**
-	 * Draws a solid sphere
+	 * Draws a solid sphere.
+	 *
+	 * @param o			A GLObject to write the disk data into.
+	 * @param radius	The radius of the sphere.
+	 * @param slices    The number of divisions around the z axis.
+     *					(latitudal)
+     * @param stacks	The number of divisions along the z axis.
+     *                   (longitudal)
 	 *
  	 * freeglut_geometry.c
 	 */
-	solidSphere : function(radius, slices, stacks) {
-		var o = new GLObject();
+	sphere : function(o, radius, slices, stacks) {
+		slices = slices || this._detail;
+		stacks = stacks || this._detail;
 
 		var i,j;
 
@@ -140,7 +145,7 @@ glprimitive = {
 				o.setNormal(cost1[j]*r1,        sint1[j]*r1,        z1       );
 				o.vertex(cost1[j]*r1*radius, sint1[j]*r1*radius, z1*radius);
 			}
-		o.end();	
+		o.end();
 
 		// Cover each stack with a quad strip, except the top and bottom stacks
 		for( i=1; i<stacks-1; i++ )
@@ -156,7 +161,7 @@ glprimitive = {
 					o.setNormal(cost1[j]*r0,        sint1[j]*r0,        z0       );
 					o.vertex(cost1[j]*r0*radius, sint1[j]*r0*radius, z0*radius);
 				}
-			o.end();	
+			o.end();
 		}
 
 		// The bottom stack is covered with a triangle fan
@@ -172,17 +177,97 @@ glprimitive = {
 				o.vertex(cost1[j]*r0*radius, sint1[j]*r0*radius, z0*radius);
 			}
 		o.end();
+	},
 
-		return o;
+	/**
+	 * Draws a solid cylinder.
+	 *
+	 * @param o			A GLObject to write the disk data into.
+	 * @param radius	The radius of the sphere.
+	 * @param slices    The number of divisions around the z axis.
+     *					(latitudal)
+     * @param stacks	The number of divisions along the z axis.
+     *                   (longitudal)
+	 *
+ 	 * freeglut_geometry.c
+	 */
+	cylinder : function(o, radius, height, slices, stacks) {
+		slices = slices || this._detail;
+		stacks = stacks || this._detail;
+
+		var i,j;
+
+		/* Step in z and radius as stacks are drawn. */
+
+		var z0,z1;
+		var zStep = height / ( ( stacks > 0 ) ? stacks : 1 );
+
+		/* Pre-computed circle */
+
+		var sint = [];
+		var cost = [];
+
+		this.fghCircleTable(sint, cost,-slices);
+
+		/* Cover the base and top */
+/*
+		o.begin(GLObject.GL_TRIANGLE_FAN);
+			o.setNormal(0.0, 0.0, -1.0 );
+			o.vertex(0.0, 0.0,  0.0 );
+			for (j=0; j<=slices; j++)
+			{
+				o.vertex(cost[j]*radius, sint[j]*radius, 0.0);
+			}
+		o.end();
+
+		o.begin(GLObject.GL_TRIANGLE_FAN);
+			o.setNormal(0.0, 0.0, 1.0   );
+			o.vertex(0.0, 0.0, height);
+			for (j=slices; j>=0; j--)
+			{
+				o.vertex(cost[j]*radius, sint[j]*radius, height);
+			}
+		o.end();
+*/
+
+		/* Do the stacks */
+
+		z0 = 0.0;
+		z1 = zStep;
+
+		for (i=1; i<=stacks; i++)
+		{
+			if (i==stacks)
+				z1 = height;
+
+			o.begin(GLObject.GL_QUAD_STRIP);
+				for (j=0; j<=slices; j++ )
+				{
+					o.setNormal(cost[j],        sint[j],        0.0 );
+					o.vertex(cost[j]*radius, sint[j]*radius, z0  );
+					o.vertex(cost[j]*radius, sint[j]*radius, z1  );
+				}
+			o.end();
+
+			z0 = z1; z1 += zStep;
+		}
 	},
 
 	/*
 	 * Draws a solid cone
+	 *
+	 * @param o			A GLObject to write the disk data into.
+	 * @param radius	The radius of the sphere.
+	 * @param slices    The number of divisions around the z axis.
+     *					(latitudal)
+     * @param stacks	The number of divisions along the z axis.
+     *                   (longitudal)
  	 * freeglut_geometry.c
 	 */
-	solidCone : function( base, height, slices, stacks )
+	cone : function(o, base, height, slices, stacks )
 	{
-		var o = new GLObject();
+		slices = slices || this._detail;
+		stacks = stacks || this._detail;
 
 		var i,j;
 
@@ -214,6 +299,7 @@ glprimitive = {
 		r0 = base;
 		r1 = r0 - rStep;
 
+		/*
 		o.begin(GLObject.GL_TRIANGLE_FAN);
 
 			o.setNormal(0.0,0.0,-1.0);
@@ -223,6 +309,7 @@ glprimitive = {
 				o.vertex(cost[j]*r0, sint[j]*r0, z0);
 
 		o.end();
+		*/
 
 		/* Cover each stack with a quad strip, except the top stack */
 
@@ -258,8 +345,6 @@ glprimitive = {
 			}
 
 		o.end();
-
-		return o;
 	},
 
 	/**

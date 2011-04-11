@@ -81,6 +81,7 @@ webgl_ext = {
 	 */
 	setPerspective : function(fovy, aspect, zNear, zFar) {
 		this.perspectiveMatrix.perspective(fovy, aspect, zNear, zFar);
+		//this.perspectiveMatrix.lookat(0, 0, 7, 0, 0, 0, 0, 1, 0);
 		this.perspectiveMatrix.setUniform(this, this.pMatrixUniform, false);
 	},
 

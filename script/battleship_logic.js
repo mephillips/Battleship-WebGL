@@ -141,5 +141,30 @@ Battleship.Logic = {
 		if (needRefresh) {
 			Battleship.View.refresh();
 		}
+	},
+
+	keypress : function(key) {
+		var needRefresh = false;
+
+		var size = Battleship.View.getsize();
+		var rdiff = 1/size.width * 360;
+		switch (key) {
+			case 'x':
+				Battleship.View.set_rotate(0, rdiff, 'U');
+				needRefresh = true;
+			break;
+			case 'y':
+				Battleship.View.set_rotate(1, rdiff, 'U');
+				needRefresh = true;
+			break;
+			case 'z':
+				Battleship.View.set_rotate(2, -rdiff, 'U');
+				needRefresh = true;
+			break;
+		}
+
+		if (needRefresh) {
+			Battleship.View.refresh();
+		}
 	}
 };

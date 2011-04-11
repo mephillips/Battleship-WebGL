@@ -157,7 +157,7 @@ Battleship.View = {
 		gl.uniform1i(gl.useTexturesUniform, false);
 		gl.uniform1i(gl.useLightingUniform, true);
 		gl.setAmbientColor(0.2, 0.2, 0.2);
-		gl.setLightPositon(0.0, 1.0, 0.0);
+		gl.setLightPositon(0.0, 0, -75.0);
 
 		gl.identity();
 		gl.translate(0, 0, -50);
@@ -186,13 +186,16 @@ Battleship.View = {
 			if (!this._lines) {
 				this._lines = this._createLines();
 			}
+			gl.setDiffuseColor( 1.0, 1.0, 1.0 );
+			gl.setSpecularColor( 1.0, 1.0, 1.0 );
+			gl.setMaterialShininess( 1.0 );
 			gl.draw(this._lines);
 		}
 
 		switch (Battleship.Model.get_test())
 		{
 			case Battleship.Model.TEST_PRIMITIVE:
-				glprimitive.test(gl, 4.0, 15);
+				glprimitive.test(gl, 4.0, 10);
 			break;
 		}
 
@@ -211,7 +214,7 @@ Battleship.View = {
 
 	_createLines : function() {
 		// TODO: I need to implement lines
-		var o = new GLObject();
+		var o = new GLObject('lines');
 		o.begin(GLObject.GL_TRIANGLES);
 		o.vertex(0.0, 50.0, 0.0);
 		o.vertex(0.1, 0.0, 0.0);

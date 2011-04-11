@@ -58,6 +58,13 @@ Battleship = {
 		Battleship.Logic.mouse_move(evt.clientX, evt.clientY);
 	},
 
+	keypress : function(evt) {
+		evt = evt || window.event;
+		var key = String.fromCharCode(evt.which || evt.keyCode);
+		console.log(key);
+		Battleship.Logic.keypress(key);
+	},
+
 	/** Foreces redraw (implementation dependent)
 	 *
 	 *  This function should be implement in the main file corrispoding
@@ -74,22 +81,17 @@ Battleship = {
 		var gl = webgl_ext.initWebGL(canvas, 'script/vshader.vs', 'script/fshader.fs' );
 		if (!gl) { return; }
 
-		gl.clearDepth(10000);
+		//gl.clearDepth(10000);
 		gl.enable(gl.DEPTH_TEST);
 		gl.enable(gl.BLEND);
 		//gl.enable(gl.TEXTURE_2D);
 		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-		// Enable the vertex attribute arrays that will be used throughout
-		// the app
-		gl.enableVertexAttribArray(0);
-		gl.enableVertexAttribArray(1);
-		gl.enableVertexAttribArray(2);
-
 		// Set up input event listeners
 		canvas.onmouseup = this.mouseup.bind(this);
 		canvas.onmousedown = this.mousedown.bind(this);
 		canvas.onmousemove = this.motion.bind(this);
+		window.onkeypress = this.keypress.bind(this);
 
 		// Setup implementation specific methods
 		Battleship.View.refresh = this.view_refresh;

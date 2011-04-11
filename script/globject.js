@@ -1,11 +1,12 @@
-GLObject = function() {
+GLObject = function(id) {
+	this._id = id;
 	this._stored = false;
 
 	// The current drawing type
 	this._type = null;
 	// The current normal
 	this._normal = [1, 0, 0];
-	this._texCoord = [0, 0];
+	this._texCoord = null;
 
 	// Hold arrays of things while we are drawing
 	this._vertices = [];
@@ -20,7 +21,8 @@ GLObject = function() {
 	this._indexObject = null;
 }
 
-GLObject.GL_QUADS = 'quads';
+GLObject.GL_QUADS = 'quads'
+GLObject.GL_QUAD_STRIP = 'quadstrip';
 GLObject.GL_TRIANGLES = 'tri';
 GLObject.GL_TRIANGLE_FAN = 'trifan';
 GLObject.GL_LINES = 'lines';
@@ -45,16 +47,31 @@ GLObject.prototype.end = function() {
 	var newVertex = totalVertex - this._startI;
 	switch (this._type) {
 		case GLObject.GL_QUADS:
-			for (i = this._startI; i < newVertex; ++i) {
-				if (count == 3) {
-					this.i.push(i - 3);
-					this.i.push(i - 1);
-					this.i.push(i);
-					count = 0;
-				}  else {
-					this._indices.push(i);
-					++count;
-				}
+			i = this._startI;
+			var numQuads = Math.floor(newVertex / 4);
+			var quadNum;
+			for (quadNum = 0; quadNum < numQuads; ++quadNum) {
+				this._indices.push(i);
+				this._indices.push(i + 1);
+				this._indices.push(i + 3);
+				this._indices.push(i);
+				this._indices.push(i + 3);
+				this._indices.push(i + 2);
+				i += 4;
+			}
+		break;
+		case GLObject.GL_QUAD_STRIP:
+			i = this._startI;
+			var numQuads = Math.floor((newVertex - 2) / 2);
+			var quadNum;
+			for (quadNum = 0; quadNum < numQuads; ++quadNum) {
+				this._indices.push(i);
+				this._indices.push(i + 1);
+				this._indices.push(i + 3);
+				this._indices.push(i);
+				this._indices.push(i + 3);
+				this._indices.push(i + 2);
+				i += 2;
 			}
 		break;
 		case GLObject.GL_LINES:
@@ -84,15 +101,18 @@ GLObject.prototype.vertex = function(x, y, z) {
 	this._normals.push(this._normal[0]);
 	this._normals.push(this._normal[1]);
 	this._normals.push(this._normal[2]);
-	this._texCoords.push(this._texCoord[0]);
-	this._texCoords.push(this._texCoord[1]);
+	if (this._texCoord) {
+		this._texCoords.push(this._texCoord[0]);
+		this._texCoords.push(this._texCoord[1]);
+	}
 	this._vertices.push(x);
 	this._vertices.push(y);
 	this._vertices.push(z);
 }
 
 GLObject.prototype.store = function(gl) {
-	console.log('GLObject.store numNormals: %i, numVertixes: %i, numIndices: %i',
+	console.log('GLObject.store id: %s, numNormals: %i, numVertixes: %i, numIndices: %i',
+		this._id,
 		this._normals.length,
 		this._vertices.length,
 		this._indices.length );
@@ -102,10 +122,12 @@ GLObject.prototype.store = function(gl) {
 	gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this._normals), gl.STATIC_DRAW);
 	this._normals = [];
 
-	this._texCoordObject = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, this._texCoordObject);
-	gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this._texCoords), gl.STATIC_DRAW);
-	this._texCoords = [];
+	if (this._texCoords.length) {
+		this._texCoordObject = gl.createBuffer();
+		gl.bindBuffer(gl.ARRAY_BUFFER, this._texCoordObject);
+		gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this._texCoords), gl.STATIC_DRAW);
+		this._texCoords = [];
+	}
 
 	this._vertexObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexObject);
