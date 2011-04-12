@@ -41,24 +41,25 @@ glprimitive = {
 	test : function(gl, r, d) {
 		if (!this._testObj) {
 			this._testObj = {
+				torus : new GLObject('glprimitive_test_torus'),
 				cone : new GLObject('glprimitive_test_cone'),
 				cylinder : new GLObject('glprimitive_test_cylinder'),
 				disk : new GLObject('glprimitive_test_disk'),
 				sphere : new GLObject('glprimitive_test_sphere')
 			};
 
-		//	glprimitive_torus(r/2.0, r/2.0);
-		//	gl.translate(-2*r, 2*r, 0);
-			this.cone(this._testObj.cone, r, r/2, d/2, d/2);
-			this.cylinder(this._testObj.cylinder, r, r, d/2, d/2);
+			//this.torus(this._testObj.torus, r/2, r/2, d, d);
+			this.cone(this._testObj.cone, r/2, r, r, d, d);
+			this.cylinder(this._testObj.cylinder, r, r, d, d);
 			this.disk(this._testObj.disk, r, d);
-			this.sphere(this._testObj.sphere, r, d, d/2);
+			this.sphere(this._testObj.sphere, r, d, d);
 		}
 
 		gl.setDiffuseColor( 1.0, 0.0, 0.0 );
 		gl.setSpecularColor( 0.5, 0.0, 0.0 );
 		gl.setMaterialShininess( 1.0 );
 
+		//gl.draw(this._testObj.torus);
 		gl.translate(-2*r, 2*r, 0);
 		gl.draw(this._testObj.cone);
 		gl.translate(4*r, 0, 0);
@@ -72,27 +73,31 @@ glprimitive = {
 	/**
 	 * Draw a disk with the given radius
 	 *
+ 	 * The disk will be on the x-y plane with normal along positive z.
+	 *
 	 * @param o			A GLObject to write the disk data into.
 	 * @param radius	The radius of the disk to draw.
-	 * @param detail	The number of tringles to use when drawing.
+	 * @param slices	The number of tringles to use when drawing.
 	 *
 	 */
-	disk : function(o, radius, detail) {
-		var detail = detail || this._detail;
-		var NUM_POINTS = detail*10;
+	disk : function(o, radius, slices) {
+		slices = slices || this._detail;
+		if (slices < 1) { slices = 1; }
+		slices *= 10;
+
+		var i;
+
+		var sint = [];
+		var cost = [];
+		this.fghCircleTable(sint,cost,-slices);
 
 		o.begin(GLObject.GL_TRIANGLE_FAN);
 		o.setNormal(0.0, 0.0, 1.0);
 		o.setTexCoord(0.5, 0.5);
 		o.vertex(0.0, 0.0, 0.0);
-		var i;
-		for (i = 0; i <= NUM_POINTS; ++i) {
-			var tx = 0.5 + 0.5*Math.cos(2.0*i*Math.PI/NUM_POINTS);
-			var ty = 0.5 + 0.5*Math.sin(2.0*i*Math.PI/NUM_POINTS);
-			o.setTexCoord(tx, ty);
-			var x = radius * Math.cos(2.0*i*Math.PI/NUM_POINTS);
-			var y = radius * Math.sin(2.0*i*Math.PI/NUM_POINTS);
-			o.vertex(x, y, 0.0);
+		for (i = 0; i <= slices; ++i) {
+			o.setTexCoord(0.5 + 0.5*cost[i], 0.5 + 0.5*sint[i]);
+			o.vertex(radius * cost[i], radius * sint[i], 0.0);
 		}
 		o.end();
 
@@ -113,7 +118,9 @@ glprimitive = {
 	 */
 	sphere : function(o, radius, slices, stacks) {
 		slices = slices || this._detail;
+		if (slices < 1) { slices = 1; }
 		stacks = stacks || this._detail;
+		if (stacks < 1) { stacks = 1; }
 
 		var i,j;
 
@@ -182,169 +189,172 @@ glprimitive = {
 	/**
 	 * Draws a solid cylinder.
 	 *
-	 * @param o			A GLObject to write the disk data into.
-	 * @param radius	The radius of the sphere.
-	 * @param slices    The number of divisions around the z axis.
-     *					(latitudal)
-     * @param stacks	The number of divisions along the z axis.
-     *                   (longitudal)
+ 	 * The cylinder will be centered at the origin moving outward along
+	 * positive z. It is oriented so that the whole in the center is on
+	 * the x-y plane.
 	 *
- 	 * freeglut_geometry.c
+	 * @param o			A GLObject to write the disk data into.
+	 * @param radius	The radius of the cylinder.
+	 * @param len		The length of the cylinder
+	 * @param slices    The number of divisions around the z axis.
+     *					(latitudal). (Defaults to this._detail)
+     * @param stacks	The number of divisions along the z axis.
+     *                   (longitudal). (Defaults to this._detail)
+	 *
 	 */
-	cylinder : function(o, radius, height, slices, stacks) {
-		slices = slices || this._detail;
-		stacks = stacks || this._detail;
-
-		var i,j;
-
-		/* Step in z and radius as stacks are drawn. */
-
-		var z0,z1;
-		var zStep = height / ( ( stacks > 0 ) ? stacks : 1 );
-
-		/* Pre-computed circle */
-
-		var sint = [];
-		var cost = [];
-
-		this.fghCircleTable(sint, cost,-slices);
-
-		/* Cover the base and top */
-/*
-		o.begin(GLObject.GL_TRIANGLE_FAN);
-			o.setNormal(0.0, 0.0, -1.0 );
-			o.vertex(0.0, 0.0,  0.0 );
-			for (j=0; j<=slices; j++)
-			{
-				o.vertex(cost[j]*radius, sint[j]*radius, 0.0);
-			}
-		o.end();
-
-		o.begin(GLObject.GL_TRIANGLE_FAN);
-			o.setNormal(0.0, 0.0, 1.0   );
-			o.vertex(0.0, 0.0, height);
-			for (j=slices; j>=0; j--)
-			{
-				o.vertex(cost[j]*radius, sint[j]*radius, height);
-			}
-		o.end();
-*/
-
-		/* Do the stacks */
-
-		z0 = 0.0;
-		z1 = zStep;
-
-		for (i=1; i<=stacks; i++)
-		{
-			if (i==stacks)
-				z1 = height;
-
-			o.begin(GLObject.GL_QUAD_STRIP);
-				for (j=0; j<=slices; j++ )
-				{
-					o.setNormal(cost[j],        sint[j],        0.0 );
-					o.vertex(cost[j]*radius, sint[j]*radius, z0  );
-					o.vertex(cost[j]*radius, sint[j]*radius, z1  );
-				}
-			o.end();
-
-			z0 = z1; z1 += zStep;
-		}
+	cylinder : function(o, radius, len, slices, stacks) {
+		this.cone(o, radius, radius, len, slices, stacks);
 	},
 
 	/*
-	 * Draws a solid cone
+	 * Draws a solid cone.
 	 *
-	 * @param o			A GLObject to write the disk data into.
-	 * @param radius	The radius of the sphere.
-	 * @param slices    The number of divisions around the z axis.
-     *					(latitudal)
-     * @param stacks	The number of divisions along the z axis.
-     *                   (longitudal)
- 	 * freeglut_geometry.c
+	 * The cone moves outward from the origin along positive z. It is oriented
+	 * so that the whole in the center is on the x-y plane. The major radius
+	 * is the radius of the opening on positive z and the minor radius is the
+	 * radius at the origin.
+	 *
+	 * @param o				A GLObject to write the disk data into.
+	 * @param majorRadius	The major radius of the cone
+	 * @param minorRadius	The minor radius of the cone
+ 	 * @param len			The length
+	 *
+	 * Based on code from freeglut_geometry.c but alterned to match
+	 * the functionality from my original code
 	 */
-	cone : function(o, base, height, slices, stacks )
+	cone : function(o, majorRadius, minorRadius, len, slices, stacks )
 	{
 		slices = slices || this._detail;
+		if (slices < 1 ) { slices = 1; }
 		stacks = stacks || this._detail;
+		if (stacks < 1) { stacks = 1; }
 
 		var i,j;
 
-		/* Step in z and radius as stacks are drawn. */
-
+		// Step in z and radius as stacks are drawn.
 		var z0,z1;
 		var r0,r1;
 
-		var zStep = height / ( ( stacks > 0 ) ? stacks : 1 );
-		var rStep = base / ( ( stacks > 0 ) ? stacks : 1 );
+		var rStep = (majorRadius - minorRadius) / stacks;
+		var zStep = len / stacks;
 
-		/* Scaling factors for vertex normals */
-
+		// Scaling factors for vertex normals
+		//TODO: Don't know if this is right
+		var base = Math.max(majorRadius, minorRadius);
+		var height = len;
 		var cosn = ( height / Math.sqrt ( height * height + base * base ));
-		var sinn = ( base   / Math.sqrt ( height * height + base * base ));
+		var sinn = ( majorRadius / Math.sqrt ( height * height + base * base ));
 
-		/* Pre-computed circle */
-
+		// Pre-computed circle
 		var sint = [];
 		var cost = [];
 
 		this.fghCircleTable(sint,cost,-slices);
 
-		/* Cover the circular base with a triangle fan... */
-
 		z0 = 0.0;
 		z1 = zStep;
 
-		r0 = base;
+		r0 = majorRadius;
 		r1 = r0 - rStep;
 
-		/*
-		o.begin(GLObject.GL_TRIANGLE_FAN);
-
-			o.setNormal(0.0,0.0,-1.0);
-			o.vertex(0.0,0.0, z0 );
-
-			for (j=0; j<=slices; j++)
-				o.vertex(cost[j]*r0, sint[j]*r0, z0);
-
-		o.end();
-		*/
-
-		/* Cover each stack with a quad strip, except the top stack */
-
-		for( i=0; i<stacks-1; i++ )
-		{
+		// Create "stacks" quad strips. Decreasing the radius as we go.
+		// rStep and zStep are computed such that after "stacks" strips
+		// we will have a radius of minorRadius
+		for(i = 0; i < stacks; i++) {
 			o.begin(GLObject.GL_QUAD_STRIP);
-
-				for(j=0; j<=slices; j++)
-				{
+				for(j = 0; j <= slices; j++) {
 					o.setNormal(cost[j]*sinn, sint[j]*sinn, cosn);
 					o.vertex(cost[j]*r0,   sint[j]*r0,   z0  );
 					o.vertex(cost[j]*r1,   sint[j]*r1,   z1  );
 				}
-
 				z0 = z1; z1 += zStep;
 				r0 = r1; r1 -= rStep;
+			o.end();
+		}
+	},
+
+	/**
+	 * Draw a torus
+	 *
+	 * The torus will be centered at the origin. It is oriented so that
+	 * the whole in the center is on the x-y plane.
+	 *
+	 * @param o	A GLObject to write the disk data into.
+     * @param	dInnerRadius    Radius of ``tube''
+     * @param	dOuterRadius    Radius of ``path''
+     * @param	nSides          Facets around ``tube''
+     * @param	nRings          Joints along ``path''
+	 */
+	torus : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
+		nSides = nSides | this._detail;
+		nRings = nRings | this._detail;
+		if ( nSides < 1 ) nSides = 1;
+		if ( nRings < 1 ) nRings = 1;
+
+		var iradius = dInnerRadius;
+		var oradius = dOuterRadius
+		var phi, psi, dpsi, dphi;
+
+		var vertex = [];
+		var normal = [];
+
+		var i, j;
+		var spsi, cpsi, sphi, cphi;
+
+		dpsi =  2.0 * Math.PI / nRings;
+		dphi = -2.0 * Math.PI / nSides;
+		psi  = 0.0;
+
+		for( j=0; j<nRings; j++ )
+		{
+			cpsi = Math.cos ( psi ) ;
+			spsi = Math.sin ( psi ) ;
+			phi = 0.0;
+
+			for( i=0; i<nSides; i++ )
+			{
+				var offset = 3 * ( j * nSides + i ) ;
+				cphi = Math.cos ( phi ) ;
+				sphi = Math.sin ( phi ) ;
+				vertex[offset] = cpsi * ( oradius + cphi * iradius ) ;
+				vertex[offset+ 1] = spsi * ( oradius + cphi * iradius ) ;
+				vertex[offset + 2] =                    sphi * iradius  ;
+				normal[offset + 0] = cpsi * cphi ;
+				normal[offset + 1] = spsi * cphi ;
+				normal[offset + 2] =        sphi ;
+				phi += dphi;
+			}
+
+			psi += dpsi;
+		}
+
+		for( i=0; i<nSides; i++ )
+		{
+			o.begin( GLObject.GL_LINE_LOOP );
+
+			for( j=0; j<nRings; j++ )
+			{
+				var offset = 3 * ( j * nSides + i ) ;
+				o.setNormal( normal[offset] );
+				o.vertex( vertex[offset] );
+			}
 
 			o.end();
 		}
 
-		/* The top stack is covered with individual triangles */
+		for( j=0; j<nRings; j++ )
+		{
+			o.begin(GL_LINE_LOOP);
 
-		o.begin(GLObject.GL_TRIANGLES);
-
-			o.setNormal(cost[0]*sinn, sint[0]*sinn, cosn);
-
-			for (j=0; j<slices; j++)
+			for( i=0; i<nSides; i++ )
 			{
-				o.vertex(cost[j+0]*r0,   sint[j+0]*r0,   z0    );
-				o.vertex(0,              0,              height);
-				o.setNormal(cost[j+1]*sinn, sint[j+1]*sinn, cosn  );
-				o.vertex(cost[j+1]*r0,   sint[j+1]*r0,   z0    );
+				var offset = 3 * ( j * nSides + i ) ;
+				o.setNormal( normal[offset] );
+				o.vertex( vertex[offset] );
 			}
 
-		o.end();
+			o.end();
+		}
 	},
 
 	/**
