@@ -143,8 +143,7 @@ webgl_ext = {
 
 			var normalMatrix = new J3DIMatrix4(this.mvMatrix);
 			normalMatrix.invert();
-			normalMatrix.transpose();
-			normalMatrix.setUniform(this, this.nMatrixUniform, false);
+			normalMatrix.setUniform(this, this.nMatrixUniform, true);
 
 			this.mvChanged = false;
 		}

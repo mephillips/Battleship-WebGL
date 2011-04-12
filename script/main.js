@@ -61,7 +61,6 @@ Battleship = {
 	keypress : function(evt) {
 		evt = evt || window.event;
 		var key = String.fromCharCode(evt.which || evt.keyCode);
-		console.log(key);
 		Battleship.Logic.keypress(key);
 	},
 

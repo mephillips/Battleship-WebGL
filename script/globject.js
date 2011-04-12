@@ -6,7 +6,7 @@ GLObject = function(id) {
 	this._type = null;
 	// The current normal
 	this._normal = [1, 0, 0];
-	this._texCoord = null;
+	this._texCoord = [0, 0];
 
 	// Hold arrays of things while we are drawing
 	this._vertices = [];
@@ -26,6 +26,7 @@ GLObject.GL_QUAD_STRIP = 'quadstrip';
 GLObject.GL_TRIANGLES = 'tri';
 GLObject.GL_TRIANGLE_FAN = 'trifan';
 GLObject.GL_LINES = 'lines';
+GLObject.GL_LINE_LOOP = 'lineloop';
 
 GLObject.prototype.setNormal = function(x,y,z) {
 	this._normal = [ x, y, z ];
@@ -101,10 +102,8 @@ GLObject.prototype.vertex = function(x, y, z) {
 	this._normals.push(this._normal[0]);
 	this._normals.push(this._normal[1]);
 	this._normals.push(this._normal[2]);
-	if (this._texCoord) {
-		this._texCoords.push(this._texCoord[0]);
-		this._texCoords.push(this._texCoord[1]);
-	}
+	this._texCoords.push(this._texCoord[0]);
+	this._texCoords.push(this._texCoord[1]);
 	this._vertices.push(x);
 	this._vertices.push(y);
 	this._vertices.push(z);
@@ -122,12 +121,10 @@ GLObject.prototype.store = function(gl) {
 	gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this._normals), gl.STATIC_DRAW);
 	this._normals = [];
 
-	if (this._texCoords.length) {
-		this._texCoordObject = gl.createBuffer();
-		gl.bindBuffer(gl.ARRAY_BUFFER, this._texCoordObject);
-		gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this._texCoords), gl.STATIC_DRAW);
-		this._texCoords = [];
-	}
+	this._texCoordObject = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, this._texCoordObject);
+	gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this._texCoords), gl.STATIC_DRAW);
+	this._texCoords = [];
 
 	this._vertexObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexObject);
@@ -138,7 +135,11 @@ GLObject.prototype.store = function(gl) {
 
 	this._indexObject = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexObject);
-	gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint8Array(this._indices), gl.STATIC_DRAW);
+	if (this._indices.length < 256) {
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint8Array(this._indices), gl.STATIC_DRAW);
+	} else {
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint16Array(this._indices), gl.STATIC_DRAW);
+	}
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 	this._numIndices = this._indices.length;
 	this._indices = [];
@@ -165,7 +166,11 @@ GLObject.prototype.draw = function(gl) {
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexObject);
 
 	// Draw
-	gl.drawElements(gl.TRIANGLES, this._numIndices, gl.UNSIGNED_BYTE, 0);
+	if (this._numIndices < 256) {
+		gl.drawElements(gl.TRIANGLES, this._numIndices, gl.UNSIGNED_BYTE, 0);
+	} else {
+		gl.drawElements(gl.TRIANGLES, this._numIndices, gl.UNSIGNED_SHORT, 0);
+	}
 }
 
 GLObject.prototype.destroy = function(gl) {

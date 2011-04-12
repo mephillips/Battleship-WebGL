@@ -147,7 +147,7 @@ Battleship.Logic = {
 		var needRefresh = false;
 
 		var size = Battleship.View.getsize();
-		var rdiff = 1/size.width * 360;
+		var rdiff = 10/size.width * 360;
 		switch (key) {
 			case 'x':
 				Battleship.View.set_rotate(0, rdiff, 'U');
