@@ -48,7 +48,7 @@ glprimitive = {
 				sphere : new GLObject('glprimitive_test_sphere')
 			};
 
-			//this.torus(this._testObj.torus, r/2, r/2, d, d);
+			this.torus(this._testObj.torus, r/2, r, d, d);
 			this.cone(this._testObj.cone, r/2, r, r, d, d);
 			this.cylinder(this._testObj.cylinder, r, r, d, d);
 			this.disk(this._testObj.disk, r, d);
@@ -59,7 +59,7 @@ glprimitive = {
 		gl.setSpecularColor( 0.5, 0.0, 0.0 );
 		gl.setMaterialShininess( 1.0 );
 
-		//gl.draw(this._testObj.torus);
+		gl.draw(this._testObj.torus);
 		gl.translate(-2*r, 2*r, 0);
 		gl.draw(this._testObj.cone);
 		gl.translate(4*r, 0, 0);
@@ -292,17 +292,20 @@ glprimitive = {
 		if ( nRings < 1 ) nRings = 1;
 
 		var iradius = dInnerRadius;
-		var oradius = dOuterRadius
-		var phi, psi, dpsi, dphi;
+		var oradius = dOuterRadius;
+		var  phi, psi, dpsi, dphi;
 
 		var vertex = [];
 		var normal = [];
-
 		var i, j;
 		var spsi, cpsi, sphi, cphi;
 
-		dpsi =  2.0 * Math.PI / nRings;
-		dphi = -2.0 * Math.PI / nSides;
+		// Increment the number of sides and rings to allow for one more point than surface
+		nSides ++;
+		nRings ++;
+
+		dpsi =  2.0 * Math.PI / (nRings - 1) ;
+		dphi = -2.0 * Math.PI / (nSides - 1) ;
 		psi  = 0.0;
 
 		for( j=0; j<nRings; j++ )
@@ -314,10 +317,10 @@ glprimitive = {
 			for( i=0; i<nSides; i++ )
 			{
 				var offset = 3 * ( j * nSides + i ) ;
-				cphi = Math.cos ( phi ) ;
-				sphi = Math.sin ( phi ) ;
+				cphi = Math.cos( phi ) ;
+				sphi = Math.sin( phi ) ;
 				vertex[offset] = cpsi * ( oradius + cphi * iradius ) ;
-				vertex[offset+ 1] = spsi * ( oradius + cphi * iradius ) ;
+				vertex[offset + 1] = spsi * ( oradius + cphi * iradius ) ;
 				vertex[offset + 2] =                    sphi * iradius  ;
 				normal[offset + 0] = cpsi * cphi ;
 				normal[offset + 1] = spsi * cphi ;
@@ -328,33 +331,29 @@ glprimitive = {
 			psi += dpsi;
 		}
 
-		for( i=0; i<nSides; i++ )
+		o.begin( GLObject.GL_QUADS );
+		for( i=0; i<nSides-1; i++ )
 		{
-			o.begin( GLObject.GL_LINE_LOOP );
-
-			for( j=0; j<nRings; j++ )
+			for( j=0; j<nRings-1; j++ )
 			{
-				var offset = 3 * ( j * nSides + i ) ;
-				o.setNormal( normal[offset] );
-				o.vertex( vertex[offset] );
+				var k = 3 * ( j * nSides + i ) ;
+				o.setNormal(normal[k], normal[k+1], normal[k+2]);
+				o.vertex(vertex[k], vertex[k+1], vertex[k+2]);
+
+				var k2 = k + 3;
+				o.setNormal(normal[k2], normal[k2+1], normal[k2+2]);
+				o.vertex(vertex[k2], vertex[k2+1], vertex[k2+2]);
+
+				var k3 = k + 3 * nSides + 3;
+				o.setNormal(normal[k3], normal[k3+1], normal[k3+2]);
+				o.vertex(vertex[k3], vertex[k3+1], vertex[k3+2]);
+
+				var k4 = k + 3 * nSides;
+				o.setNormal(normal[k4],normal[k4+1],normal[k4+2]);
+				o.vertex(vertex[k4], vertex[k4+1], vertex[k4+2]);
 			}
-
-			o.end();
 		}
-
-		for( j=0; j<nRings; j++ )
-		{
-			o.begin(GL_LINE_LOOP);
-
-			for( i=0; i<nSides; i++ )
-			{
-				var offset = 3 * ( j * nSides + i ) ;
-				o.setNormal( normal[offset] );
-				o.vertex( vertex[offset] );
-			}
-
-			o.end();
-		}
+		o.end();
 	},
 
 	/**

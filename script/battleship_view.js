@@ -157,7 +157,7 @@ Battleship.View = {
 		gl.uniform1i(gl.useTexturesUniform, false);
 		gl.uniform1i(gl.useLightingUniform, true);
 		gl.setAmbientColor(0.2, 0.2, 0.2);
-		gl.setLightPositon(0.0, 0, -75.0);
+		gl.setLightPositon(0.0, 0, -60.0);
 
 		gl.identity();
 		gl.translate(0, 0, -50);
@@ -195,35 +195,19 @@ Battleship.View = {
 		switch (Battleship.Model.get_test())
 		{
 			case Battleship.Model.TEST_PRIMITIVE:
-				glprimitive.test(gl, 4.0, 10);
+				glprimitive.test(gl, 4.0, 15);
 			break;
 		}
-
-		/*
-		if (!this._disk) {
-			this._disk = glprimitive.disk(10, 5);
-		}
-		if (!this._spiritTexture) {
-			this._spiritTexture = gl.loadImageTexture("images/spirit.jpg");
-		}
-		gl.bindTexture(gl.TEXTURE_2D, this._spiritTexture);
-		gl.draw(this._disk);
-		gl.bindTexture(gl.TEXTURE_2D, null);
-		*/
 	},
 
 	_createLines : function() {
-		// TODO: I need to implement lines
 		var o = new GLObject('lines');
-		o.begin(GLObject.GL_TRIANGLES);
+		o.begin(GLObject.GL_LINES);
 		o.vertex(0.0, 50.0, 0.0);
-		o.vertex(0.1, 0.0, 0.0);
 		o.vertex(0.0, -50.0, 0.0);
 		o.vertex(-50.0, 0.0, 0.0);
-		o.vertex(0.0, 0.1, 0.0);
 		o.vertex(50, 0.0, 0.0);
 		o.vertex(0.0, 0.0, 50.0);
-		o.vertex(0.0, 0.1, 0.0);
 		o.vertex(0.0, 0.0, -50.0);
 		o.end();
 		return o;
