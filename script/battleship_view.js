@@ -197,6 +197,19 @@ Battleship.View = {
 			case Battleship.Model.TEST_PRIMITIVE:
 				glprimitive.test(gl, 4.0, 15);
 			break;
+			default:
+				if (!this.__disk) {
+					spiritTexture = gl.loadImageTexture("images/spirit.jpg");
+					this.__disk = new GLObject('Spirit');
+					glprimitive.disk(this.__disk, 10, 5);
+					this.__disk.store(gl);
+				}
+				gl.uniform1i(gl.useTexturesUniform, true);
+				gl.uniform1i(gl.useLightingUniform, false);
+				gl.bindTexture(gl.TEXTURE_2D, spiritTexture);
+				this.__disk.draw(gl);
+				gl.bindTexture(gl.TEXTURE_2D, null);
+			break;
 		}
 	},
 

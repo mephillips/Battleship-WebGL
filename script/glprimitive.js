@@ -96,7 +96,7 @@ glprimitive = {
 		o.setTexCoord(0.5, 0.5);
 		o.vertex(0.0, 0.0, 0.0);
 		for (i = 0; i <= slices; ++i) {
-			o.setTexCoord(0.5 + 0.5*cost[i], 0.5 + 0.5*sint[i]);
+			o.setTexCoord(0.5 - 0.5*cost[i], 0.5 - 0.5*sint[i]);
 			o.vertex(radius * cost[i], radius * sint[i], 0.0);
 		}
 		o.end();
