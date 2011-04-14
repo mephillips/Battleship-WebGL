@@ -56,7 +56,7 @@ glprimitive = {
 		}
 
 		gl.setDiffuseColor( 1.0, 0.0, 0.0 );
-		gl.setSpecularColor( 0.5, 0.0, 0.0 );
+		gl.setSpecularColor( 0.1, 0.1, 0.1 );
 		gl.setMaterialShininess( 1.0 );
 
 		gl.draw(this._testObj.torus);

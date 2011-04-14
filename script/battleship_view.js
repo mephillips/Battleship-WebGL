@@ -157,7 +157,7 @@ Battleship.View = {
 		gl.uniform1i(gl.useTexturesUniform, false);
 		gl.uniform1i(gl.useLightingUniform, true);
 		gl.setAmbientColor(0.2, 0.2, 0.2);
-		gl.setLightPositon(0.0, 0, -60.0);
+		gl.setLightPositon(0.0, 10.0, 0.0);
 
 		gl.identity();
 		gl.translate(0, 0, -50);
