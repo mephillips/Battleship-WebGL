@@ -207,7 +207,7 @@ Battleship.View = {
 				gl.uniform1i(gl.useTexturesUniform, true);
 				gl.uniform1i(gl.useLightingUniform, false);
 				gl.bindTexture(gl.TEXTURE_2D, spiritTexture);
-				this.__disk.draw(gl);
+				gl.draw(this.__disk);
 				gl.bindTexture(gl.TEXTURE_2D, null);
 			break;
 		}
