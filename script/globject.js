@@ -42,29 +42,26 @@ GLObject.prototype.begin = function(type) {
 	this._type = type;
 	switch (type) {
 		case GLObject.GL_QUADS:
+		case GLObject.GL_QUAD_STRIP:
 		case GLObject.GL_TRIANGLES:
+		case GLObject.GL_TRIANGLE_FAN:
 			// These draw types are just tringles so we can reuse the same
 			// object
 			if (this._vertexData[0] === null) {
-				this._vertexData[0] = new GLVertexData(this._type, this._id + '0');
+				this._vertexData[0] = new GLVertexData(GLObject.GL_TRIANGLES, this._id + '0');
 			}
 			this._currentData = this._vertexData[0];
+			this._currentData.drawType = type;
 		break;
 		case GLObject.GL_LINES:
+		case GLObject.GL_LINE_LOOP:
 			// These draw types are just lines so we can reuse the same
 			// object
 			if (this._vertexData[1] === null) {
-				this._vertexData[1] = new GLVertexData(this._type, this._id + '1');
+				this._vertexData[1] = new GLVertexData(GLObject.GL_LINES, this._id + '1');
 			}
 			this._currentData = this._vertexData[1];
-		break;
-		case GLObject.GL_QUAD_STRIP:
-		case GLObject.GL_TRIANGLE_FAN:
-		case GLObject.GL_LINE_LOOP:
-			// These draw types have links to the previous vertices
-			// so we can't just mash them all together
-			this._currentData = new GLVertexData(this._type, this._id + this._vertexData.length);
-			this._vertexData.push(this._currentData);
+			this._currentData.drawType = type;
 		break;
 		default:
 			throw Error('GLObject ' + this._id + ' unknown type ' + type);
@@ -76,6 +73,7 @@ GLObject.prototype.begin = function(type) {
  */
 GLObject.prototype.end = function() {
 	this._type = null;
+	this._currentData.generateIndices();
 	this._currentData = null;
 };
 /**
@@ -100,6 +98,9 @@ GLObject.prototype.vertex = function(x, y, z) {
  */
 GLObject.prototype.store = function(gl) {
 	if (this._stored) { return; }
+	if (this._currentData) {
+		throw Error('GLObject ' + this._id + ' end has not been called');
+	}
 
 	var i;
 	for (i = 0; i < this._vertexData.length; ++i) {
@@ -144,7 +145,7 @@ GLObject.prototype.destroy = function(gl) {
  */
 GLVertexData = function(type, id) {
 	this.reset();
-	this._type = type;
+	this._finalType = type;
 	this._id = id;
 }
 /**
@@ -155,6 +156,7 @@ GLVertexData.prototype.reset = function() {
 	this.texCoords = [];
 	this.normals = [];
 	this._indices = [];
+	this._firstVertex = 0;
 }
 /**
  * Using the current vertex data generate generate vertex buffers.
@@ -163,13 +165,11 @@ GLVertexData.prototype.reset = function() {
  *							draw the data represented by this object.
  */
 GLVertexData.prototype.store = function(gl) {
-	this._generateIndices();
-
-	console.log('GLVertexData.store id: %s, type: %s, numNormals: %i, numVertixes: %i, numIndices: %i',
+	console.log('GLVertexData.store id: %s, type: %s, normals: %i, vertixes: %i, indices: %i',
 		this._id,
-		this._type,
-		this.normals.length,
-		this.vertices.length,
+		this._finalType,
+		this.normals.length/3,
+		this.vertices.length/3,
 		this._indices.length );
 
 	var normalObject = gl.createBuffer();
@@ -201,7 +201,7 @@ GLVertexData.prototype.store = function(gl) {
 		texCoordObject,
 		indexObject,
 		this._indices.length,
-		this._type );
+		this._finalType );
 	this.reset();
 	return result;
 }
@@ -211,49 +211,60 @@ GLVertexData.prototype.store = function(gl) {
  * GL_QUADS and GL_QUAD_STRIP seem not to exist in webgl so I have implemented
  * them with tringles.
  */
-GLVertexData.prototype._generateIndices = function() {
+GLVertexData.prototype.generateIndices = function() {
 	var i;
-	var totalVertex = this.vertices.length/3;
-	switch (this._type) {
+	var base = this._firstVertex/3;
+	var newVertex = (this.vertices.length - this._firstVertex)/3;
+	if (newVertex === 0) { return; }
+	switch (this.drawType) {
 		case GLObject.GL_QUADS:
-			i = 0;
-			var numQuads = Math.floor(totalVertex / 4);
-			var quadNum;
-			for (quadNum = 0; quadNum < numQuads; ++quadNum) {
-				this._indices.push(i);
-				this._indices.push(i + 1);
-				this._indices.push(i + 3);
-				this._indices.push(i + 3);
-				this._indices.push(i + 2);
-				this._indices.push(i + 1);
-				i += 4;
+			var numQuads = Math.floor(newVertex / 4);
+			for (i = 0; i < numQuads; ++i) {
+				this._indices.push(base);
+				this._indices.push(base + 1);
+				this._indices.push(base + 3);
+				this._indices.push(base + 3);
+				this._indices.push(base + 2);
+				this._indices.push(base + 1);
+				base += 4;
 			}
-			this._type = GLObject.GL_TRIANGLES;
 		break;
 		case GLObject.GL_QUAD_STRIP:
-			i = 0;
-			var numQuads = Math.floor((totalVertex - 2) / 2);
-			var quadNum;
-			for (quadNum = 0; quadNum < numQuads; ++quadNum) {
-				this._indices.push(i);
-				this._indices.push(i + 1);
-				this._indices.push(i + 2);
-				this._indices.push(i + 2);
-				this._indices.push(i + 1);
-				this._indices.push(i + 3);
-				i += 2;
+			var numQuads = Math.floor((newVertex - 2) / 2);
+			for (i = 0; i < numQuads; ++i) {
+				this._indices.push(base);
+				this._indices.push(base + 1);
+				this._indices.push(base + 2);
+				this._indices.push(base + 2);
+				this._indices.push(base + 1);
+				this._indices.push(base + 3);
+				base += 2;
 			}
-			this._type = GLObject.GL_TRIANGLES;
+		break;
+		case GLObject.GL_TRIANGLE_FAN:
+			var numTriangles = newVertex - 1;
+			for (i = 0; i < numTriangles; ++i) {
+				this._indices.push(base);
+				this._indices.push(base + i);
+				this._indices.push(base + i + 1);
+			}
+		break;
+		case GLObject.GL_LINE_LOOP:
+			var numLoops = newVertex - 1;
+			for (i = 0; i < numLoops; ++i) {
+				this._indices.push(base + i);
+				this._indices.push(base + i + 1);
+			}
 		break;
 		case GLObject.GL_LINES:
-		case GLObject.GL_LINE_LOOP:
 		case GLObject.GL_TRIANGLES:
-		case GLObject.GL_TRIANGLE_FAN:
-			for (i = 0; i < totalVertex; ++i) {
-				this._indices.push(i);
+			for (i = 0; i < newVertex; ++i) {
+				this._indices.push(base + i);
 			}
 		break;
 	}
+	this._firstVertex = this.vertices.length;
+	this.drawType = null;
 }
 
 /**
