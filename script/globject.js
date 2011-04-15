@@ -174,25 +174,24 @@ GLVertexData.prototype.store = function(gl) {
 
 	var normalObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, normalObject);
-	gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this.normals), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.normals), gl.STATIC_DRAW);
 
 	var texCoordObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, texCoordObject);
-	gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this.texCoords), gl.STATIC_DRAW);
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.texCoords), gl.STATIC_DRAW);
 
 	var vertexObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, vertexObject);
-	gl.bufferData(gl.ARRAY_BUFFER, Float32Array(this.vertices), gl.STATIC_DRAW);
-	this._vertices = [];
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 	var indexObject = gl.createBuffer();
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexObject);
 	if (this._indices.length < 256) {
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint8Array(this._indices), gl.STATIC_DRAW);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(this._indices), gl.STATIC_DRAW);
 	} else {
-		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint16Array(this._indices), gl.STATIC_DRAW);
+		gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this._indices), gl.STATIC_DRAW);
 	}
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 
@@ -276,7 +275,7 @@ GLVertexObject.prototype.draw = function(gl) {
 
 	// Set up all the vertex attributes for vertices, normals and texCoords
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._vertexObject);
-	gl.vertexAttribPointer(gl.vertexAttribPointer, 3, gl.FLOAT, false, 0, 0);
+	gl.vertexAttribPointer(gl.vertexPositionAttribute, 3, gl.FLOAT, false, 0, 0);
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, this._normalObject);
 	gl.vertexAttribPointer(gl.vertexNormalAttribute, 3, gl.FLOAT, false, 0, 0);
@@ -295,6 +294,9 @@ GLVertexObject.prototype.draw = function(gl) {
 		dataSize = gl.UNSIGNED_SHORT;
 	}
 	gl.drawElements(this._type, this._numIndices, dataSize, 0);
+
+	gl.bindBuffer(gl.ARRAY_BUFFER, null);
+	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
 }
 /**
  * Free vertex buffes held by this object
