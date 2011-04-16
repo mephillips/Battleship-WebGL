@@ -917,29 +917,33 @@ glfont = {
 				o.translate(0.0, 0.0, size - 5*r);
 				glprimitive.sphere(o, r, d, d);
 			break;
-			/*
 			case '(':
-				o.rotate(90, 1.0, 0.0, 0.0);
-				o.rotate(180, 0.0, 1.0, 0.0);
+				o.rotate(90, 0.0, 0.0);
+				o.rotate(0.0, 180, 0.0);
 				o.translate(-size/2.0, size/2.0, 0.0);
-				glScalef(0.6, 1.0, 1.0);
-				glprimitive_half_torus1((size - 4*r)/2.0, r);
+				o.scale(0.6, 1.0, 1.0);
+				o.pushMatrix();
+					o.rotate(0.0, 0.0, -90);
+					glprimitive.half_torus1(o, r, r + (size - 4*r)/2.0);
+				o.popMatrix();
 				o.translate(0.0, size/2.0 - r, 0.0);
 				glprimitive.sphere(o, r, d, d);
 				o.translate(0.0, -size + 2*r, 0.0);
 				glprimitive.sphere(o, r, d, d);
 			break;
 			case ')':
-				o.rotate(90, 1.0, 0.0, 0.0);
+				o.rotate(90, 0.0, 0.0);
 				o.translate(size/2.0 - 2*r, size/2.0, 0.0);
-				glScalef(0.6, 1.0, 1.0);
-				glprimitive_half_torus1((size - 4*r)/2.0, r);
+				o.scale(0.6, 1.0, 1.0);
+				o.pushMatrix();
+					o.rotate(0.0, 0.0, -90);
+					glprimitive.half_torus1(o, r, r + (size - 4*r)/2.0);
+				o.popMatrix();
 				o.translate(0.0, size/2.0 - r, 0.0);
 				glprimitive.sphere(o, r, d, d);
 				o.translate(0.0, -size + 2*r, 0.0);
 				glprimitive.sphere(o, r, d, d);
 			break;
-			*/
 			case ' ' :
 			break;
 			case '/':

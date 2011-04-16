@@ -119,6 +119,10 @@ GLObject.prototype.rotate = function(x, y, z) {
 	this._mvMatrix.rotate(x, y, z);
 	this._updateNormal();
 }
+GLObject.prototype.scale = function(x, y, z) {
+	this._mvMatrix.scale(x, y, z);
+	this._updateNormal();
+}
 GLObject.prototype._updateNormal = function() {
 	this._nMatrix = new J3DIMatrix4(this._mvMatrix);
 	this._nMatrix.invert();
