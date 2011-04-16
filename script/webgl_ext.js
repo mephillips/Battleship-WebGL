@@ -55,6 +55,7 @@ webgl_ext = {
 		gl.mvMatrix = new J3DIMatrix4();
 		gl.mvChanged = true;
 		gl.perspectiveMatrix = new J3DIMatrix4();
+		gl.mvStack = [];
 
 		// Add methods
 		gl.loadImageTexture = this.loadImageTexture;

@@ -197,6 +197,9 @@ Battleship.View = {
 			case Battleship.Model.TEST_PRIMITIVE:
 				glprimitive.test(gl, 4.0, 15);
 			break;
+			case Battleship.Model.TEST_CLOCK:
+				glprimitive.clock(gl, 8.0, 15);
+			break;
 			default:
 				if (!this.__disk) {
 					spiritTexture = gl.loadImageTexture("images/spirit.jpg");

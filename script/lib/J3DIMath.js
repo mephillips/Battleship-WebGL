@@ -976,6 +976,17 @@ J3DIMatrix4.prototype._makeAdjoint = function()
     this.$matrix.m44  =   this._determinant3x3(a1, a2, a3, b1, b2, b3, c1, c2, c3);
 }
 
+J3DIMatrix4.prototype.toString = function()
+{
+	var m = this.$matrix;
+	return "[" +
+		m.m11 +  "," + m.m12 + "," + m.m13 + "," + m.m14 + "\n" +
+		m.m21 +  "," + m.m22 + "," + m.m23 + "," + m.m24 + "\n" +
+		m.m31 +  "," + m.m32 + "," + m.m33 + "," + m.m34 + "\n" +
+		m.m41 +  "," + m.m42 + "," + m.m43 + "," + m.m44 + 
+	"]";
+}
+
 //
 // J3DIVector3
 //
