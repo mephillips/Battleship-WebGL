@@ -17,6 +17,7 @@ uniform vec3 uAmbientColor;
 uniform vec3 uPointLightingLocation;
 uniform vec3 uPointLightingSpecularColor;
 uniform vec3 uPointLightingDiffuseColor;
+uniform vec4 uFragmentColor;
 
 uniform sampler2D uSampler;
 
@@ -47,7 +48,7 @@ void main(void) {
 	if (uUseTextures) {
 		fragmentColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
 	} else {
-		fragmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+		fragmentColor = uFragmentColor;
 	}
 	gl_FragColor = vec4(fragmentColor.rgb * lightWeighting, fragmentColor.a);
 }

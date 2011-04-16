@@ -177,6 +177,7 @@ Battleship.View = {
 		gl.uniform1i(gl.showSpecularHighlightsUniform, true);
 		gl.uniform1i(gl.useTexturesUniform, false);
 		gl.uniform1i(gl.useLightingUniform, true);
+		gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
 		gl.setAmbientColor(0.2, 0.2, 0.2);
 		gl.setLightPositon(0.0, 10.0, 0.0);
 
@@ -224,6 +225,8 @@ Battleship.View = {
 				gl.setMaterialShininess( this._shinny_w );
 				gl.scale(4.0, 4.0, 4.0);
 				this._drawPeg(gl);
+			break;
+			case Battleship.Modle.TEST_SHIPS:
 			break;
 			default:
 				if (!this.__disk) {

@@ -828,6 +828,16 @@ glprimitive = {
 		gl.draw(this._clockData.center);
 		gl.translate(0.0, 0.0, -0.3);
 
+		// The glass
+		gl.translate(0, 0, size/4.0-0.1);
+		gl.setDiffuseColor( 0.5, 0.5, 0.5 );
+		gl.setSpecularColor( 0.1, 0.1, 0.1 );
+		gl.setMaterialShininess( 1.0 );
+		gl.setFragmentColor(1.0, 1.0, 1.0, 0.6);
+		gl.draw(this._clockData.face);
+		gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
+		gl.translate(0, 0, -(size/4.0-0.1));
+
 		//The body
 		gl.setDiffuseColor( 1.0, 1.0, 0.0 );
 		gl.setSpecularColor( 0.5, 0.5, 0.5 );

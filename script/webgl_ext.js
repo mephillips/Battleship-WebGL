@@ -73,6 +73,7 @@ webgl_ext = {
 		gl.setDiffuseColor = this.setDiffuseColor;
 		gl.setSpecularColor = this.setSpecularColor;
 		gl.setMaterialShininess = this.setMaterialShininess;
+		gl.setFragmentColor = this.setFragmentColor;
 
 		return gl;
 	},
@@ -183,6 +184,9 @@ webgl_ext = {
 	},
 	setMaterialShininess : function(s) {
 		this.uniform1f(this.materialShininessUniform, s);
+	},
+	setFragmentColor : function(x, y, z, a) {
+		this.uniform4f(this.fragmentColorUniform, x, y, z, a);
 	},
 
 	/**
@@ -303,6 +307,7 @@ webgl_ext = {
 		gl.pointLightingLocationUniform = gl.getUniformLocation(program, "uPointLightingLocation");
 		gl.pointLightingSpecularColorUniform = gl.getUniformLocation(program, "uPointLightingSpecularColor");
 		gl.pointLightingDiffuseColorUniform = gl.getUniformLocation(program, "uPointLightingDiffuseColor");
+		gl.fragmentColorUniform = gl.getUniformLocation(program, "uFragmentColor");
 	},
 
 	/**
