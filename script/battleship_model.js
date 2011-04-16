@@ -23,6 +23,13 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+
+/** The width/height of the playing grid */
+var GRID_DIM = 10;
+
+/**
+ * @namespace
+ */
 Battleship.Model = {
 	NUM_TEST_TYPES : 10,
 	TEST_NONE : "None",
@@ -35,6 +42,16 @@ Battleship.Model = {
 	TEST_FOG : "Fog",
 	TEST_LSYSTEM : "Lsystem",
 	TEST_ROCKET : "Rocket",
+
+	NUM_SHIPS : 5,
+	SHIP_CARRIER : 0,
+	SHIP_BATTLESHIP : 1,
+	SHIP_DESTROYER : 2,
+	SHIP_SUB : 3,
+	SHIP_PT : 4,
+	SHIP_NO_SHIP : 5,
+
+	MAX_SHIP_LEN : 5,
 
 	init : function() {
 		this._do_test = 0;
