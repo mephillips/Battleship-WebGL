@@ -180,6 +180,9 @@ Battleship.View = {
 		gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
 		gl.setAmbientColor(0.2, 0.2, 0.2);
 		gl.setLightPositon(0.0, 10.0, 0.0);
+		gl.setDiffuseColor( this._diff_w );
+		gl.setSpecularColor( this._spec_w );
+		gl.setMaterialShininess( this._shinny_w );
 
 		gl.identity();
 		gl.translate(0, 0, -50);
@@ -220,13 +223,12 @@ Battleship.View = {
 				glprimitive.mug(gl, 8.0, 15);
 			break;
 			case Battleship.Model.TEST_PEG:
-				gl.setDiffuseColor( this._diff_w );
-				gl.setSpecularColor( this._spec_w );
-				gl.setMaterialShininess( this._shinny_w );
 				gl.scale(4.0, 4.0, 4.0);
 				this._drawPeg(gl);
 			break;
-			case Battleship.Modle.TEST_SHIPS:
+			case Battleship.Model.TEST_FONT:
+				gl.translate(-14, 8, 0);
+				glfont.test(gl, 3, 0, 0);
 			break;
 			default:
 				if (!this.__disk) {
@@ -257,9 +259,6 @@ Battleship.View = {
 			o.end();
 			this._lines = o;
 		}
-		gl.setDiffuseColor( this._diff_w );
-		gl.setSpecularColor( this._spec_w );
-		gl.setMaterialShininess( this._spec_w );
 		gl.draw(this._lines);
 	},
 
