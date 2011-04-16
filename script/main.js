@@ -60,8 +60,14 @@ Battleship = {
 
 	keypress : function(evt) {
 		evt = evt || window.event;
+		var mods = {
+			alt : evt.altKey,
+			ctrl : evt.ctrlKey,
+			shift : evt.shiftKey,
+			meta : evt.metaKey
+		};
 		var key = String.fromCharCode(evt.which || evt.keyCode);
-		Battleship.Logic.keypress(key);
+		Battleship.Logic.keypress(key, mods);
 	},
 
 	/** Foreces redraw (implementation dependent)

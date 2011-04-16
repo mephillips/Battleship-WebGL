@@ -198,6 +198,8 @@ GLVertexData.prototype.reset = function() {
 	this._indices = [];
 	this._firstVertex = 0;
 }
+GLVertexData._totalV = 0;
+GLVertexData._totalO = 0;
 /**
  * Using the current vertex data generate generate vertex buffers.
  *
@@ -205,12 +207,16 @@ GLVertexData.prototype.reset = function() {
  *							draw the data represented by this object.
  */
 GLVertexData.prototype.store = function(gl) {
-	console.log('GLVertexData.store id: %s, type: %s, normals: %i, vertixes: %i, indices: %i',
+	GLVertexData._totalV += this.vertices.length;
+	GLVertexData._totalO += 1;
+	console.log('GLVertexData.store id: %s, type: %s, normals: %i, vertixes: %i, indices: %i totalV: %i totalO: %i',
 		this._id,
 		this._finalType,
 		this.normals.length/3,
 		this.vertices.length/3,
-		this._indices.length );
+		this._indices.length,
+		GLVertexData._totalV,
+		GLVertexData._totalO );
 
 	var normalObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, normalObject);
@@ -355,7 +361,12 @@ GLVertexObject.prototype.draw = function(gl) {
  * Free vertex buffes held by this object
  */
 GLVertexObject.prototype.destroy = function(gl) {
-	console.log('GLVertexObject.destroy id: %s', this._id);
+	GLVertexData._totalV -= this.vertices.length;
+	GLVertexData._totalO -= 1;
+	console.log('GLVertexObject.destroy id: %s totalV: %i totalO: %i',
+		this._id,
+		this._totalV,
+		this._totalO );
 
 	if (this._vertexObject) {
 		gl.deleteBuffer(this._vertexObject);

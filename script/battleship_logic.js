@@ -143,22 +143,66 @@ Battleship.Logic = {
 		}
 	},
 
-	keypress : function(key) {
+	keypress : function(key, mod) {
 		var needRefresh = false;
 
 		var size = Battleship.View.getsize();
 		var rdiff = 10/size.width * 360;
 		switch (key) {
+			case 'r':
+				Battleship.View.set_rotate(0, 0, 'u');
+				Battleship.View.set_rotate(1, 0, 'u');
+				Battleship.View.set_rotate(2, 0, 'u');
+				Battleship.View.set_translate(0, 0, 'u');
+				Battleship.View.set_translate(1, 0, 'u');
+				Battleship.View.set_translate(2, 0, 'u');
+			break;
 			case 'x':
-				Battleship.View.set_rotate(0, rdiff, 'U');
+				if (mod.ctrl) {
+					Battleship.View.set_translate(0, rdiff, 'U');
+				} else {
+					Battleship.View.set_rotate(0, rdiff, 'U');
+				}
 				needRefresh = true;
 			break;
 			case 'y':
-				Battleship.View.set_rotate(1, rdiff, 'U');
+				if (mod.ctrl) {
+					Battleship.View.set_translate(1, rdiff, 'U');
+				} else {
+					Battleship.View.set_rotate(1, rdiff, 'U');
+				}
 				needRefresh = true;
 			break;
 			case 'z':
-				Battleship.View.set_rotate(2, -rdiff, 'U');
+				if (mod.ctrl) {
+					Battleship.View.set_translate(2, -rdiff, 'U');
+				} else {
+					Battleship.View.set_rotate(2, -rdiff, 'U');
+				}
+				needRefresh = true;
+			break;
+			case 'X':
+				if (mod.ctrl) {
+					Battleship.View.set_translate(0, -rdiff, 'U');
+				} else {
+					Battleship.View.set_rotate(0, -rdiff, 'U');
+				}
+				needRefresh = true;
+			break;
+			case 'Y':
+				if (mod.ctrl) {
+					Battleship.View.set_translate(1, -rdiff, 'U');
+				} else {
+					Battleship.View.set_rotate(1, -rdiff, 'U');
+				}
+				needRefresh = true;
+			break;
+			case 'Z':
+				if (mod.ctrl) {
+					Battleship.View.set_translate(2, rdiff, 'U');
+				} else {
+					Battleship.View.set_rotate(2, rdiff, 'U');
+				}
 				needRefresh = true;
 			break;
 		}
