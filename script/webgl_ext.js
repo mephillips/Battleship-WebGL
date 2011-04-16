@@ -166,16 +166,20 @@ webgl_ext = {
 	},
 
 	setLightPositon : function(x, y, z) {
-		this.uniform3f(this.pointLightingLocationUniform, x, y, z);
+		var v = webgl_ext._3fto3v(x, y, z);
+		this.uniform3fv(this.pointLightingLocationUniform, v);
 	},
 	setAmbientColor : function(x, y, z) {
-		this.uniform3f(this.ambientColorUniform, x, y, z);
+		var v = webgl_ext._3fto3v(x, y, z);
+		this.uniform3fv(this.ambientColorUniform, v);
 	},
 	setDiffuseColor : function(x, y, z) {
-		this.uniform3f(this.pointLightingDiffuseColorUniform, x, y, z);
+		var v = webgl_ext._3fto3v(x, y, z);
+		this.uniform3fv(this.pointLightingDiffuseColorUniform, v);
 	},
 	setSpecularColor : function(x, y, z) {
-		this.uniform3f(this.pointLightingSpecularColorUniform, x, y, z);
+		var v = webgl_ext._3fto3v(x, y, z);
+		this.uniform3fv(this.pointLightingSpecularColorUniform, v);
 	},
 	setMaterialShininess : function(s) {
 		this.uniform1f(this.materialShininessUniform, s);
@@ -343,5 +347,19 @@ webgl_ext = {
 		request.send();
 
 		return shader;
+	},
+
+	/**
+	 * Takes the given parameters which may be:
+	 * 	array, undefined, undefiend or
+	 * 	x, y, z
+	 * And generates an array [x, y, z]
+	 */
+	_3fto3v : function(x, y, z) {
+		if (x && x.length && x.length === 3) {
+			return x;
+		} else {
+			return [x, y, z];
+		}
 	}
 };

@@ -40,13 +40,22 @@ var PEG_DIAM_2 = 0.15;
   * @namespace
   */
 Battleship.View = {
+	/** @private A reference to the Canvas DOM element. */
 	_canvas : null,
+	/** @private The WegGL context used for rendering */
 	_gl : null,
-
+	/** @private The last recorded width of the canvas */
 	_width : null,
+	/** @private The last recorded height of the canvas */
 	_height : null,
 
+	/** @private Debug value used to draw axis */
 	_do_lines : false,
+
+	/** @private Colour values for White */
+	_diff_w : [ 1.0, 1.0, 1.0 ],
+	_spec_w : [ 0.1, 0.1, 0.1 ],
+	_shinny_w : 1,
 
 	init : function() {
 		this._curr_menu = null;
@@ -210,9 +219,9 @@ Battleship.View = {
 				glprimitive.mug(gl, 8.0, 15);
 			break;
 			case Battleship.Model.TEST_PEG:
-				gl.setDiffuseColor( 1.0, 1.0, 1.0 );
-				gl.setSpecularColor( 1.0, 1.0, 1.0 );
-				gl.setMaterialShininess( 1.0 );
+				gl.setDiffuseColor( this._diff_w );
+				gl.setSpecularColor( this._spec_w );
+				gl.setMaterialShininess( this._shinny_w );
 				gl.scale(4.0, 4.0, 4.0);
 				this._drawPeg(gl);
 			break;
@@ -245,9 +254,9 @@ Battleship.View = {
 			o.end();
 			this._lines = o;
 		}
-		gl.setDiffuseColor( 1.0, 1.0, 1.0 );
-		gl.setSpecularColor( 1.0, 1.0, 1.0 );
-		gl.setMaterialShininess( 1.0 );
+		gl.setDiffuseColor( this._diff_w );
+		gl.setSpecularColor( this._spec_w );
+		gl.setMaterialShininess( this._spec_w );
 		gl.draw(this._lines);
 	},
 
