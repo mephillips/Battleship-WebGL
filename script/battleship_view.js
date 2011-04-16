@@ -245,6 +245,7 @@ Battleship.View = {
 				this._drawPeg(gl);
 			break;
 			case Battleship.Model.TEST_SHIPS:
+				gl.scale(2.0, 2.0, 2.0);
 				gl.rotate(30, 0, 0);
 				gl.translate(0.0, 2, -3);
 				this._drawShips(gl);
@@ -255,6 +256,8 @@ Battleship.View = {
 			case Battleship.Model.TEST_FONT:
 				gl.translate(-14, 8, 0);
 				glfont.test(gl, 3, 0, 0);
+			break;
+			case Battleship.Model.TEST_FOG:
 			break;
 			default:
 				if (!this.__disk) {
@@ -535,9 +538,80 @@ Battleship.View = {
 	},
 
 	_drawSub : function(gl) {
+		var pegStart = BLOCK_REAL_DIM/2.0;
+
+		if (!this._sub) {
+			var o = new GLObject('sub');
+			this._sub = o;
+
+			//Pegs
+			o.pushMatrix();
+				o.translate(0, -PEG_LEN_2, pegStart);
+				o.rotate(-90, 0, 0);
+				glprimitive.cylinder(o, PEG_DIAM_2, PEG_LEN_2);
+				o.translate(0.0, -BLOCK_REAL_DIM*2.0, 0.0);
+				glprimitive.cylinder(o, PEG_DIAM_2, PEG_LEN_2);
+			o.popMatrix();
+			o.translate(0.0, (SHIP_HULL_HEIGHT-SHIP_DECK_HEIGHT)/2.0, 0.0);
+			//Hull
+			o.pushMatrix();
+				o.translate(0.0, 0.0, BLOCK_REAL_DIM*1.5);
+				o.rotate(-90, 0.0, 0.0);
+				o.pushMatrix();
+					o.scale(1.0, BLOCK_REAL_DIM*4.5,
+							(SHIP_HULL_HEIGHT+SHIP_DECK_HEIGHT)*2.5);
+					glprimitive.sphere(o, SHIP_HULL_DIAM*2.0);
+				o.popMatrix();
+			o.popMatrix();
+			//Controll Tower
+			var G2 = 0.2;
+			glprimitive.box(o, -G2/2.0,
+							SHIP_HULL_HEIGHT,
+							BLOCK_REAL_DIM,
+							G2, G2, G2*2);
+		}
+		gl.draw(this._sub);
 	},
 
 	_drawPT : function(gl) {
+		var pegStart = BLOCK_REAL_DIM/2.0;
+
+		if (!this._ptBoat) {
+			var o = new GLObject('ptBoat');
+			this._ptBoat = o;
+
+			//Pegs
+			o.pushMatrix();
+				o.translate(0, -PEG_LEN_2, pegStart);
+				o.rotate(-90, 0, 0);
+				glprimitive.cylinder(o, PEG_DIAM_2, PEG_LEN_2);
+				o.translate(0.0, -BLOCK_REAL_DIM, 0.0);
+				glprimitive.cylinder(o, PEG_DIAM_2, PEG_LEN_2);
+			o.popMatrix();
+			o.pushMatrix();
+				o.translate(0.0, 0.0, BLOCK_REAL_DIM);
+				o.rotate(-90, 0.0, 0.0);
+				//The hull
+				o.pushMatrix();
+					o.scale(1.0, BLOCK_REAL_DIM*3.0, 1.0);
+					glprimitive.cylinder(o,SHIP_HULL_DIAM*2.0,SHIP_HULL_HEIGHT);
+				o.popMatrix();
+				//The deck
+				o.pushMatrix();
+					o.translate(0.0, 0.0, SHIP_HULL_HEIGHT);
+					o.scale(1.0, BLOCK_REAL_DIM*3.0, 1.0);
+					glprimitive.cylinder(o,SHIP_HULL_DIAM*2.1,SHIP_DECK_HEIGHT);
+					o.translate(0.0, 0.0, SHIP_DECK_HEIGHT);
+					glprimitive.disk(o,SHIP_HULL_DIAM*2.1);
+				o.popMatrix();
+			o.popMatrix();
+			var G2 = 0.2;
+			glprimitive.box(o, -G2/2.0,
+							SHIP_HULL_HEIGHT+SHIP_DECK_HEIGHT,
+							BLOCK_REAL_DIM-G2,
+							G2, G2, 2*G2);
+		}
+		gl.draw(this._ptBoat);
 	},
 
 	_drawShip : function(gl, snum) {
