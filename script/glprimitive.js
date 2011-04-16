@@ -435,8 +435,10 @@ glprimitive = {
 	},
 
 	/**
-	 * Draws a torus which is shapred like a u. The parts that are on the
-	 * positive side of z = 0 plane.
+	 * Draws half a torus.
+	 *
+	 * The torus is draw the same as torus() but only the portion along positive
+	 * y is drawn. Creating a u.
 	 *
 	 * @param o	A GLObject to write the disk data into.
      * @param	dInnerRadius    Radius of ``tube''
@@ -444,7 +446,7 @@ glprimitive = {
      * @param	nSides          Facets around ``tube''
      * @param	nRings          Joints along ``path''
 	 */
-	half_torus : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
+	half_torus1 : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
 		nSides = nSides | this._detail;
 		nRings = nRings | this._detail;
 		if ( nSides < 1 ) nSides = 1;
@@ -495,6 +497,89 @@ glprimitive = {
 		{
 			var max = nRings - Math.round(nRings/2);
 			for( j=0; j< max; j++ )
+			{
+				var k = 3 * ( j * nSides + i ) ;
+				o.setNormal(normal[k], normal[k+1], normal[k+2]);
+				o.vertex(vertex[k], vertex[k+1], vertex[k+2]);
+
+				var k2 = k + 3;
+				o.setNormal(normal[k2], normal[k2+1], normal[k2+2]);
+				o.vertex(vertex[k2], vertex[k2+1], vertex[k2+2]);
+
+				var k3 = k + 3 * nSides + 3;
+				o.setNormal(normal[k3], normal[k3+1], normal[k3+2]);
+				o.vertex(vertex[k3], vertex[k3+1], vertex[k3+2]);
+
+				var k4 = k + 3 * nSides;
+				o.setNormal(normal[k4],normal[k4+1],normal[k4+2]);
+				o.vertex(vertex[k4], vertex[k4+1], vertex[k4+2]);
+			}
+		}
+		o.end();
+	},
+
+	/**
+	 * Draws half a torus.
+	 *
+	 * The torus is draw the same as torus() but only the portion along positive
+	 * z is draw. Leaving the circle complete but the body chopped in half.
+	 *
+	 * @param o	A GLObject to write the disk data into.
+     * @param	dInnerRadius    Radius of ``tube''
+     * @param	dOuterRadius    Radius of ``path''
+     * @param	nSides          Facets around ``tube''
+     * @param	nRings          Joints along ``path''
+	 */
+	half_torus2 : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
+		nSides = nSides | this._detail;
+		nRings = nRings | this._detail;
+		if ( nSides < 1 ) nSides = 1;
+		if ( nRings < 1 ) nRings = 1;
+
+		var iradius = dInnerRadius;
+		var oradius = dOuterRadius;
+		var  phi, psi, dpsi, dphi;
+
+		var vertex = [];
+		var normal = [];
+		var i, j;
+		var spsi, cpsi, sphi, cphi;
+
+		// Increment the number of sides and rings to allow for one more point than surface
+		nSides ++;
+		nRings ++;
+
+		dpsi =  2.0 * Math.PI / (nRings - 1) ;
+		dphi = -2.0 * Math.PI / (nSides - 1) ;
+		psi  = 0.0;
+
+		for( j=0; j<nRings; j++ )
+		{
+			cpsi = Math.cos ( psi ) ;
+			spsi = Math.sin ( psi ) ;
+			phi = 0.0;
+
+			for( i=0; i<nSides; i++ )
+			{
+				var offset = 3 * ( j * nSides + i ) ;
+				cphi = Math.cos( phi ) ;
+				sphi = Math.sin( phi ) ;
+				vertex[offset] = cpsi * ( oradius + cphi * iradius ) ;
+				vertex[offset + 1] = spsi * ( oradius + cphi * iradius ) ;
+				vertex[offset + 2] =                    sphi * iradius  ;
+				normal[offset + 0] = cpsi * cphi ;
+				normal[offset + 1] = spsi * cphi ;
+				normal[offset + 2] =        sphi ;
+				phi += dphi;
+			}
+
+			psi += dpsi;
+		}
+
+		o.begin( GLObject.GL_QUADS );
+		for( i=Math.round(nSides/2); i<nSides-1; i++ )
+		{
+			for( j=0; j< nRings - 1; j++ )
 			{
 				var k = 3 * ( j * nSides + i ) ;
 				o.setNormal(normal[k], normal[k+1], normal[k+2]);
@@ -749,6 +834,66 @@ glprimitive = {
 		gl.setSpecularColor( 0.5, 0.5, 0.5 );
 		gl.setMaterialShininess( 15.0 );
 		gl.draw(this._clockData.body);
+	},
+
+	/** Draws a mug
+	 *
+	 *  @param gl	A reference to the graphics context
+	 *  @param size How big to draw the mug.
+	 *  @param d	Detail to use
+	 */
+	mug : function(gl, size, detail) {
+		var lastSize = null;
+		var lastD = null;
+		if (this._mugData) {
+			lastSize = this._mugData.size;
+			lastD = this._mugData.detail;
+		}
+
+		if (size !== lastSize || lastD !== detail) {
+			if (this._mugData) {
+				this._mugData.mug.destroy(gl);
+				this._mugData.coffee.destory(gl);
+			}
+			this._mugData = { size : size, detail : detail };
+
+			var o = new GLObject('mug');
+			this._mugData.mug = o;
+
+			//The handel
+			o.pushMatrix();
+				o.translate(size - size/32.0, size/8.0, 0.0);
+				o.rotate(0.0, 0.0, -90);
+				glprimitive.half_torus1(o, size/8.0, size/2.0, detail, detail);
+			o.popMatrix();
+			//Outside
+			o.translate(0, -size, 0);
+			o.rotate(-90, 0.0, 0.0);
+			glprimitive.cylinder(o, size, 2*size, detail, detail);
+			//Bottom
+			o.rotate(180, 0.0, 0.0);
+			glprimitive.disk(o, size*0.99, detail, detail);
+			//Rim
+			o.rotate(180, 0.0, 0.0);
+			o.translate(0.0, 0.0, 2*size);
+			glprimitive.half_torus2(o, size/8.0, size - size/8.0,detail,detail);
+			//Coffee
+			o = new GLObject('mug_coffee');
+			this._mugData.coffee = o;
+			o.translate(0, size, 0);
+			o.rotate(-90, 0, 0);
+			glprimitive.disk(o, size - size/4.0, detail, detail);
+		}
+
+		gl.setDiffuseColor( 0.7, 0.7, 0.7 );
+		gl.setSpecularColor( 0.4, 0.4, 0.4 );
+		gl.setMaterialShininess( 15.0 );
+		gl.draw(this._mugData.mug);
+
+		gl.setDiffuseColor( 0.4, 0.2, 0.0 );
+		gl.setSpecularColor( 0.1, 0.1, 0.1 );
+		gl.setMaterialShininess( 1.0 );
+		gl.draw(this._mugData.coffee);
 	}
 };
 

@@ -183,13 +183,7 @@ Battleship.View = {
 
 		// Draw axis
 		if (this._do_lines) {
-			if (!this._lines) {
-				this._lines = this._createLines();
-			}
-			gl.setDiffuseColor( 1.0, 1.0, 1.0 );
-			gl.setSpecularColor( 1.0, 1.0, 1.0 );
-			gl.setMaterialShininess( 1.0 );
-			gl.draw(this._lines);
+			this._drawLines(gl);
 		}
 
 		switch (Battleship.Model.get_test())
@@ -199,6 +193,13 @@ Battleship.View = {
 			break;
 			case Battleship.Model.TEST_CLOCK:
 				glprimitive.clock(gl, 8.0, 15);
+			break;
+			case Battleship.Model.TEST_MUG:
+				glprimitive.mug(gl, 8.0, 15);
+			break;
+			case Battleship.Model.TEST_PEG:
+				gl.scale(4.0, 4.0, 4.0);
+				_drawPeg(gl);
 			break;
 			default:
 				if (!this.__disk) {
@@ -216,16 +217,25 @@ Battleship.View = {
 		}
 	},
 
-	_createLines : function() {
-		var o = new GLObject('lines');
-		o.begin(GLObject.GL_LINES);
-		o.vertex(0.0, 50.0, 0.0);
-		o.vertex(0.0, -50.0, 0.0);
-		o.vertex(-50.0, 0.0, 0.0);
-		o.vertex(50, 0.0, 0.0);
-		o.vertex(0.0, 0.0, 50.0);
-		o.vertex(0.0, 0.0, -50.0);
-		o.end();
-		return o;
+	_drawLines : function(gl) {
+		if (!this._lines) {
+			var o = new GLObject('lines');
+			o.begin(GLObject.GL_LINES);
+			o.vertex(0.0, 50.0, 0.0);
+			o.vertex(0.0, -50.0, 0.0);
+			o.vertex(-50.0, 0.0, 0.0);
+			o.vertex(50, 0.0, 0.0);
+			o.vertex(0.0, 0.0, 50.0);
+			o.vertex(0.0, 0.0, -50.0);
+			o.end();
+			this._lines = o;
+		}
+		gl.setDiffuseColor( 1.0, 1.0, 1.0 );
+		gl.setSpecularColor( 1.0, 1.0, 1.0 );
+		gl.setMaterialShininess( 1.0 );
+		gl.draw(this._lines);
+	},
+
+	_drawPeg : function(gl) {
 	}
 };
