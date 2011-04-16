@@ -76,6 +76,63 @@ glprimitive = {
 		gl.draw(this._testObj.sphere);
 	},
 
+	/** Draws a box.
+	 *
+	 *  The box is drawn with origin x,y,z. It moves away from the orign
+	 *  by w along positive x, by h along positive y and by d along positive z.
+	 *
+	 *  @param o GLObject to draw box into
+	 *  @param x X origin
+	 *  @param y Y origin
+	 *  @param z Z origin
+	 *  @param w Width
+	 *  @param h Height
+	 *  @param d Depth
+	 */
+	box : function(o, x, y, z, w, h, d) {
+		var s = 1.0/(h + w);
+		var t = 1.0/(d + h);
+
+		o.begin(GLObject.GL_QUADS);
+			//Back
+			o.setNormal(0, 0, -1);
+			o.setTexCoord(1, 1); o.vertex(x, y + h, z);
+			o.setTexCoord(h*s, 1); o.vertex(x + w, y + h, z);
+			o.setTexCoord(h*s, d*t); o.vertex(x + w, y, z);
+			o.setTexCoord(1, d*t); o.vertex(x, y, z);
+			//Front
+			o.setNormal(0, 0, 1);
+			o.setTexCoord(h*s, 1); o.vertex(x, y, z + d);
+			o.setTexCoord(1, 1); o.vertex(x + w, y, z + d);
+			o.setTexCoord(1, d*t); o.vertex(x + w, y + h, z + d);
+			o.setTexCoord(h*s, d*t); o.vertex(x, y + h, z + d);
+			//Left
+			o.setNormal(-1, 0, 0);
+			o.setTexCoord(0, 0); o.vertex(x, y, z);
+			o.setTexCoord(0, d*t); o.vertex(x, y, z + d);
+			o.setTexCoord(h*s, d*t); o.vertex(x, y + h, z + d);
+			o.setTexCoord(h*s, 0); o.vertex(x, y + h, z);
+			//Right
+			o.setNormal(1, 0, 0);
+			o.setTexCoord(h*s, 0); o.vertex(x + w, y, z + d);
+			o.setTexCoord(h*s, d*t); o.vertex(x + w, y, z);
+			o.setTexCoord(0, d*t); o.vertex(x + w, y + h, z);
+			o.setTexCoord(0, 0); o.vertex(x + w, y + h, z + d);
+			//Top
+			o.setNormal(0, 1, 0);
+			o.setTexCoord(h*s, 0); o.vertex(x, y + h, z);
+			o.setTexCoord(h*s, d*t); o.vertex(x, y + h, z + d);
+			o.setTexCoord(1, d*t); o.vertex(x + w, y + h, z +d);
+			o.setTexCoord(1, 0); o.vertex(x + w, y + h, z);
+			//Bottom
+			o.setNormal(0, -1, 0);
+			o.setTexCoord(h*s, d*t); o.vertex(x + w, y, z);
+			o.setTexCoord(h*s, 0); o.vertex(x + w, y, z + d);
+			o.setTexCoord(1, 0); o.vertex(x, y, z + d);
+			o.setTexCoord(1, d*t); o.vertex(x, y, z);
+		o.end();
+	},
+
 	/**
 	 * Draw a disk with the given radius
 	 *
@@ -278,9 +335,48 @@ glprimitive = {
      * @param stacks	The number of divisions along the z axis.
      *                   (longitudal). (Defaults to this._detail)
 	 *
+ 	 * freeglut_geometry.c
 	 */
 	cylinder : function(o, radius, len, slices, stacks) {
-		this.cone(o, radius, radius, len, slices, stacks);
+		slices = slices || this._detail;
+		if (slices < 1 ) { slices = 1; }
+		stacks = stacks || this._detail;
+		if (stacks < 1) { stacks = 1; }
+
+		var i,j;
+
+		// Step in z and radius as stacks are drawn.
+		var z0,z1;
+		var r0,r1;
+
+		var z0,z1;
+		var zStep = len / stacks;
+
+
+		// Pre-computed circle
+		var sint = [];
+		var cost = [];
+
+		this.fghCircleTable(sint,cost,-slices);
+
+		z0 = 0.0;
+		z1 = zStep;
+
+		for (i=1; i<=stacks; i++) {
+			if (i==stacks)
+				z1 = len;
+
+			o.begin(GLObject.GL_QUAD_STRIP);
+			for (j=0; j<=slices; j++ )
+			{
+				o.setNormal(cost[j],        sint[j],        0.0 );
+				o.vertex(cost[j]*radius, sint[j]*radius, z0  );
+				o.vertex(cost[j]*radius, sint[j]*radius, z1  );
+			}
+			o.end();
+
+			z0 = z1; z1 += zStep;
+		}
 	},
 
 	/*
@@ -361,6 +457,8 @@ glprimitive = {
      * @param	dOuterRadius    Radius of ``path''
      * @param	nSides          Facets around ``tube''
      * @param	nRings          Joints along ``path''
+	 *
+ 	 * freeglut_geometry.c
 	 */
 	torus : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
 		nSides = nSides | this._detail;
@@ -444,6 +542,8 @@ glprimitive = {
      * @param	dOuterRadius    Radius of ``path''
      * @param	nSides          Facets around ``tube''
      * @param	nRings          Joints along ``path''
+	 *
+ 	 * freeglut_geometry.c
 	 */
 	half_torus1 : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
 		nSides = nSides | this._detail;
@@ -528,6 +628,8 @@ glprimitive = {
      * @param	dOuterRadius    Radius of ``path''
      * @param	nSides          Facets around ``tube''
      * @param	nRings          Joints along ``path''
+	 *
+ 	 * freeglut_geometry.c
 	 */
 	half_torus2 : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
 		nSides = nSides | this._detail;
