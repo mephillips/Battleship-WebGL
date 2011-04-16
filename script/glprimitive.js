@@ -573,6 +573,7 @@ glprimitive = {
 				this._clockData.ticksSmall.destroy(gl);
 				this._clockData.ticksLarge.destroy(gl);
 				this._clockData.center.destroy(gl);
+				this._clockData.hand.destroy(gl);
 				this._clockData.body.destroy(gl);
 			}
 			this._clockData = { size : size, detail : detail };
@@ -625,6 +626,14 @@ glprimitive = {
 			o = new GLObject('clock_center');
 			this._clockData.center = o;
 			glprimitive.disk(o, size/16.0);
+
+			// Clock hand
+			o = new GLObject('clock_hand');
+			this._clockData.hand = o;
+			o.begin(GLObject.GL_LINES);
+				o.vertex(0, r2, 0.2);
+				o.vertex(0, 0, 0.2);
+			o.end()
 
 			o = new GLObject('clock_body');
 			this._clockData.body = o;
@@ -690,8 +699,6 @@ glprimitive = {
 			glprimitive.sphere(o, size/8.0, detail, detail);
 		}
 
-		gl.pushMatrix();
-
 		//The front face
 		gl.setDiffuseColor( 0.7, 0.7, 0.7 );
 		gl.setSpecularColor( 0.1, 0.1, 0.1 );
@@ -708,53 +715,40 @@ glprimitive = {
 		gl.draw(this._clockData.ticksLarge);
 		gl.lineWidth(1.0);
 
+		// Hands
+		var time = new Date();
+		var hour = time.getHours() % 12;
+		var min = time.getMinutes();
+		var sec = time.getSeconds();
+
+		gl.setDiffuseColor( 0.0, 0.0, 0.0 );
+		gl.setSpecularColor( 0.0, 0.0, 0.0 );
+		gl.setMaterialShininess( 1.0 );
+		gl.lineWidth(size/2);
+		//Min hand
+		gl.pushMatrix();
+			gl.rotate(0.0, 0.0, -6*min);
+			gl.draw(this._clockData.hand);
+		gl.popMatrix();
+		//Hour hand
+		gl.pushMatrix();
+			gl.rotate(0.0, 0.0, -30*hour);
+			gl.scale(0.9, 0.9, 0.9);
+			gl.translate(0.0, -0.5, 0.0);
+			gl.draw(this._clockData.hand);
+		gl.popMatrix();
+		gl.lineWidth(1.0);
+
 		//Circle in center
 		gl.translate(0.0, 0.0, 0.3);
 		gl.draw(this._clockData.center);
 		gl.translate(0.0, 0.0, -0.3);
 
+		//The body
 		gl.setDiffuseColor( 1.0, 1.0, 0.0 );
 		gl.setSpecularColor( 0.5, 0.5, 0.5 );
 		gl.setMaterialShininess( 15.0 );
-
 		gl.draw(this._clockData.body);
-
-		// Hands
-		/*
-		var time = new Date();
-		var min = time.getMinutes();
-		var hour = time.getHours() % 12;
-
-		gl.setDiffuseColor( 0.0, 0.0, 0.0 );
-		gl.setSpecularColor( 0.0, 0.0, 0.0 );
-		gl.setMaterialShininess( 1.0 );
-		//Min hand
-		var up = Math.sin(2 * min * Math.PI/60 + Math.PI/2.0);
-		var over = -Math.cos(2 * min * Math.PI/60 + Math.PI/2.0);
-		gl.lineWidth(size);
-		var lineObject = new GLObject('min_hand');
-		lineObject.begin(GLObject.GL_LINES);
-			lineObject.vertex(r2*over, r2*up, 0.2);
-			lineObject.vertex(0, 0, 0.2);
-		lineObject.end()
-		lineObject.draw(gl);
-		lineObject.destroy(gl);
-		//Hour hand
-		up = Math.sin(2 * hour * Math.PI/60 + Math.PI/2.0);
-		over = -Math.cos(2 * hour * Math.PI/60 + Math.PI/2.0);
-		r2 -= size/8.0 + size/16.0;
-		gl.lineWidth(2*size);
-		lineObject = new GLObject('hour_hand');
-		lineObject.begin(GLObject.GL_LINES);
-			lineObject.vertex(r2*over, r2*up, 0.2);
-			lineObject.vertex(0, 0, 0.2);
-		lineObject.end()
-		lineObject.draw(gl);
-		lineObject.destroy(gl);
-		gl.lineWidth(1);
-		*/
-
-		gl.popMatrix();
 	}
 };
 

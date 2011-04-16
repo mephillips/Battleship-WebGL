@@ -123,6 +123,10 @@ GLObject.prototype._updateNormal = function() {
 	this._nMatrix = new J3DIMatrix4(this._mvMatrix);
 	this._nMatrix.invert();
 	this._nMatrix.transpose();
+	//TODO:
+	var data = this._nMatrix.getAsArray();
+	data[3] = 0.0; data[7] = 0.0; data[11] = 0.0; data[15] = 0.0;
+	this._nMatrix.load(data);
 }
 /**
  * Generate vertex buffers for the data in this object.
