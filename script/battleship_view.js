@@ -24,6 +24,18 @@
  * THE SOFTWARE.
  */
 
+/** The depth of grid blocks */
+var BLOCK_DEPTH = 0.8;
+
+/** Length of wide part of a peg */
+var PEG_LEN_1 = BLOCK_DEPTH;
+/** Length of the skinny part of a peg */
+var PEG_LEN_2 = (BLOCK_DEPTH - 0.2);
+/** Diameter of the wide part of a peg */
+var PEG_DIAM_1 = 0.3;
+/** Diameter of the skinny part of a peg */
+var PEG_DIAM_2 = 0.15;
+
  /**
   * @namespace
   */
@@ -198,8 +210,11 @@ Battleship.View = {
 				glprimitive.mug(gl, 8.0, 15);
 			break;
 			case Battleship.Model.TEST_PEG:
+				gl.setDiffuseColor( 1.0, 1.0, 1.0 );
+				gl.setSpecularColor( 1.0, 1.0, 1.0 );
+				gl.setMaterialShininess( 1.0 );
 				gl.scale(4.0, 4.0, 4.0);
-				_drawPeg(gl);
+				this._drawPeg(gl);
 			break;
 			default:
 				if (!this.__disk) {
@@ -237,5 +252,20 @@ Battleship.View = {
 	},
 
 	_drawPeg : function(gl) {
+		if (!this._peg) {
+			var o = new GLObject('peg');
+			glprimitive.cylinder(o, PEG_DIAM_2, PEG_LEN_2);
+			o.translate(0.0, 0.0, PEG_LEN_2);
+			glprimitive.cylinder(o, PEG_DIAM_1, PEG_LEN_1);
+			o.translate(0.0, 0.0, PEG_LEN_1);
+			glprimitive.disk(o, PEG_DIAM_1);
+			o.translate(0.0, 0.0, -PEG_LEN_1);
+			o.rotate(0.0, 180.0, 0.0);
+			glprimitive.disk(o, PEG_DIAM_1);
+			o.translate(0.0, 0.0, PEG_LEN_2);
+			glprimitive.disk(o, PEG_DIAM_2);
+			this._peg = o;
+		}
+		gl.draw(this._peg);
 	}
 };

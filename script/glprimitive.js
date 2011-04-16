@@ -39,7 +39,7 @@
  */
 glprimitive = {
 	/** @private The default detail level */
-	_detail : 5,
+	_detail : 10,
 
 	/** @private Holds a refrence do dispaly objects used to draw the clock */
 	_clockData : null,
@@ -89,7 +89,6 @@ glprimitive = {
 	disk : function(o, radius, slices) {
 		slices = slices || this._detail;
 		if (slices < 1) { slices = 1; }
-		slices *= 10;
 
 		var i;
 
