@@ -759,8 +759,7 @@ Battleship.View = {
 		var p = {};
 		p.freq = 0.15;
 		p.pers = 0.65;
-		p.octaves = 4;
-		perlin.seed(Math.random());
+		p.octaves = 3;
 		//deterine density
 		var density;
 		switch (this._do_fog)
@@ -783,6 +782,8 @@ Battleship.View = {
 
 		var i, j;
 		var di = 0;
+		var start = new Date().getTime();
+		perlin.init(w, h);
 		for (i = 0; i < w; i++)
 		{
 			for (j = 0; j < h; j++)
@@ -796,6 +797,8 @@ Battleship.View = {
 				di += 4;
 			}
 		}
+		console.log(new Date().getTime() - start);
+		perlin.destroy();
 
 		if (this._fogTexture) {
 			gl.deleteTexture(this._fogTexture);

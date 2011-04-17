@@ -55,12 +55,8 @@ perlin = {
 	   when you always get the same results for the same values of x and y
 	*/
 	noise2D : function(x, y) {
-		var n;
-		n = this._seed * x + y * 57;
-		n = (n << 13) ^ n;
-		var res = (1.0 - ( (n * (n * n * 15731 + 789221)
-			+ 1376312589) & 0x7fffffff ) / 1073741824.0);
-		return res;
+		var index = x + y * this._randBuffer.width;
+		return this._randBuffer[index];
 	},
 
 	/** Performs linear interpolation
@@ -139,7 +135,7 @@ perlin = {
 
 		//find the four corners
 		var x0y0 = this.smooth2D(ix, iy);
-		var x0y1 = this.smooth2D(ix, iy+ 1);
+		var x0y1 = this.smooth2D(ix, iy + 1);
 		var x1y0 = this.smooth2D(ix + 1, iy);
 		var x1y1 = this.smooth2D(ix + 1, iy + 1);
 
@@ -152,9 +148,29 @@ perlin = {
 	},
 
 	/**
-	 * Seed the 'random' number generator used by the perlin noise generator
+	 * Call this function before using perlin2d.
+	 *
+	 * This function generates a random number table for use by perlin2d
+	 * and other perlin functions.
+	 *
+	 * @param width		The maxium x value that will be passed to perlin2d
+	 * @param height	The maxium y value that will be passed to perlin2d
+	 *
 	 */
-	seed : function(s) { this._seed = s; },
+	init : function(width, height) {
+		var size = width*height;
+		this._randBuffer = new Array(size);
+		this._randBuffer.width = width;
+		var i;
+		for (i = 0; i < size; ++i) {
+			this._randBuffer[i] = 1 - Math.random() * 2;
+		}
+	},
+
+	/**
+	 * Call this function to free resources allocated by init
+	 */
+	destroy : function() { this._randBuffer = null; },
 
 	perlin2d : function(param, x, y) {
 		var total = 0.0;
