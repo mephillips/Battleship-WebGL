@@ -60,20 +60,24 @@ Battleship.Model = {
 	FOG_HEAVY : 3,
 	FOG_REGEN : 4,
 
+	/** @private Used to enabled renering tests */
+	_do_test : null,
+	/** @private Debug value used to draw axis */
+	do_lines : false,
+	/** @private Used to disable/enable textrues */
+	do_textures : true,
+	/** @private Used to disable/enable fog */
+	do_fog : 1,
+	/** @private Used to disable/enable lystems */
+	do_lsystem : true,
+
+	game_lsys : { type : 3, length : 5 },
+
 	init : function() {
-		this._do_test = 0;
-	},
-
-	/**
-	 * Enable drawing test mode and draws the given test
-	 *
-	 * @param test	The test to draw
-	 */
-	set_test : function(test) { this._do_test = test; },
-
-	/**
-	 * Checks whether a drawing test is active.
-	 * @return	The active drawing test.
-	 */
-	get_test : function() { return this._do_test; },
+		this.do_test = 0;
+		this.do_lines = false;
+		this.do_textures = true;
+		this.do_fog = 1;
+		this.do_lsystem = true;
+	}
 };

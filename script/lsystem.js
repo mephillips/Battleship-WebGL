@@ -86,7 +86,7 @@ lsystem = {
 				"F[S0.5+++++++++x]-F[S0.4-----------Nx]S0.6x",
 				"F[A160S0.4x]F[A10S0.5x]x}" ],
 			depth : 9,
-			angle : 7
+			angle : 7,
 			len : 50
 		},
 		//Bush **
@@ -183,9 +183,11 @@ lsystem = {
 	 * @param w		The width
 	 * @param h		The height
 	 */
-	lsystem_test : function(id, len, w, h) {
-		var l = this._copyLsystem(this._tests[id]);
+	test : function(id, len, w, h) {
+		var l = this._copyLsystem(this._test[id]);
+		console.log('lsystem.test: ', id, len, w, h);
 		l.len += len;
+		console.log('lsystem.test: ', l);
 
 		var mode = this.LSYSTEM_COLOUR_NONE;
 		var colours = null;
@@ -198,39 +200,38 @@ lsystem = {
 				if (id === 2) {
 					mode = this.LSYSTEM_COLOUR_INLINE;
 				}
-				colours = {
-							BR, BG, BB,
+				colours = [
+							this._BR, this._BG, this._BB,
 							110, 70, 0,
-							15, 130, 10 };
+							15, 130, 10 ];
 				num_colours = 2;
 			break;
 			case 3:
 				mode = this.LSYSTEM_COLOUR_LINE;
-				colours = {
-							BR, BG, BB,
+				colours = [
+							this._BR, this._BG, this._BB,
 							150, 0, 150,
 							0, 0, 240,
 							180, 0, 40,
 							0, 0, 240,
 							150, 0, 150,
 							0, 0, 240,
-							150, 0, 150 };
+							150, 0, 150 ];
 				num_colours = 7;
 			break;
 			case 4:
 				mode = this.LSYSTEM_COLOUR_LINE;
-				colours = {
-							BR, BG, BB,
-							0, 0, 0 };
-				colours = c4;
+				colours = [
+							this._BR, this._BG, this._BB,
+							0, 0, 0 ];
 				num_colours = 2;
 				if (id === 4) { num_colours = 1 };
 			break;
 			case 5:
 			case 6:
 				mode = this.LSYSTEM_COLOUR_INLINE;
-				colours = {
-							BR, BG, BB,
+				colours = [
+							this._BR, this._BG, this._BB,
 							0, 0, 240,
 							0, 0, 240,
 							0, 0, 240,
@@ -242,15 +243,15 @@ lsystem = {
 							140, 0, 140,
 							180, 0, 40,
 							180, 0, 40,
-							180, 0, 40 };
+							180, 0, 40 ];
 				num_colours = 9;
 			break;
 			case 7:
 				mode = this.LSYSTEM_COLOUR_LINE;
-				colours = {
-							BR, BG, BB,
+				colours = [
+							this._BR, this._BG, this._BB,
 							240, 0, 0,
-							205, 205, 0 };
+							205, 205, 0 ];
 				num_colours = 2;
 				if (id == 4) { num_colours = 1; }
 			break;
@@ -268,11 +269,12 @@ lsystem = {
 		ls2.depth = ls1.depth;
 		ls2.angle = ls1.angle;
 		ls2.len = ls1.len;
-		ls2.productions = new Array(ls1.roductions.length);
+		ls2.productions = new Array(ls1.productions.length);
 		var i;
 		for(i = 0; i < ls1.productions.length; ++i) {
-			ls2.productions.push(ls1.productions[i]);
+			ls2.productions[i] = ls1.productions[i];
 		}
+		return ls2;
 	},
 
 	_draw_colour : function(l, w, h, cm, colours, num_colours) {
@@ -286,11 +288,11 @@ lsystem = {
 			background[2] = colours.shift();
 		}
 		var i = 0;
-		for (i = 0; i < w*h; i++)
+		for (i = 0; i < w*h; ++i)
 		{
-			d[i] = background[0];
-			d[i + 1] = background[1];
-			d[i + 2] = background[2];
+			data[i] = background[0];
+			data[i + 1] = background[1];
+			data[i + 2] = background[2];
 		}
 
 		var state = {};
@@ -304,11 +306,12 @@ lsystem = {
 		state.lsys = l;
 		state.angle = 0.0;
 		state.len = l.len;
-		state.str = l.axiom;
+		state.str = l.axium;
 
 		state.colour_mode = cm;
 		state.colour_list = colours;
 		state.ci = 0;
+		state.colour = new Array(3);
 		if (colours)
 		{
 			state.colour[0] = colours[0];
@@ -325,6 +328,7 @@ lsystem = {
 
 		state.data = data;
 
+		console.log('lsystem._draw_colour: ', state);
 		this._draw_r(state);
 
 		return data;
@@ -356,7 +360,7 @@ lsystem = {
 				if (search_i != -1)
 				{
 					//replace current string with proposition
-					char *temp = state.str;
+					var temp = state.str;
 					state.str = state.lsys.productions[search_i];
 
 					//process the new string
@@ -375,27 +379,27 @@ lsystem = {
 			//was not substituted then process it
 			switch (c[ci])
 			{
-				case LSYSTEM_LINE :
+				case this.LSYSTEM_LINE :
 					this._draw_line(state);
 				break;
-				case LSYSTEM_MOVE :
+				case this.LSYSTEM_MOVE :
 					var d = this._find_slope(state);
 					state.x += d.dx;
 					state.y += d.dy;
 				break;
-				case LSYSTEM_ROTATE_P :
+				case this.LSYSTEM_ROTATE_P :
 					state.angle += state.lsys.angle*negate;
 				break;
-				case LSYSTEM_ROTATE_N :
+				case this.LSYSTEM_ROTATE_N :
 					state.angle -= state.lsys.angle*negate;
 				break;
-				case LSYSTEM_SAVE:
+				case this.LSYSTEM_SAVE:
 					//copy current state
-					var new_state this._copyLsystemState(state);
+					var new_state = this._copyLsystemState(state);
 					new_state.str = c.substring(ci + 1);
 
 					//call recursive
-					this._draw_r(&new_state);
+					this._draw_r(new_state);
 
 					//advance past save area
 					var search_i = new_state.str.indexOf(this.LSYSTEM_RESTORE);
@@ -405,12 +409,12 @@ lsystem = {
 						console.log("Missing close of save state at: %i\n", ci);
 					}
 				break;
-				case LSYSTEM_RESTORE :
+				case this.LSYSTEM_RESTORE :
 					done = true;
 				break;
-				case LSYSTEM_ANGLE :
+				case this.LSYSTEM_ANGLE :
 					angle = true;
-				case LSYSTEM_SCALE :
+				case this.LSYSTEM_SCALE :
 					++ci;
 
 					var numStr = "";
@@ -429,10 +433,10 @@ lsystem = {
 						console.log("Invaild number at: %s\n", ci);
 					}
 				break;
-				case LSYSTEM_REVERSE :
+				case this.LSYSTEM_REVERSE :
 					negate *= -1;
 				break;
-				case LSYSTEM_COLOUR :
+				case this.LSYSTEM_COLOUR :
 					if (state.colour_mode === this.LSYSTEM_COLOUR_INLINE) {
 						state.ci = (state.ci + 1) % state.num_colours;
 						state.colour[0] = state.colour_list[state.ci * 3];
@@ -440,22 +444,22 @@ lsystem = {
 						state.colour[2] = state.colour_list[state.ci * 3 + 2];
 					}
 				break;
-				case LSYSTEM_TOP :
+				case this.LSYSTEM_TOP :
 					state.y = state.h - 1;
 				break;
-				case LSYSTEM_BOTTOM :
+				case this.LSYSTEM_BOTTOM :
 					state.y = 0;
 				break;
-				case LSYSTEM_LEFT :
+				case this.LSYSTEM_LEFT :
 					state.x = 0;
 				break;
-				case LSYSTEM_RIGHT :
+				case this.LSYSTEM_RIGHT :
 					state.x = state.w - 1;
 				break;
-				case LSYSTEM_CENTER_H :
+				case this.LSYSTEM_CENTER_H :
 					state.x = state.w/2;
 				break;
-				case LSYSTEM_CENTER_V :
+				case this.LSYSTEM_CENTER_V :
 					state.y = state.h/2;
 				break;
 				default : break;
@@ -483,24 +487,23 @@ lsystem = {
 		ls2.num_colours = ls1.num_colours;
 		ls2.ci = ls1.ci;
 		ls2.data = ls1.data;
+		return ls2;
 	},
 
 	/** Finds the x and y component of the current line slope
 	 *  @param state The lsystem
 	 *  @return An object { dx, dy }
 	 */
-	_find_slope : function(state)
-	{
+	_find_slope : function(state) {
 		var dx = Math.round(state.len*Math.cos(state.angle*Math.PI/180.0));
 		var dy = Math.round(state.len*Math.sin(state.angle*Math.PI/180.0));
 		return { dx : dx, dy : dy };
-	}
+	},
 
 	/** Fills in a pixel
 	 *  @param state The lsystem
 	 */
-	_draw_pixel : function(state)
-	{
+	_draw_pixel : function(state) {
 		if (state.x < state.w && state.y < state.h)
 		{
 			state.data[(state.y*state.w + state.x)*3] = state.colour[0];
@@ -512,8 +515,7 @@ lsystem = {
 	/** Draws a line
 	 *  @param state The lsystem
 	 */
-	_draw_line : (state)
-	{
+	_draw_line : function(state) {
 		var slope = this._find_slope(state);
 		var dx = slope.dx;
 		var dy = slope.dy;
@@ -523,8 +525,12 @@ lsystem = {
 		var y1 = state.y + dy;
 
 		//lope is greater than 1 move on y instead of x
+		var x, y;
 		if (Math.abs(dy) > Math.abs(dx))
 		{
+			x = 'y';
+			y = 'x';
+
 			var temp = x1;
 			x1 = y1;
 			y1 = temp;
@@ -532,6 +538,9 @@ lsystem = {
 			var temp2 = dx;
 			dx = dy;
 			dy = temp2;
+		} else {
+			x = 'x';
+			y = 'y';
 		}
 
 		//deal with negative slopes
@@ -546,7 +555,7 @@ lsystem = {
 		var e = 0;
 		var de = dy;
 
-		if (state.colour_mode == LSYSTEM_COLOUR_LINE)
+		if (state.colour_mode == this.LSYSTEM_COLOUR_LINE)
 		{
 			state.ci = (state.ci + 1) % state.num_colours;
 			state.colour[0] = state.colour_list[state.ci * 3];
@@ -554,15 +563,15 @@ lsystem = {
 			state.colour[2] = state.colour_list[state.ci * 3 + 2];
 		}
 
-		while (state.x != x1)
+		while (state[x] != x1)
 		{
 			this._draw_pixel(state);
-			state.x += xstep;
+			state[x] += xstep;
 
 			e += de;
 			if (e << 1 >= dx)
 			{
-				state.y += ystep;
+				state[y] += ystep;
 				e -= dx;
 			}
 		}

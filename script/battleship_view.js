@@ -58,6 +58,12 @@ var SHIP_HULL_DIAM = 0.15;
 /** The height of a ships deck */
 var SHIP_DECK_HEIGHT = 0.2;
 
+/** The size of the room width/depth the game is being played in */
+var ROOM_DIM = 60;
+
+/** The size of the room height the game is being played in */
+var ROOM_HEIGHT = 55;
+
 /** The height of the fog cube */
 var FOG_HEIGHT = PEG_LEN_2;
 
@@ -70,12 +76,6 @@ Battleship.View = {
 	/** @private The last recorded height of the canvas */
 	_height : null,
 
-	/** @private Debug value used to draw axis */
-	_do_test : 'None',
-	_do_lines : false,
-	_do_textures : true,
-	_do_fog : 1,
-
 	/** @private Colour values for White */
 	_diff_w : [ 1.0, 1.0, 1.0 ],
 	_spec_w : [ 0.1, 0.1, 0.1 ],
@@ -85,6 +85,28 @@ Battleship.View = {
 	_diff_ship : [0.5, 0.5, 0.5],
 	_spec_ship : [0.1, 0.1, 0.1],
 	_shinny_ship : 1,
+
+	/** Display objects */
+	_lines : null,
+	_wall : null,
+	_fog : null,
+	_grid : null,
+	_peg : null,
+	_carrier : null,
+	_battleship : null,
+	_destroyer : null,
+	_sub : null,
+	_ptBoat : null,
+
+	/** Textures */
+	_fogTexture : null,
+	_lsysTexture : null,
+
+	/** State */
+	/** @private The value of do_fog used to generat the current texture */
+	_fogType : null,
+	/** @private The value of game_lsys used to generat the current lsys tex */
+	_lastLsys : null,
 
 	init : function() {
 		this._curr_menu = null;
@@ -227,7 +249,7 @@ Battleship.View = {
 			this._drawLines(gl);
 		}
 
-		switch (Battleship.Model.get_test())
+		switch (Battleship.Model.do_test)
 		{
 			case Battleship.Model.TEST_PRIMITIVE:
 				glprimitive.test(gl, 4.0, 15);
@@ -260,6 +282,11 @@ Battleship.View = {
 				gl.translate(0.0, -5.0, 15.0);
 				this._drawGrid(gl);
 				this._drawFog(gl);
+			break;
+			case Battleship.Model.TEST_LSYSTEM:
+				gl.rotate(0.0, 180, 0.0);
+				gl.translate(0.0, 0.0, 40);
+				this._drawWall(gl);
 			break;
 			default:
 				if (!this.__disk) {
@@ -662,7 +689,7 @@ Battleship.View = {
 	},
 
 	_drawFog : function(gl) {
-		if (this._do_fog === Battleship.Model.FOG_OFF) { return; }
+		if (Battleship.Model.do_fog === Battleship.Model.FOG_OFF) { return; }
 
 		var d = GRID_DIM*BLOCK_REAL_DIM;
 		var s = 1.0/(d + 2.0*FOG_HEIGHT);
@@ -728,7 +755,7 @@ Battleship.View = {
 		gl.setDiffuseColor( this._diff_w );
 		gl.setSpecularColor( this._spec_w );
 		gl.setMaterialShininess( this._shinny_w );
-		if (this._do_textures) {
+		if (Battleship.Model.do_textures) {
 			//Generate (if needed)
 			this._generateFog(gl);
 
@@ -736,19 +763,69 @@ Battleship.View = {
 			gl.bindTexture(gl.TEXTURE_2D, this._fogTexture);
 		}
 		gl.draw(this._fog);
-		if (this._do_textures) {
+		if (Battleship.Model.do_textures) {
 			gl.uniform1i(gl.useTexturesUniform, false);
 			gl.bindTexture(gl.TEXTURE_2D, null);
 		}
 	},
 
-	_generateFog : function(gl) {
-		if (this._fogType === this._do_fog) { return; }
+	_drawWall : function(gl) {
+		if (!this._wall) {
+			var o = new GLObject('wall');
+			this._wall = o;
 
-		if (this._do_fog === Battleship.Model.FOG_REGEN) {
-			this._do_fog = this._fogType;
+			o.pushMatrix();
+				o.translate(0.0, 0.0, ROOM_DIM/2.0);
+				o.begin(GLObject.GL_QUADS);
+					o.setNormal(0.0, 0.0, -1.0);
+					o.setTexCoord(1.0, 0.0);
+					o.vertex(-ROOM_DIM/2.0, -ROOM_HEIGHT/2.0, 0.0);
+					o.setTexCoord(0.0, 0.0);
+					o.vertex(ROOM_DIM/2.0, -ROOM_HEIGHT/2.0, 0.0);
+					o.setTexCoord(0.0, 1.0);
+					o.vertex(ROOM_DIM/2.0, ROOM_HEIGHT/2.0, 0.0);
+					o.setTexCoord(1.0, 1.0);
+					o.vertex(-ROOM_DIM/2.0, ROOM_HEIGHT/2.0, 0.0);
+				o.end();
+			o.popMatrix();
+		}
+
+		if (Battleship.Model.do_textures && Battleship.Model.do_lsystem) {
+			//Generate (if needed)
+			this._generateLsystem(gl);
+
+			gl.uniform1i(gl.useTexturesUniform, true);
+			gl.bindTexture(gl.TEXTURE_2D, this._lsysTexture);
+		}
+		gl.draw(this._wall);
+		if (Battleship.Model.do_textures && Battleship.Model.do_lsystem) {
+			gl.uniform1i(gl.useTexturesUniform, false);
+			gl.bindTexture(gl.TEXTURE_2D, null);
+		}
+	},
+
+	_generateLsystem : function(gl) {
+		var lsys = Battleship.Model.game_lsys;
+		if (this._lastLsys && this._lastLsys.type === lsys.type && this._lastLsys.length === lsys.length) { return; }
+
+		var w = 512;
+		var h = 512;
+		var data = lsystem.test(lsys.type, lsys.length, w, h);
+		this._lastLsys = { type : lsys.type, length : lsys.length };
+
+		if (this._lsysTextureTexture) {
+			gl.deleteTexture(this._lsysTexture);
+		}
+		this._lsysTexture = gl.loadTextureData(data, w, h, false);
+	},
+
+	_generateFog : function(gl) {
+		if (this._fogType === Battleship.Model.do_fog) { return; }
+
+		if (Battleship.Model.do_fog === Battleship.Model.FOG_REGEN) {
+			Battleship.Model.do_fog = this._fogType;
 		} else {
-			this._fogType = this._do_fog;
+			this._fogType = Battleship.Model.do_fog;
 		}
 
 		var w = 128;
@@ -762,7 +839,7 @@ Battleship.View = {
 		p.octaves = 3;
 		//deterine density
 		var density;
-		switch (this._do_fog)
+		switch (Battleship.Model.do_fog)
 		{
 			case Battleship.Model.FOG_REGEN:
 			case Battleship.Model.FOG_OFF:
@@ -797,7 +874,7 @@ Battleship.View = {
 				di += 4;
 			}
 		}
-		console.log(new Date().getTime() - start);
+		console.log("Generate fog: %ims", new Date().getTime() - start);
 		perlin.destroy();
 
 		if (this._fogTexture) {

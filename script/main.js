@@ -100,7 +100,7 @@ Battleship = {
 
 		// Game parameters
 		var do_test = this._getQueryArg('do_test', 'None');
-		Battleship.Model.set_test(do_test);
+		Battleship.Model.do_test = do_test;
 		var do_lines = (this._getQueryArg('do_lines', 'false') === 'true');
 		Battleship.View._do_lines = do_lines;
 
