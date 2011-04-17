@@ -185,9 +185,7 @@ lsystem = {
 	 */
 	test : function(id, len, w, h) {
 		var l = this._copyLsystem(this._test[id]);
-		console.log('lsystem.test: ', id, len, w, h);
 		l.len += len;
-		console.log('lsystem.test: ', l);
 
 		var mode = this.LSYSTEM_COLOUR_NONE;
 		var colours = null;
@@ -253,7 +251,7 @@ lsystem = {
 							240, 0, 0,
 							205, 205, 0 ];
 				num_colours = 2;
-				if (id == 4) { num_colours = 1; }
+				if (id === 4) { num_colours = 1; }
 			break;
 		}
 		return this._draw_colour(l, w, h, mode, colours, num_colours);
@@ -278,7 +276,8 @@ lsystem = {
 	},
 
 	_draw_colour : function(l, w, h, cm, colours, num_colours) {
-		var data = new Array(w * h * 3);
+		var dataSize = w * h * 3;
+		var data = new Array(dataSize);
 
 		var background = [255, 255, 255];
 		if (colours)
@@ -288,7 +287,7 @@ lsystem = {
 			background[2] = colours.shift();
 		}
 		var i = 0;
-		for (i = 0; i < w*h; ++i)
+		for (i = 0; i < dataSize; i+=3)
 		{
 			data[i] = background[0];
 			data[i + 1] = background[1];
@@ -328,16 +327,16 @@ lsystem = {
 
 		state.data = data;
 
-		console.log('lsystem._draw_colour: ', state);
 		this._draw_r(state);
 
 		return data;
 	},
 
 	_draw_r : function(state) {
+		//console.log('lsystem._draw_r: %s %i', state.str, state.depth);
 		if (state.colour_mode === this.LSYSTEM_COLOUR_DEPTH)
 		{
-			state.ci = state.depth*(state.num_colours/(state.lsys.depth + 1.0));
+			state.ci = Math.floor(state.depth*(state.num_colours/(state.lsys.depth + 1)));
 			state.colour[0] = state.colour_list[state.ci * 3 + 0];
 			state.colour[1] = state.colour_list[state.ci * 3 + 1];
 			state.colour[2] = state.colour_list[state.ci * 3 + 2];
@@ -357,11 +356,13 @@ lsystem = {
 			{
 				//see if this character has a substitution
 				search_i = state.lsys.vars.indexOf(c[ci]);
-				if (search_i != -1)
+				if (search_i !== -1)
 				{
 					//replace current string with proposition
 					var temp = state.str;
 					state.str = state.lsys.productions[search_i];
+
+					//console.log('lsystem._draw_r: substitue %s', c[ci]);
 
 					//process the new string
 					++state.depth;
@@ -398,13 +399,16 @@ lsystem = {
 					var new_state = this._copyLsystemState(state);
 					new_state.str = c.substring(ci + 1);
 
+
 					//call recursive
+					//console.log('lsystem._draw_r: save');
 					this._draw_r(new_state);
 
 					//advance past save area
-					var search_i = new_state.str.indexOf(this.LSYSTEM_RESTORE);
-					if (search_i != -1) {
+					var search_i = c.indexOf(this.LSYSTEM_RESTORE, ci);
+					if (search_i !== -1) {
 						ci = search_i;
+						//console.log('lsystem._draw_r: save done %s', c.substring(ci+1));
 					} else {
 						console.log("Missing close of save state at: %i\n", ci);
 					}
@@ -422,13 +426,14 @@ lsystem = {
 						numStr += c[ci];
 						++ci;
 					}
+					--ci;
 					var amount = parseFloat(numStr);
 					if (!isNaN(amount)) {
-						if (angle)
+						if (angle) {
 							state.angle = amount;
-						else
+						} else {
 							state.len *= amount;
-						//advance pointer to end of number
+						}
 					} else {
 						console.log("Invaild number at: %s\n", ci);
 					}
@@ -555,7 +560,7 @@ lsystem = {
 		var e = 0;
 		var de = dy;
 
-		if (state.colour_mode == this.LSYSTEM_COLOUR_LINE)
+		if (state.colour_mode === this.LSYSTEM_COLOUR_LINE)
 		{
 			state.ci = (state.ci + 1) % state.num_colours;
 			state.colour[0] = state.colour_list[state.ci * 3];

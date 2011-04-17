@@ -71,7 +71,7 @@ Battleship.Model = {
 	/** @private Used to disable/enable lystems */
 	do_lsystem : true,
 
-	game_lsys : { type : 3, length : 5 },
+	game_lsys : { type : 0, length : 1 },
 
 	init : function() {
 		this.do_test = 0;

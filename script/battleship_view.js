@@ -810,7 +810,9 @@ Battleship.View = {
 
 		var w = 512;
 		var h = 512;
+		var start = new Date().getTime();
 		var data = lsystem.test(lsys.type, lsys.length, w, h);
+		console.log("Generate lsystem: %ims", new Date().getTime() - start);
 		this._lastLsys = { type : lsys.type, length : lsys.length };
 
 		if (this._lsysTextureTexture) {
