@@ -59,6 +59,7 @@ webgl_ext = {
 
 		// Add methods
 		gl.loadImageTexture = this.loadImageTexture;
+		gl.loadTextureData = this.loadTextureData;
 		gl.setMatrixUniforms = this.setMatrixUniforms;
 		gl.setPerspective = this.setPerspective;
 		gl.identity = this.identity;
@@ -187,6 +188,52 @@ webgl_ext = {
 	},
 	setFragmentColor : function(x, y, z, a) {
 		this.uniform4f(this.fragmentColorUniform, x, y, z, a);
+	},
+
+	/**
+	 * Create a new WebGLTexture using the image data provided
+	 *
+	 * @param data	An array containg pixel data
+	 * @param w		The width of the data
+	 * @param h		The height of the data
+	 * @param alpha	Whether the data contains an alpha channel
+	 *
+	 */
+	loadTextureData : function(data, w, h, alpha) {
+		var texture = this.createTexture();
+		var gl = this;
+
+		gl.bindTexture(gl.TEXTURE_2D, texture);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+		if (alpha) {
+			gl.texImage2D(
+				gl.TEXTURE_2D,	// target
+				0,				// level
+				gl.RGBA,		// internal format
+				w, h,			// with, height
+				0,				// border
+				gl.RGBA,		// format
+				gl.UNSIGNED_BYTE, // type
+				new Uint8Array(data) );
+		} else {
+			gl.texImage2D(
+				gl.TEXTURE_2D,	// target
+				0,				// level
+				gl.RGB,			// internal format
+				w, h,			// with, height
+				0,				// border
+				gl.RGB,			// format
+				gl.UNSIGNED_BYTE, // type
+				new Uint8Array(data) );
+		}
+
+		gl.bindTexture(gl.TEXTURE_2D, null);
+
+		return texture;
 	},
 
 	/**

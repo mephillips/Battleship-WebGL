@@ -53,6 +53,13 @@ Battleship.Model = {
 
 	MAX_SHIP_LEN : 5,
 
+	NUM_FOG_TYPES : 4,
+	FOG_OFF : 0,
+	FOG_LIGHT : 1,
+	FOG_MEDIUM : 2,
+	FOG_HEAVY : 3,
+	FOG_REGEN : 4,
+
 	init : function() {
 		this._do_test = 0;
 	},

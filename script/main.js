@@ -78,8 +78,7 @@ Battleship = {
 	 *  This fuction causes the window to redraw.
 	 *
 	 */
-	view_refresh : function() {
-	},
+	view_refresh : function() {},
 
 	main : function() {
 		var canvas = document.getElementById('battleship');
@@ -98,7 +97,6 @@ Battleship = {
 
 		// Setup implementation specific methods
 		Battleship.View.refresh = this.view_refresh;
-		Battleship.View.set_context(gl, canvas);
 
 		// Game parameters
 		var do_test = this._getQueryArg('do_test', 'None');
@@ -110,7 +108,7 @@ Battleship = {
 
 		var animateLoop = function() {
 			try {
-				Battleship.View.draw();
+				Battleship.View.draw(gl, canvas.width, canvas.height);
 				window.requestAnimFrame(animateLoop, canvas);
 			} catch (e) {
 				console.log('animateLoop', e);

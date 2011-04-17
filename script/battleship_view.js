@@ -24,6 +24,15 @@
  * THE SOFTWARE.
  */
 
+/** How far up on the board to draw the vertical grid */
+var GRID_TOP_Y = 2.0;  	// - For the normal on the diagonl stuff. This 
+/** How far out fromt he origin to draw the vertical gird */
+var GRID_TOP_Z = 0.5;
+/** How far up on the board to draw the horizontal grid */
+var GRID_BOTTOM_Y = -1.5;
+/** How far out fromt he origin to draw the horizonal gird */
+var GRID_BOTTOM_Z = 2.0;  	// - And this should be equal
+
 /** The depth of grid blocks */
 var BLOCK_DEPTH = 0.8;
 /** The heigh/width of grid blocks */
@@ -49,21 +58,23 @@ var SHIP_HULL_DIAM = 0.15;
 /** The height of a ships deck */
 var SHIP_DECK_HEIGHT = 0.2;
 
+/** The height of the fog cube */
+var FOG_HEIGHT = PEG_LEN_2;
+
  /**
   * @namespace
   */
 Battleship.View = {
-	/** @private A reference to the Canvas DOM element. */
-	_canvas : null,
-	/** @private The WegGL context used for rendering */
-	_gl : null,
 	/** @private The last recorded width of the canvas */
 	_width : null,
 	/** @private The last recorded height of the canvas */
 	_height : null,
 
 	/** @private Debug value used to draw axis */
+	_do_test : 'None',
 	_do_lines : false,
+	_do_textures : true,
+	_do_fog : 1,
 
 	/** @private Colour values for White */
 	_diff_w : [ 1.0, 1.0, 1.0 ],
@@ -83,17 +94,6 @@ Battleship.View = {
 		this._gameRotate = [ 0, 0, 0 ];
 	},
 
-	/**
-	 * Provides the graphics context and canvas to the view
-	 *
-	 * @param gl		A webgl graphics context
-	 * @param canvas	A canvas DOM element
-	 */
-	set_context : function(gl, canvas) {
-		this._gl = gl;
-		this._canvas = canvas;
-	},
-
 	/** Gets the current size of the window
 	 *
 	 *  Used in some places by the game logic.
@@ -101,7 +101,7 @@ Battleship.View = {
 	 *  @return	An object { width, height }
 	 */
 	getsize : function() {
-		return { width : this._canvas.width, height : this._canvas.height };
+		return { width : this._width, height : this._height };
 	},
 
 	/** Translates the view
@@ -176,15 +176,15 @@ Battleship.View = {
 		}
 	},
 
-	set_perspective : function(gl) {
-		if (this._canvas.width !== this._width && this._canvas.height !== this._height) {
+	set_perspective : function(gl, width, height) {
+		if (width !== this._width && height !== this._height) {
 
-			this._width = this._canvas.width;
-			this._height = this._canvas.height;
+			this._width = width;
+			this._height = height;
 
 			// Set the viewport and projection matrix for the scene
-			gl.viewport(0, 0, this._width, this._height);
-			gl.setPerspective(30, this._width/this._height, 30.0, 500);
+			gl.viewport(0, 0, width, height);
+			gl.setPerspective(30, width/height, 30.0, 500);
 		}
 
 		gl.clearColor(0.0, 0.0, 0.4, 1.0);
@@ -206,10 +206,8 @@ Battleship.View = {
 		gl.translate(0, 0, -50);
 	},
 
-	draw : function() {
-		var gl = this._gl;
-
-		this.set_perspective(gl);
+	draw : function(gl, width, height) {
+		this.set_perspective(gl, width, height);
 
 		// Translation
 		if (!this._curr_menu)
@@ -249,6 +247,7 @@ Battleship.View = {
 				gl.rotate(30, 0, 0);
 				gl.translate(0.0, 2, -3);
 				this._drawShips(gl);
+				gl.translate(0.0, GRID_BOTTOM_Y, -GRID_TOP_Z + GRID_BOTTOM_Z);
 				gl.rotate(90, 0, 0);
 				gl.rotate(0, 180, 0);
 				this._drawGrid(gl);
@@ -258,6 +257,9 @@ Battleship.View = {
 				glfont.test(gl, 3, 0, 0);
 			break;
 			case Battleship.Model.TEST_FOG:
+				gl.translate(0.0, -5.0, 15.0);
+				this._drawGrid(gl);
+				this._drawFog(gl);
 			break;
 			default:
 				if (!this.__disk) {
@@ -659,4 +661,145 @@ Battleship.View = {
 		}
 	},
 
+	_drawFog : function(gl) {
+		if (this._do_fog === Battleship.Model.FOG_OFF) { return; }
+
+		var d = GRID_DIM*BLOCK_REAL_DIM;
+		var s = 1.0/(d + 2.0*FOG_HEIGHT);
+
+		if (!this._fog) {
+			var o = new GLObject('fog');
+			this._fog = o;
+
+			o.begin(GLObject.GL_QUADS);
+				//Top
+				o.setNormal(0.0, 0.0, 1.0);
+				o.setTexCoord(FOG_HEIGHT*s, FOG_HEIGHT*s);
+				o.vertex(d/2.0, 0.0, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				o.setTexCoord(FOG_HEIGHT*s, (FOG_HEIGHT + d)*s);
+				o.vertex(d/2.0, d, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				o.setTexCoord((FOG_HEIGHT+d)*s, (FOG_HEIGHT + d)*s);
+				o.vertex(-d/2.0, d, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				o.setTexCoord((FOG_HEIGHT+d)*s, FOG_HEIGHT*s);
+				o.vertex(-d/2.0, 0.0, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				//Left
+				o.setNormal(1.0, 0.0, 0.0);
+				o.setTexCoord(FOG_HEIGHT*s, FOG_HEIGHT*s);
+				o.vertex(d/2.0, 0.0, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				o.setTexCoord(0, FOG_HEIGHT*s);
+				o.vertex(d/2.0, 0.0, BLOCK_DEPTH/2.0);
+				o.setTexCoord(0, (FOG_HEIGHT + d)*s);
+				o.vertex(d/2.0, d, BLOCK_DEPTH/2.0);
+				o.setTexCoord(FOG_HEIGHT*s, (FOG_HEIGHT+d)*s);
+				o.vertex(d/2.0, d, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				//Right
+				o.setNormal(-1.0, 0.0, 0.0);
+				o.setTexCoord((FOG_HEIGHT + d)*s, FOG_HEIGHT*s);
+				o.vertex(-d/2.0, 0.0, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				o.setTexCoord((FOG_HEIGHT + d)*s, (FOG_HEIGHT + d)*s);
+				o.vertex(-d/2.0, d, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				o.setTexCoord(1, (FOG_HEIGHT+d)*s);
+				o.vertex(-d/2.0, d, BLOCK_DEPTH/2.0);
+				o.setTexCoord(1, FOG_HEIGHT*s);
+				o.vertex(-d/2.0, 0.0, BLOCK_DEPTH/2.0);
+				//Back
+				o.setNormal(0.0, -1.0, 0.0);
+				o.setTexCoord((FOG_HEIGHT + d)*s, 0);
+				o.vertex(-d/2.0, 0.0, BLOCK_DEPTH/2.0);
+				o.setTexCoord(FOG_HEIGHT*s, 0);
+				o.vertex(d/2.0, 0.0, BLOCK_DEPTH/2.0);
+				o.setTexCoord(FOG_HEIGHT*s, FOG_HEIGHT*s);
+				o.vertex(d/2.0, 0.0, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				o.setTexCoord((FOG_HEIGHT + d)*s, FOG_HEIGHT*s);
+				o.vertex(-d/2.0, 0.0, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				//Front
+				o.setNormal(0.0, 1.0, 0.0);
+				o.setTexCoord(FOG_HEIGHT*s, (FOG_HEIGHT + d)*s);
+				o.vertex(d/2.0, d, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+				o.setTexCoord(FOG_HEIGHT*s, 1);
+				o.vertex(d/2.0, d, BLOCK_DEPTH/2.0);
+				o.setTexCoord((FOG_HEIGHT + d)*s, 1);
+				o.vertex(-d/2.0, d, BLOCK_DEPTH/2.0);
+				o.setTexCoord((FOG_HEIGHT + d)*s, (FOG_HEIGHT+d)*s);
+				o.vertex(-d/2.0, d, FOG_HEIGHT + BLOCK_DEPTH/2.0);
+			o.end();
+		}
+
+		gl.setDiffuseColor( this._diff_w );
+		gl.setSpecularColor( this._spec_w );
+		gl.setMaterialShininess( this._shinny_w );
+		if (this._do_textures) {
+			//Generate (if needed)
+			this._generateFog(gl);
+
+			gl.uniform1i(gl.useTexturesUniform, true);
+			gl.bindTexture(gl.TEXTURE_2D, this._fogTexture);
+		}
+		gl.draw(this._fog);
+		if (this._do_textures) {
+			gl.uniform1i(gl.useTexturesUniform, false);
+			gl.bindTexture(gl.TEXTURE_2D, null);
+		}
+	},
+
+	_generateFog : function(gl) {
+		if (this._fogType === this._do_fog) { return; }
+
+		if (this._do_fog === Battleship.Model.FOG_REGEN) {
+			this._do_fog = this._fogType;
+		} else {
+			this._fogType = this._do_fog;
+		}
+
+		var w = 128;
+		var h = 128;
+		var data = new Array(w*h*4);
+
+		//ready perlin
+		var p = {};
+		p.freq = 0.15;
+		p.pers = 0.65;
+		p.octaves = 4;
+		perlin.seed(Math.random());
+		//deterine density
+		var density;
+		switch (this._do_fog)
+		{
+			case Battleship.Model.FOG_REGEN:
+			case Battleship.Model.FOG_OFF:
+				density = 0.0;
+			break;
+			case Battleship.Model.FOG_LIGHT:
+				density = 255.0;
+			break;
+			case Battleship.Model.FOG_MEDIUM:
+				density = 200.0;
+			break;
+			case Battleship.Model.FOG_HEAVY:
+				density = 125.0;
+				p.freq = 0.15;
+			break;
+		}
+
+		var i, j;
+		var di = 0;
+		for (i = 0; i < w; i++)
+		{
+			for (j = 0; j < h; j++)
+			{
+				var val = perlin.perlin2d(p, i, j);
+				var n = Math.floor((val + 1.0)/2.0*density);
+				data[di + 0] = 200;
+				data[di + 1] = 200;
+				data[di + 2] = 200;
+				data[di + 3] = 255 - n;
+				di += 4;
+			}
+		}
+
+		if (this._fogTexture) {
+			gl.deleteTexture(this._fogTexture);
+		}
+		this._fogTexture = gl.loadTextureData(data, w, h, true);
+	}
 };
