@@ -1,8 +1,4 @@
-/**
- * @fileOverview
- *
- * Contains rendering portion of the Battleship game.
- *
+/*
  * Copyright (C) 2011 by Matthew Phillips
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,9 +19,15 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+/**
+ * @fileOverview
+ *
+ * Contains rendering portion of the Battleship game.
+ *
+ */
 
 /** How far up on the board to draw the vertical grid */
-var GRID_TOP_Y = 2.0;  	// - For the normal on the diagonl stuff. This 
+var GRID_TOP_Y = 2.0;  	// - For the normal on the diagonl stuff. This
 /** How far out fromt he origin to draw the vertical gird */
 var GRID_TOP_Z = 0.5;
 /** How far up on the board to draw the horizontal grid */
@@ -251,20 +253,20 @@ Battleship.View = {
 
 		switch (Battleship.Model.do_test)
 		{
-			case Battleship.Model.TEST_PRIMITIVE:
+			case Battleship.Model.enum_testtype.PRIMITIVE:
 				glprimitive.test(gl, 4.0, 15);
 			break;
-			case Battleship.Model.TEST_CLOCK:
+			case Battleship.Model.enum_testtype.CLOCK:
 				glprimitive.clock(gl, 8.0, 15);
 			break;
-			case Battleship.Model.TEST_MUG:
+			case Battleship.Model.enum_testtype.MUG:
 				glprimitive.mug(gl, 8.0, 15);
 			break;
-			case Battleship.Model.TEST_PEG:
+			case Battleship.Model.enum_testtype.PEG:
 				gl.scale(4.0, 4.0, 4.0);
 				this._drawPeg(gl);
 			break;
-			case Battleship.Model.TEST_SHIPS:
+			case Battleship.Model.enum_testtype.SHIPS:
 				gl.scale(2.0, 2.0, 2.0);
 				gl.rotate(30, 0, 0);
 				gl.translate(0.0, 2, -3);
@@ -274,32 +276,21 @@ Battleship.View = {
 				gl.rotate(0, 180, 0);
 				this._drawGrid(gl);
 			break;
-			case Battleship.Model.TEST_FONT:
+			case Battleship.Model.enum_testtype.FONT:
 				gl.translate(-14, 8, 0);
 				glfont.test(gl, 3, 0, 0);
 			break;
-			case Battleship.Model.TEST_FOG:
+			case Battleship.Model.enum_testtype.FOG:
 				gl.translate(0.0, -5.0, 15.0);
 				this._drawGrid(gl);
 				this._drawFog(gl);
 			break;
-			case Battleship.Model.TEST_LSYSTEM:
+			case Battleship.Model.enum_testtype.LSYSTEM:
 				gl.rotate(0.0, 180, 0.0);
 				gl.translate(0.0, 0.0, 40);
 				this._drawWall(gl);
 			break;
 			default:
-				if (!this.__disk) {
-					spiritTexture = gl.loadImageTexture("images/spirit.jpg");
-					this.__disk = new GLObject('Spirit');
-					glprimitive.disk(this.__disk, 10, 5);
-					this.__disk.store(gl);
-				}
-				gl.uniform1i(gl.useTexturesUniform, true);
-				gl.uniform1i(gl.useLightingUniform, false);
-				gl.bindTexture(gl.TEXTURE_2D, spiritTexture);
-				gl.draw(this.__disk);
-				gl.bindTexture(gl.TEXTURE_2D, null);
 			break;
 		}
 	},
@@ -325,6 +316,7 @@ Battleship.View = {
 			var o = new GLObject('grid');
 			this._grid = o;
 
+			var GRID_DIM = Battleship.Model.GRID_DIM;
 			o.translate(-GRID_DIM/2.0, 0.0, -BLOCK_DEPTH/2.0);
 			var x, y;
 			for (x = 0; x < GRID_DIM; x++)
@@ -644,15 +636,16 @@ Battleship.View = {
 	},
 
 	_drawShip : function(gl, snum) {
-		switch (snum)
+		var ship = Battleship.Model.enum_shiptype[Battleship.Model.SHIP_IDS[snum]];
+		switch (ship)
 		{
-			case Battleship.Model.SHIP_CARRIER: this._drawCarrier(gl); break;
-			case Battleship.Model.SHIP_BATTLESHIP: this._drawBattleship(gl); break;
-			case Battleship.Model.SHIP_DESTROYER: this._drawDestroyer(gl); break;
-			case Battleship.Model.SHIP_SUB: this._drawSub(gl); break;
-			case Battleship.Model.SHIP_PT: this._drawPT(gl); break;
+			case Battleship.Model.enum_shiptype.CARRIER: this._drawCarrier(gl); break;
+			case Battleship.Model.enum_shiptype.BATTLESHIP: this._drawBattleship(gl); break;
+			case Battleship.Model.enum_shiptype.DESTROYER: this._drawDestroyer(gl); break;
+			case Battleship.Model.enum_shiptype.SUB: this._drawSub(gl); break;
+			case Battleship.Model.enum_shiptype.PT: this._drawPT(gl); break;
 			default:
-				console.log("Invalid ship to drawShip %i\n", snum);
+				console.log("Invalid ship to drawShip %i %s\n", snum, Battleship.Model.SHIP_IDS[snum]);
 			break;
 		}
 	},
@@ -689,9 +682,9 @@ Battleship.View = {
 	},
 
 	_drawFog : function(gl) {
-		if (Battleship.Model.do_fog === Battleship.Model.FOG_OFF) { return; }
+		if (Battleship.Model.do_fog === Battleship.Model.enum_fogtype.OFF) { return; }
 
-		var d = GRID_DIM*BLOCK_REAL_DIM;
+		var d = Battleship.Model.GRID_DIM*BLOCK_REAL_DIM;
 		var s = 1.0/(d + 2.0*FOG_HEIGHT);
 
 		if (!this._fog) {
@@ -824,7 +817,7 @@ Battleship.View = {
 	_generateFog : function(gl) {
 		if (this._fogType === Battleship.Model.do_fog) { return; }
 
-		if (Battleship.Model.do_fog === Battleship.Model.FOG_REGEN) {
+		if (Battleship.Model.do_fog === Battleship.Model.enum_fogtype.REGEN) {
 			Battleship.Model.do_fog = this._fogType;
 		} else {
 			this._fogType = Battleship.Model.do_fog;
@@ -843,17 +836,17 @@ Battleship.View = {
 		var density;
 		switch (Battleship.Model.do_fog)
 		{
-			case Battleship.Model.FOG_REGEN:
-			case Battleship.Model.FOG_OFF:
+			case Battleship.Model.enum_fogtype.REGEN:
+			case Battleship.Model.enum_fogtype.OFF:
 				density = 0.0;
 			break;
-			case Battleship.Model.FOG_LIGHT:
+			case Battleship.Model.enum_fogtype.LIGHT:
 				density = 255.0;
 			break;
-			case Battleship.Model.FOG_MEDIUM:
+			case Battleship.Model.enum_fogtype.MEDIUM:
 				density = 200.0;
 			break;
-			case Battleship.Model.FOG_HEAVY:
+			case Battleship.Model.enum_fogtype.HEAVY:
 				density = 125.0;
 				p.freq = 0.15;
 			break;

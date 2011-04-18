@@ -77,6 +77,8 @@ lsystem = {
 	/** Colour is changing using C command in lsystem string */
 	LSYSTEM_COLOUR_INLINE : 3,
 
+	_number_regexp : /[\d.]/,
+
 	_test : [
 		//Tree **
 		{
@@ -346,10 +348,11 @@ lsystem = {
 		var c = state.str;
 		var done = false;
 		var negate = 1;
+		var angle = false;
+		var search_i = -1;
 		while (ci < c.length && !done)
 		{
-			var angle = false;
-			var search_i = null;
+			angle = false;
 
 			//If haven't reach the maximum recursive depth
 			if (state.depth < state.lsys.depth)
@@ -399,13 +402,12 @@ lsystem = {
 					var new_state = this._copyLsystemState(state);
 					new_state.str = c.substring(ci + 1);
 
-
 					//call recursive
 					//console.log('lsystem._draw_r: save');
 					this._draw_r(new_state);
 
 					//advance past save area
-					var search_i = c.indexOf(this.LSYSTEM_RESTORE, ci);
+					search_i = c.indexOf(this.LSYSTEM_RESTORE, ci);
 					if (search_i !== -1) {
 						ci = search_i;
 						//console.log('lsystem._draw_r: save done %s', c.substring(ci+1));
@@ -418,11 +420,12 @@ lsystem = {
 				break;
 				case this.LSYSTEM_ANGLE :
 					angle = true;
+					// pass through
 				case this.LSYSTEM_SCALE :
 					++ci;
 
 					var numStr = "";
-					while (/[\d.]/.test(c[ci])) {
+					while (this._number_regexp.test(c[ci])) {
 						numStr += c[ci];
 						++ci;
 					}
@@ -511,9 +514,10 @@ lsystem = {
 	_draw_pixel : function(state) {
 		if (state.x < state.w && state.y < state.h)
 		{
-			state.data[(state.y*state.w + state.x)*3] = state.colour[0];
-			state.data[(state.y*state.w + state.x)*3 + 1] = state.colour[1];
-			state.data[(state.y*state.w + state.x)*3 + 2] = state.colour[2];
+			var i = (state.y*state.w + state.x)*3;
+			state.data[i] = state.colour[0];
+			state.data[i + 1] = state.colour[1];
+			state.data[i + 2] = state.colour[2];
 		}
 	},
 

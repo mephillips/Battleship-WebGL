@@ -28,9 +28,6 @@
  * @namespace
  */
 Battleship = {
-	View : {},
-	Logic : {},
-
 	mouseup : function(evt) { this.mouse(true, evt); },
 
 	mousedown : function(evt) { this.mouse(false, evt); },
@@ -98,13 +95,13 @@ Battleship = {
 		// Setup implementation specific methods
 		Battleship.View.refresh = this.view_refresh;
 
+		Battleship.Logic.init();
+
 		// Game parameters
 		var do_test = this._getQueryArg('do_test', 'None');
 		Battleship.Model.do_test = do_test;
 		var do_lines = (this._getQueryArg('do_lines', 'false') === 'true');
 		Battleship.View._do_lines = do_lines;
-
-		Battleship.Logic.init();
 
 		var animateLoop = function() {
 			try {

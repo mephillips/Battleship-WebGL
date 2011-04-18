@@ -1,8 +1,4 @@
-/**
- * @fileOverview
- *
- * Contains the logic portion of the Battleship game.
- *
+/*
  * Copyright (C) 2011 by Matthew Phillips
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -23,12 +19,21 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
+/**
+ * @fileOverview
+ *
+ * Contains the logic portion of the Battleship game.
+ */
+ /**
+  * @namespace
+  */
 Battleship.Logic = {
 	BATTLESHIP_MOUSE_LEFT : 1,
 	BATTLESHIP_MOUSE_MIDDLE : 2,
 	BATTLESHIP_MOUSE_RIGHT : 4,
 
 	init : function() {
+		Battleship.Model.init();
 		Battleship.View.init();
 
 		this._mouse_x = 0;
