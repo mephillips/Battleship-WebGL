@@ -63,8 +63,29 @@ Battleship = {
 			shift : evt.shiftKey,
 			meta : evt.metaKey
 		};
-		var key = String.fromCharCode(evt.which || evt.keyCode);
+		var key = this._mapKey(evt.which || evt.keyCode);
 		Battleship.Logic.keypress(key, mods);
+		// Cancel this event if we have handled the key
+		return (key === 0);
+	},
+
+	_mapKey : function(key) {
+		switch (key) {
+			case 81: key = Battleship.Logic.enum_key.QUIT; break;
+			case 114: key = Battleship.Logic.enum_key.RESET; break;
+			case 38: key = Battleship.Logic.enum_key.UP; break;
+			case 40: key = Battleship.Logic.enum_key.DOWN; break;
+			case 37: key = Battleship.Logic.enum_key.LEFT; break;
+			case 39: key = Battleship.Logic.enum_key.RIGHT; break;
+			case 102: key = Battleship.Logic.enum_key.ROTATE; break;
+			case 13: key = Battleship.Logic.enum_key.ENTER; break;
+			case 8: key = Battleship.Logic.enum_key.BACKSPACE; break;
+			case 120: case 88: key = Battleship.Logic.enum_key.X; break;
+			case 121: case 89: key = Battleship.Logic.enum_key.Y; break;
+			case 122: case 90: key = Battleship.Logic.enum_key.Z; break;
+			default: key = 0; break;
+		}
+		return key;
 	},
 
 	/** Foreces redraw (implementation dependent)

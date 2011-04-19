@@ -32,6 +32,22 @@ Battleship.Logic = {
 	BATTLESHIP_MOUSE_MIDDLE : 2,
 	BATTLESHIP_MOUSE_RIGHT : 4,
 
+	enum_key : {
+		QUIT : 'quit',
+		RESET : 'reset',
+		LEFT : 'left',
+		RIGHT : 'right',
+		DOWN : 'down',
+		UP : 'up',
+		ROTATE : 'rotate',
+		ENTER : 'enter',
+		ESC : 'esc',
+		BACKSPACE : 'backspace',
+		X : 'x',
+		Y : 'y',
+		Z : 'z'
+	},
+
 	init : function() {
 		Battleship.Model.init();
 		Battleship.View.init();
@@ -45,6 +61,8 @@ Battleship.Logic = {
 			shift : false,
 			meta : false };
 		this._mouse_button = 0;
+
+		Battleship.Menu.load(Battleship.Menu.main_menu);
 	},
 
 	/** Handles mouse button releases.
@@ -104,38 +122,30 @@ Battleship.Logic = {
 		var diffy = (y - this._mouse_y) / size.height;
 
 		var needRefresh = false;
-		if (this._mouse_mod.shift)
-		{
+		if (this._mouse_mod.shift) {
 			var tdiffx = diffx * 15.0;
 			var tdiffy = diffy * 15.0;
-			if (this._mouse_button & this.BATTLESHIP_MOUSE_LEFT)
-			{
+			if (this._mouse_button & this.BATTLESHIP_MOUSE_LEFT) {
 				Battleship.View.set_translate(0, tdiffx, 'U');
 			}
-			if (this._mouse_button & this.BATTLESHIP_MOUSE_MIDDLE)
-			{
+			if (this._mouse_button & this.BATTLESHIP_MOUSE_MIDDLE) {
 				Battleship.View.set_translate(1, -tdiffy, 'U');
 			}
-			if (this._mouse_button & this.BATTLESHIP_MOUSE_RIGHT)
-			{
+			if (this._mouse_button & this.BATTLESHIP_MOUSE_RIGHT) {
 				Battleship.View.set_translate(2, tdiffy, 'U');
 			}
 			needRefresh = true;
 		}
-		if (this._mouse_mod.ctrl)
-		{
+		if (this._mouse_mod.ctrl) {
 			var rdiffx = diffx * 360;
 			var rdiffy = diffy * 360;
-			if (this._mouse_button & this.BATTLESHIP_MOUSE_LEFT)
-			{
+			if (this._mouse_button & this.BATTLESHIP_MOUSE_LEFT) {
 				Battleship.View.set_rotate(1, rdiffx, 'U');
 			}
-			if (this._mouse_button & this.BATTLESHIP_MOUSE_MIDDLE)
-			{
+			if (this._mouse_button & this.BATTLESHIP_MOUSE_MIDDLE) {
 				Battleship.View.set_rotate(0, rdiffy, 'U');
 			}
-			if (this._mouse_button & this.BATTLESHIP_MOUSE_RIGHT)
-			{
+			if (this._mouse_button & this.BATTLESHIP_MOUSE_RIGHT) {
 				Battleship.View.set_rotate(2, -rdiffx, 'U');
 			}
 			needRefresh = true;
@@ -154,8 +164,12 @@ Battleship.Logic = {
 
 		var size = Battleship.View.getsize();
 		var rdiff = 10/size.width * 360;
+		if (mod.shift) { rdiff *= -1; }
 		switch (key) {
-			case 'r':
+			case this.enum_key.QUIT:
+				Battleship.Logic.quit();
+			break;
+			case this.enum_key.RESET:
 				Battleship.View.set_rotate(0, 0, 'u');
 				Battleship.View.set_rotate(1, 0, 'u');
 				Battleship.View.set_rotate(2, 0, 'u');
@@ -163,7 +177,7 @@ Battleship.Logic = {
 				Battleship.View.set_translate(1, 0, 'u');
 				Battleship.View.set_translate(2, 0, 'u');
 			break;
-			case 'x':
+			case this.enum_key.X:
 				if (mod.ctrl) {
 					Battleship.View.set_translate(0, rdiff, 'U');
 				} else {
@@ -171,7 +185,7 @@ Battleship.Logic = {
 				}
 				needRefresh = true;
 			break;
-			case 'y':
+			case this.enum_key.Y:
 				if (mod.ctrl) {
 					Battleship.View.set_translate(1, rdiff, 'U');
 				} else {
@@ -179,7 +193,7 @@ Battleship.Logic = {
 				}
 				needRefresh = true;
 			break;
-			case 'z':
+			case this.enum_key.Z:
 				if (mod.ctrl) {
 					Battleship.View.set_translate(2, -rdiff, 'U');
 				} else {
@@ -187,30 +201,11 @@ Battleship.Logic = {
 				}
 				needRefresh = true;
 			break;
-			case 'X':
-				if (mod.ctrl) {
-					Battleship.View.set_translate(0, -rdiff, 'U');
-				} else {
-					Battleship.View.set_rotate(0, -rdiff, 'U');
-				}
-				needRefresh = true;
-			break;
-			case 'Y':
-				if (mod.ctrl) {
-					Battleship.View.set_translate(1, -rdiff, 'U');
-				} else {
-					Battleship.View.set_rotate(1, -rdiff, 'U');
-				}
-				needRefresh = true;
-			break;
-			case 'Z':
-				if (mod.ctrl) {
-					Battleship.View.set_translate(2, rdiff, 'U');
-				} else {
-					Battleship.View.set_rotate(2, rdiff, 'U');
-				}
-				needRefresh = true;
-			break;
+		}
+
+		if (Battleship.Menu.curr_menu) {
+			needRefresh = Battleship.Menu.keypress(key, mod);
+		} else {
 		}
 
 		if (needRefresh) {

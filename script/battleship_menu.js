@@ -75,7 +75,7 @@ Battleship.Menu = {
 		var gopts_p2_name = this._createMenuItem("P2 Name", Battleship.Model.player[1], 'name', this.toggle_name);
 		var gopts_p2_ai = this._createMenuItem("P2 AI", Battleship.Model.player[1], 'ai', this.toggle_ai);
 		var gopts_p2_auto = this._createMenuItem("P2 Auto Place", Battleship.Model.player[1], 'auto_place', this.toggle_bool);
-		var gopts_items = [ gopts_p1_name, gopts_p1_ai, gopts_p1_auto, gopts_p2_name, gopts_p1_ai, gopts_p2_auto ];
+		var gopts_items = [ gopts_p1_name, gopts_p1_ai, gopts_p1_auto, null, gopts_p2_name, gopts_p1_ai, gopts_p2_auto ];
 		var gopts_menu = this._createMenu("Player Options", gopts_items);
 
 		//Fog submenu
@@ -118,6 +118,95 @@ Battleship.Menu = {
 
 		var options_items = [ gopts_menu, animation_menu, fog_menu, lsys_menu, shadow_menu, options_textures, options_sound, options_quit ];
 		this.options_menu = this._createMenu("Options", options_items );
+	},
+
+	keypress : function(key, mod) {
+		var needRefresh = true;
+		if (this.name_selector) {
+			if (key === Battleship.Logic.enum_key.UP) {
+				this.name_selector.y = (glfont.TEST_HEIGHT + this.name_selector.y - 1) % glfont.TEST_HEIGHT;
+			} else if (key === Battleship.Logic.enum_key.DOWN) {
+				this.name_selector.y = (name_selector.y + 1) % glfont.TEST_HEIGHT;
+			} else if (key === Battleship.Logic.enum_key.LEFT) {
+				this.name_selector.x = (glfont.TEST_WIDTH + this.name_selector.x - 1) % glfont.TEST_WIDTH;
+			} else if (key === Battleship.Logic.enum_key.RIGHT) {
+				this.name_selector.x = (this.name_selector.x + 1) % glfont.TEST_WIDTH;
+			} else if (key === Battleship.Logic.enum_key.ENTER) {
+				var len = this.name_selector.length;
+				if (len < Battleship.Model.MAX_NAME_LEN) {
+					this.name_selector.name += glfont.test_char(
+						this.name_selector.x,
+						this.name_selector.y
+					);
+				} else {
+					needRefresh = false;
+				}
+			} else if (key === Battleship.Logic.enum_key.ESC) {
+				this.name_selector.enabled = false;
+			} else if (key === Battleship.Logic.enum_key.BACKSPACE) {
+				var len = this.name_selector.name.length;
+				if (len > 0) {
+					this.name_selector.name = this.name_selector.name.substring(0, len - 1);
+				} else {
+					needRefresh = false;
+				}
+			} else {
+				var len = this.name_selector.name.length;
+				var pos = { x : 0, y : 0 };
+				needRefresh = glfont.is_test_char(key,pos) && (len<Battleship.Model.MAX_NAME_LEN);
+				if (needRefresh)
+				{
+					this.name_selector.name += c;
+					this.name_selector.x = x;
+					this.name_selector.y = y;
+				}
+			}
+		} else {
+			if (key === Battleship.Logic.enum_key.UP) {
+				this.up();
+			} else if (key === Battleship.Logic.enum_key.DOWN) {
+				this.down();
+			} else if (key === Battleship.Logic.enum_key.LEFT) {
+				this.left();
+			} else if (key === Battleship.Logic.enum_key.RIGHT) {
+				this.right();
+			} else if (key === Battleship.Logic.enum_key.ENTER) {
+				this.toggle();
+			} else if (key === Battleship.Logic.enum_key.ESC) {
+				if (Battleship.Model.game_state !== Battleship.Model.enum_gamestate.INIT ||
+					this.curr_menu.parent !== null)
+				{
+					this.cancel();
+					if (this.curr_menu === null &&
+						Battleship.Model.game_state === Battleship.Model.enum_gamestate.PLAYING)
+					{
+						// TODO: Move this code
+
+						//if a player was previously an ai player need
+						//to clear what it knows
+						var i;
+						for (i = 0; i < 2; i++)
+						{
+							if (!Battleship.Model.player[i].ai)
+							{
+								Battleship.Model.ai_move[i].chosen = false;
+								Battleship.Model.ai_move[i].num_hits = 0;
+							}
+						}
+
+						//restart ai player
+						if (Battleship.Model.player[Battlship.Model.curr_player].ai) {
+							Battleship.Logic.start_ai();
+						}
+					}
+				} else {
+					needRefresh = false;
+				}
+			} else {
+				needRefresh = false;
+			}
+		}
+		return needRefresh;
 	},
 
 	/** Called when the user pushes up in a menu
@@ -257,11 +346,11 @@ Battleship.Menu = {
 		m.svalue = Battleship.Model.fogtype_s[val];
 	},
 
-	toggle_foggen : function(m, dir) { if (dir == 0) { Battleship.Model.do_fog = FOG_REGEN; } },
+	toggle_foggen : function(m, dir) { if (dir == 0) { Battleship.Model.do_fog = Battleship.Model.enum_fogtype.FOG_REGEN; } },
 
 	toggle_name : function(m, dir) {
 		if (dir !== 0) {
-			Battleship.Model.name_selector = {
+			this.name_selector = {
 				enabled : true,
 				x : 0,
 				y : 0,

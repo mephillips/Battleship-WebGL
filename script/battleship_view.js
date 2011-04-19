@@ -60,6 +60,15 @@ var SHIP_HULL_DIAM = 0.15;
 /** The height of a ships deck */
 var SHIP_DECK_HEIGHT = 0.2;
 
+/** The left of the screen, for writting font */
+var FONT_X0 = -16;
+/** The right of the screen, for writting font */
+var FONT_X1 = 16;
+/** The top of the screen, for writting font */
+var FONT_Y0 = 11;
+/** The bottom of the screen, for writting font */
+var FONT_Y1 = -12;
+
 /** The size of the room width/depth the game is being played in */
 var ROOM_DIM = 60;
 
@@ -82,11 +91,16 @@ Battleship.View = {
 	_diff_w : [ 1.0, 1.0, 1.0 ],
 	_spec_w : [ 0.1, 0.1, 0.1 ],
 	_shinny_w : 1,
+	/** @private Colour values for Red */
+	_diff_r : [1.0, 0.0, 0.0],
+	_spec_r : [0.1, 0.1, 0.1],
+	_shinny_r : 1,
 
 	/** @private Colour values for ships */
 	_diff_ship : [0.5, 0.5, 0.5],
 	_spec_ship : [0.1, 0.1, 0.1],
 	_shinny_ship : 1,
+
 
 	/** Display objects */
 	_lines : null,
@@ -111,7 +125,8 @@ Battleship.View = {
 	_lastLsys : null,
 
 	init : function() {
-		this._curr_menu = null;
+		this._menuTranslate = [ 0, 0, 0 ];
+		this._menuRotate = [ 0, 0, 0 ];
 		this._userTranslate = [ 0, 0, 0 ];
 		this._userRotate = [ 0, 0, 0 ];
 		this._gameTranslate = [ 0, 0, 0 ];
@@ -145,16 +160,18 @@ Battleship.View = {
 		switch (type)
 		{
 			case 'u' :
-				if (this._curr_menu)
+				if (Battleship.Menu.curr_menu) {
 					this._menuTranslate[axis] = amount;
-				else
+				} else {
 					this._userTranslate[axis] = amount;
+				}
 			break;
 			case 'U' :
-				if (this._curr_menu)
+				if (Battleship.Menu.curr_menu) {
 					this._menuTranslate[axis] += amount;
-				else
+				} else {
 					this._userTranslate[axis] += amount;
+				}
 			break;
 			case 'g' : this._gameTranslate[axis] = amount; break;
 			case 'G' : this._gameTranslate[axis] += amount; break;
@@ -181,16 +198,18 @@ Battleship.View = {
 		switch (type)
 		{
 			case 'u' :
-				if (this._curr_menu)
+				if (Battleship.Menu.curr_menu) {
 					this._menuRotate[axis] = amount;
-				else
+				} else {
 					this._userRotate[axis] = amount;
+				}
 			break;
 			case 'U' :
-				if (this._curr_menu)
+				if (Battleship.Menu.curr_menu) {
 					this._menuRotate[axis] += amount;
-				else
+				} else {
 					this._userRotate[axis] += amount;
+				}
 			break;
 			case 'g' : this._gameRotate[axis] = amount; break;
 			case 'G' : this._gameRotate[axis] += amount; break;
@@ -234,16 +253,19 @@ Battleship.View = {
 		this.set_perspective(gl, width, height);
 
 		// Translation
-		if (!this._curr_menu)
+		if (!Battleship.Menu.curr_menu)
 		{
 			//user rotation
 			gl.rotate(this._userRotate[0], 0, 0);
 			gl.rotate(0, this._userRotate[1], 0);
 			gl.rotate(0, 0, this._userRotate[2]);
-			gl.translate(
-				this._userTranslate[0],
-				this._userTranslate[1],
-				this._userTranslate[2]);
+			gl.translate(this._userTranslate[0], this._userTranslate[1], this._userTranslate[2]);
+		} else {
+			//user rotation of menu
+			gl.rotate(this._menuRotate[0], 0, 0);
+			gl.rotate(0, this._menuRotate[1], 0);
+			gl.rotate(0, 0, this._menuRotate[2]);
+			gl.translate(this._menuTranslate[0], this._menuTranslate[1], this._menuTranslate[2]);
 		}
 
 		// Draw axis
@@ -291,6 +313,34 @@ Battleship.View = {
 				this._drawWall(gl);
 			break;
 			default:
+				if (Battleship.Menu.curr_menu) {
+					if (Battleship.Model.name_selector.enabled) {
+						this._drawNameSelector(gl);
+					} else {
+						this._drawMenu(gl);
+						var menuName = Battleship.Menu.curr_menu.name;
+						if (menuName === "Fog") {
+							this._drawFog(gl);
+						} else if (menuName === "L-Systems") {
+							gl.rotate(0.0, 180, 0.0);
+							gl.translate(0.0, 30.0, 200);
+							this._drawWall(gl);
+						} else if (menuName === "Rocket" || menuName === "Fire") {
+							/*
+							gl.translatef(7.0, 0.0, 0);
+							if (battleship_rocket_get_path() != rocket_path[0])
+								battleship_rocket_set_path(rocket_path[0]);
+							//glRotatef(-90, 0.0, 1.0, 0.0);
+							drawRocket();
+							if (!battleship_rocket_move())
+								battleship_rocket_reset();
+							*/
+						}
+					}
+				} else {
+					//if (do_shadows[SHADOW_ALL]) { drawShadows(); }
+					//drawGame();
+				}
 			break;
 		}
 	},
@@ -679,6 +729,118 @@ Battleship.View = {
 
 			gl.popMatrix();
 		}
+	},
+
+	_drawMenu : function(gl) {
+		var size = 1.5;
+		var menu = Battleship.Menu.curr_menu;
+		var w = glfont.char_width(size)*menu.name.length/2.0;
+
+		gl.pushMatrix();
+
+		//Center title horizontally (and put it at top)
+		gl.pushMatrix();
+			gl.setDiffuseColor( this._diff_r );
+			gl.setSpecularColor( this._spec_r );
+			gl.setMaterialShininess( this._shinny_r );
+
+			gl.translate(-w, FONT_Y0, 0.0);
+			gl.scale(size, size, size);
+			glfont.draw_string(gl, menu.name, 1);
+
+			gl.setDiffuseColor( this._diff_w );
+			gl.setSpecularColor( this._spec_w );
+			gl.setMaterialShininess( this._shinny_w );
+		gl.popMatrix();
+
+		//find max lengthed menu item
+		var i;
+		var len = 0;
+		var max_len = 0;
+		for (i = 0; i < menu.size; i++)
+		{
+			if (!menu.item[i]) { continue; }
+			len = menu.item[i].name.length;
+			if (menu.item[i].svalue) {
+				len += menu.item[i].svalue + 2;
+			}
+			max_len = (max_len < len) ? len : max_len;
+		}
+
+		//Options are smaller than title
+		size = 1.0;
+		//Center items
+		w = glfont.char_width(size)*max_len/2.0;
+		var h = glfont.char_height(size);
+		gl.translate(-w, h*menu.size/2.0 + h*(menu.size + 1)/2.0, 0.0);
+
+		w = glfont.char_width(size);
+		h *= 2.0; //double space
+		//double space
+		for (i = 0; i < menu.size; i++) {
+			gl.translate(0.0, -h, 0.0);
+
+			//separator
+			if (!menu.item[i]) {
+				gl.pushMatrix();
+					var j;
+					for (j = 0; j < max_len - 1; j++) {
+						glfont.draw_string(gl, "-", 1);
+						gl.translate(w, 0.0, 0.0);
+					}
+				gl.popMatrix();
+				continue;
+			}
+
+			//draw selection
+			if (Battleship.Menu.curr_menu_sel === i) {
+				gl.pushMatrix();
+					gl.setDiffuseColor( this._diff_r );
+					gl.setSpecularColor( this._spec_r );
+					gl.setMaterialShininess( this._shinny_r );
+					gl.rotate(0.0, -90, 0.0);
+					gl.translate(0.0, h/4.0, w/4.0);
+					this._drawPeg(gl);
+					gl.setDiffuseColor( this._diff_w );
+					gl.setSpecularColor( this._spec_w );
+					gl.setMaterialShininess( this._shinny_w );
+				gl.popMatrix();
+			}
+
+			//draw name
+			glfont.draw_string(gl, menu.item[i].name, size);
+			if (menu.item[i].svalue) {
+				//draw value
+				gl.pushMatrix();
+					gl.translate(w * menu.item[i].name.length, 0.0, 0.0);
+					glfont.draw_string(gl, ":", size);
+					gl.translate(w, 0.0, 0.0);
+					glfont.draw_string(gl, menu.item[i].svalue, size);
+				gl.popMatrix();
+			} else if (menu.item[i].size > 0) {
+				//draw plus for submenus
+				gl.pushMatrix();
+					gl.translate(w * menu.item[i].name.length, 0.0, 0.0);
+					glfont.draw_string(gl, "+", size);
+				gl.popMatrix();
+			}
+		}
+		gl.popMatrix();
+
+		//Help text
+		gl.pushMatrix();
+			size = 0.8;
+			w = glfont.char_width(size);
+			var text;
+			if (menu.item[Battleship.Menu.curr_menu_sel].svalue) {
+				text = "(Left/Right to change)";
+			} else {
+				text = "(Enter to select)";
+			}
+			gl.scale(size, size, size);
+			gl.translate(-w*text.length/2.0, FONT_Y1, 0.0);
+			glfont.draw_string(gl, text, 1);
+		gl.popMatrix();
 	},
 
 	_drawFog : function(gl) {

@@ -28,6 +28,11 @@
  * @namespace
  */
 glfont = {
+	/** The width (number of characters) of the font test */
+	TEST_WIDTH : 8,
+	/** The height (rows of characters) of the font test */
+	TEST_HEIGHT : 6,
+
 	/** A string containing all the characters of the font, used for
 	 *  font test and other things */
 	_font_test_str :
@@ -58,6 +63,57 @@ glfont = {
 	 *  @return The character height
 	 */
 	char_height : function(size) { return size + size*0.1; },
+
+	/** Returns the font character that is selected by glfont_test at x,y
+	 *
+	 *  @param x x value pased to glfont_test
+	 *  @param y y value passed to glfont_test
+	 *  @return Returns the selected character
+	 */
+	test_char : function(x, y) {
+		var i = y * (this.TEST_WIDTH + 1) + x;
+		return this._font_test_str[i];
+	},
+
+	/** Determines if the given character is in the font and returns
+	 *  its x/y location in the font test.
+	 *
+	 *  @param c The character to check
+	 *  @param x Pointer to the location to return x
+	 *  @param y Pointer to the location to return y
+	 *  @return Returns true if the charater is valid. The x and y location
+	 *  		are returned in x, y only if true is returned otherwise these
+	 *  		values are untouched
+	*/
+	is_test_char : function(c, pos) {
+		c = toupper(c);
+		pos.x = 0;
+		pos.y = 0;
+
+		var i = 0;
+		var r = false;
+		while (true) {
+			//Reached a \n. Increament line and move on
+			if (tx >= this.TEST_WIDTH) {
+				pos.x = 0;
+				++pos.y;
+				++i;
+			}
+
+			//End of characters, the given charecter is not valid
+			if (pos.y >= this.TEST_HEIGHT) { break; }
+
+			//Found the given character
+			if (c == this._font_test_str[i]) {
+				r = true;
+				break;
+			}
+
+			++i;
+			++pos.x;
+		}
+		return r;
+	},
 
 	/** Draws a string.
 	 *
