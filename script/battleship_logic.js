@@ -160,8 +160,21 @@ Battleship.Logic = {
 	},
 
 	keypress : function(key, mod) {
-		var needRefresh = false;
+		var needRefresh = this._handleGlobalKeypress(key, mod);
+		if (!needRefresh) {
+			if (Battleship.Menu.curr_menu) {
+				needRefresh = Battleship.Menu.keypress(key, mod);
+			} else {
+				needRefresh = this._handleGameKeypress(key, mod);
+			}
+		}
+		if (needRefresh) {
+			Battleship.View.refresh();
+		}
+	},
 
+	_handleGlobalKeypress : function(key, mod) {
+		var needRefresh = true;
 		var size = Battleship.View.getsize();
 		var rdiff = 10/size.width * 360;
 		if (mod.shift) { rdiff *= -1; }
@@ -183,7 +196,6 @@ Battleship.Logic = {
 				} else {
 					Battleship.View.set_rotate(0, rdiff, 'U');
 				}
-				needRefresh = true;
 			break;
 			case this.enum_key.Y:
 				if (mod.ctrl) {
@@ -191,7 +203,6 @@ Battleship.Logic = {
 				} else {
 					Battleship.View.set_rotate(1, rdiff, 'U');
 				}
-				needRefresh = true;
 			break;
 			case this.enum_key.Z:
 				if (mod.ctrl) {
@@ -199,17 +210,15 @@ Battleship.Logic = {
 				} else {
 					Battleship.View.set_rotate(2, -rdiff, 'U');
 				}
-				needRefresh = true;
+			break;
+			default:
+				needRefresh = false;
 			break;
 		}
+		return needRefresh;
+	},
 
-		if (Battleship.Menu.curr_menu) {
-			needRefresh = Battleship.Menu.keypress(key, mod);
-		} else {
-		}
-
-		if (needRefresh) {
-			Battleship.View.refresh();
-		}
+	_handleGameKeypress : function(key, mod) {
+		return false;
 	}
 };

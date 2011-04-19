@@ -28,11 +28,71 @@
  * @namespace
  */
 Battleship = {
-	mouseup : function(evt) { this.mouse(true, evt); },
+	_canvas : null,
+	_gl : null,
 
-	mousedown : function(evt) { this.mouse(false, evt); },
+	main : function() {
+		var canvas = document.getElementById('battleship');
+		var gl = webgl_ext.initWebGL(canvas, 'script/vshader.vs', 'script/fshader.fs' );
+		if (!gl) { return; }
 
-	mouse : function(up, evt) {
+		this._canvas = canvas;
+		this._gl = gl;
+
+		gl.enable(gl.DEPTH_TEST);
+		gl.enable(gl.BLEND);
+		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+		// Set up input event listeners
+		canvas.onmouseup = this._mouseup.bind(this);
+		canvas.onmousedown = this._mousedown.bind(this);
+		canvas.onmousemove = this._motion.bind(this);
+		window.onkeypress = this._keypress.bind(this);
+
+		// Setup implementation specific methods
+		Battleship.View.refresh = this._view_refresh.bind(this);
+
+		Battleship.Logic.init();
+
+		// Game parameters
+		var do_test = this._getQueryArg('do_test', 'None');
+		Battleship.Model.do_test = do_test;
+		var do_lines = (this._getQueryArg('do_lines', 'false') === 'true');
+		Battleship.View._do_lines = do_lines;
+
+		this._draw();
+	},
+
+	/** Foreces redraw (implementation dependent)
+	 *
+	 *  This function should be implement in the main file corrispoding
+	 *  to a particualr gui frontend.
+	 *
+	 *  This fuction causes the window to redraw.
+	 *
+	 */
+	_view_refresh : function() {
+		window.requestAnimFrame(this._draw.bind(this), this._canvas);
+	},
+
+	/**
+	 * Render a single frame
+	 */
+	_draw : function() {
+		Battleship.View.draw(this._gl, this._canvas.width, this._canvas.height);
+	},
+
+	_mouseup : function(evt) {
+		this._mouse(true, evt);
+		return false;
+	},
+
+	_mousedown : function(evt) {
+		this.mouse(false, evt);
+		return false;
+	},
+
+	_mouse : function(up, evt) {
 		evt = evt || window.event;
 		var button = evt.which;
 		var mods = {
@@ -50,12 +110,12 @@ Battleship = {
 		}
 	},
 
-	motion : function(evt) {
+	_motion : function(evt) {
 		evt = evt || window.event;
 		Battleship.Logic.mouse_move(evt.clientX, evt.clientY);
 	},
 
-	keypress : function(evt) {
+	_keypress : function(evt) {
 		evt = evt || window.event;
 		var mods = {
 			alt : evt.altKey,
@@ -86,53 +146,6 @@ Battleship = {
 			default: key = 0; break;
 		}
 		return key;
-	},
-
-	/** Foreces redraw (implementation dependent)
-	 *
-	 *  This function should be implement in the main file corrispoding
-	 *  to a particualr gui frontend.
-	 *
-	 *  This fuction causes the window to redraw.
-	 *
-	 */
-	view_refresh : function() {},
-
-	main : function() {
-		var canvas = document.getElementById('battleship');
-		var gl = webgl_ext.initWebGL(canvas, 'script/vshader.vs', 'script/fshader.fs' );
-		if (!gl) { return; }
-
-		gl.enable(gl.DEPTH_TEST);
-		gl.enable(gl.BLEND);
-		gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-
-		// Set up input event listeners
-		canvas.onmouseup = this.mouseup.bind(this);
-		canvas.onmousedown = this.mousedown.bind(this);
-		canvas.onmousemove = this.motion.bind(this);
-		window.onkeypress = this.keypress.bind(this);
-
-		// Setup implementation specific methods
-		Battleship.View.refresh = this.view_refresh;
-
-		Battleship.Logic.init();
-
-		// Game parameters
-		var do_test = this._getQueryArg('do_test', 'None');
-		Battleship.Model.do_test = do_test;
-		var do_lines = (this._getQueryArg('do_lines', 'false') === 'true');
-		Battleship.View._do_lines = do_lines;
-
-		var animateLoop = function() {
-			try {
-				Battleship.View.draw(gl, canvas.width, canvas.height);
-				window.requestAnimFrame(animateLoop, canvas);
-			} catch (e) {
-				console.log('animateLoop', e);
-			}
-		}
-		animateLoop();
 	},
 
 	_getQueryArg : function(key, def) {
