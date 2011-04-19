@@ -35,6 +35,7 @@ Battleship.Logic = {
 	init : function() {
 		Battleship.Model.init();
 		Battleship.View.init();
+		Battleship.Menu.init();
 
 		this._mouse_x = 0;
 		this._mouse_y = 0;

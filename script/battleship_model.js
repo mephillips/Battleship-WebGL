@@ -61,11 +61,17 @@ Battleship.Model = {
 	NUM_AI_TYPES : 4,
 	/** The possible types of AI */
 	enum_aitype : {
-		HUMAN  : 'Human    ',
-		EASY   : 'Easy AI  ',
-		NORMAL : 'Normal AI',
-		HARD   : 'Hard AI  '
+		HUMAN : 0,
+		EASY : 1,
+		NORMAL : 2,
+		HARD : 3
 	},
+	aitype_s : [
+		'Human    ',
+		'Easy AI  ',
+		'Normal AI',
+		'Hard AI  '
+	],
 
 	NUM_TEST_TYPES : 10,
 	/** The possible types of tests*/
@@ -113,12 +119,19 @@ Battleship.Model = {
 	NUM_FOG_TYPES : 4,
 	/** The possible types of fog */
 	enum_fogtype : {
-		OFF 	: 'Off   ',
-		LIGHT 	: 'Light ',
-		MEDIUM 	: 'Medium',
-		HEAVY 	: 'Heavy ',
-		REGEN	: 'Regen '
+		OFF 	: 0,
+		LIGHT 	: 1,
+		MEDIUM 	: 2,
+		HEAVY 	: 3,
+		REGEN	: 4
 	},
+	fogtype_s : [
+		'Off   ',
+		'Light ',
+		'Medium',
+		'Heavy ',
+		'Regen '
+	],
 
 	/** The number of places shadows are draw */
 	NUM_SHADOWS : 5,
@@ -134,10 +147,15 @@ Battleship.Model = {
 	NUM_ROCKET_TYPES : 3,
 	/** The possible rocket paths */
 	enum_rockettype : {
-		OFF		: 'Off ',
-		SIDE	: 'Side',
-		TOP		: 'Top '
+		OFF : 0,
+		SIDE : 1,
+		TOP : 2
 	},
+	rockettype_s : [
+		'Off ',
+		'Side',
+		'Top '
+	],
 	/** Minimun rocket size */
 	MIN_ROCKET_SIZE : 1,
 	/** Maximum rocket size */
