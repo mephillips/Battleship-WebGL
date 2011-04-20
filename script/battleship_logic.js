@@ -122,7 +122,7 @@ Battleship.Logic = {
 		var diffy = (y - this._mouse_y) / size.height;
 
 		var needRefresh = false;
-		if (this._mouse_mod.shift) {
+		if (this._mouse_mod.alt) {
 			var tdiffx = diffx * 15.0;
 			var tdiffy = diffy * 15.0;
 			if (this._mouse_button & this.BATTLESHIP_MOUSE_LEFT) {
@@ -171,16 +171,18 @@ Battleship.Logic = {
 		if (needRefresh) {
 			Battleship.View.refresh();
 		}
+		return needRefresh;
 	},
 
 	_handleGlobalKeypress : function(key, mod) {
-		var needRefresh = true;
+		var needRefresh = false;
 		var size = Battleship.View.getsize();
 		var rdiff = 10/size.width * 360;
 		if (mod.shift) { rdiff *= -1; }
 		switch (key) {
 			case this.enum_key.QUIT:
 				Battleship.Logic.quit();
+				needRefresh = true;
 			break;
 			case this.enum_key.RESET:
 				Battleship.View.set_rotate(0, 0, 'u');
@@ -189,30 +191,34 @@ Battleship.Logic = {
 				Battleship.View.set_translate(0, 0, 'u');
 				Battleship.View.set_translate(1, 0, 'u');
 				Battleship.View.set_translate(2, 0, 'u');
+				needRefresh = true;
 			break;
 			case this.enum_key.X:
-				if (mod.ctrl) {
+				if (mod.alt) {
 					Battleship.View.set_translate(0, rdiff, 'U');
-				} else {
+					needRefresh = true;
+				} else if (mod.ctrl) {
 					Battleship.View.set_rotate(0, rdiff, 'U');
+					needRefresh = true;
 				}
 			break;
 			case this.enum_key.Y:
-				if (mod.ctrl) {
+				if (mod.alt) {
 					Battleship.View.set_translate(1, rdiff, 'U');
-				} else {
+					needRefresh = true;
+				} else if (mod.ctrl) {
 					Battleship.View.set_rotate(1, rdiff, 'U');
+					needRefresh = true;
 				}
 			break;
 			case this.enum_key.Z:
-				if (mod.ctrl) {
+				if (mod.alt) {
 					Battleship.View.set_translate(2, -rdiff, 'U');
-				} else {
+					needRefresh = true;
+				} else if (mod.ctrl) {
 					Battleship.View.set_rotate(2, -rdiff, 'U');
+					needRefresh = true;
 				}
-			break;
-			default:
-				needRefresh = false;
 			break;
 		}
 		return needRefresh;

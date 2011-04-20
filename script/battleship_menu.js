@@ -43,6 +43,8 @@ Battleship.Menu = {
 	/** The currently selected item in the current menu */
 	curr_menu_sel : 0,
 
+	name_selector : { enabled : false },
+
 	/** Inititlizes the game menus */
 	init : function() {
 		//Rockte fire submenu
@@ -75,7 +77,7 @@ Battleship.Menu = {
 		var gopts_p2_name = this._createMenuItem("P2 Name", Battleship.Model.player[1], 'name', this.toggle_name);
 		var gopts_p2_ai = this._createMenuItem("P2 AI", Battleship.Model.player[1], 'ai', this.toggle_ai);
 		var gopts_p2_auto = this._createMenuItem("P2 Auto Place", Battleship.Model.player[1], 'auto_place', this.toggle_bool);
-		var gopts_items = [ gopts_p1_name, gopts_p1_ai, gopts_p1_auto, null, gopts_p2_name, gopts_p1_ai, gopts_p2_auto ];
+		var gopts_items = [ gopts_p1_name, gopts_p1_ai, gopts_p1_auto, null, gopts_p2_name, gopts_p2_ai, gopts_p2_auto ];
 		var gopts_menu = this._createMenu("Player Options", gopts_items);
 
 		//Fog submenu
@@ -122,17 +124,17 @@ Battleship.Menu = {
 
 	keypress : function(key, mod) {
 		var needRefresh = true;
-		if (this.name_selector) {
+		if (this.name_selector.enabled) {
 			if (key === Battleship.Logic.enum_key.UP) {
 				this.name_selector.y = (glfont.TEST_HEIGHT + this.name_selector.y - 1) % glfont.TEST_HEIGHT;
 			} else if (key === Battleship.Logic.enum_key.DOWN) {
-				this.name_selector.y = (name_selector.y + 1) % glfont.TEST_HEIGHT;
+				this.name_selector.y = (this.name_selector.y + 1) % glfont.TEST_HEIGHT;
 			} else if (key === Battleship.Logic.enum_key.LEFT) {
 				this.name_selector.x = (glfont.TEST_WIDTH + this.name_selector.x - 1) % glfont.TEST_WIDTH;
 			} else if (key === Battleship.Logic.enum_key.RIGHT) {
 				this.name_selector.x = (this.name_selector.x + 1) % glfont.TEST_WIDTH;
 			} else if (key === Battleship.Logic.enum_key.ENTER) {
-				var len = this.name_selector.length;
+				var len = this.name_selector.name.length;
 				if (len < Battleship.Model.MAX_NAME_LEN) {
 					this.name_selector.name += glfont.test_char(
 						this.name_selector.x,
@@ -143,12 +145,12 @@ Battleship.Menu = {
 				}
 			} else if (key === Battleship.Logic.enum_key.ESC) {
 				this.name_selector.enabled = false;
+				this.name_selector.menu.svalue = this.name_selector.name;
+				this.name_selector.menu.object[this.name_selector.menu.key] = this.name_selector.name;
 			} else if (key === Battleship.Logic.enum_key.BACKSPACE) {
 				var len = this.name_selector.name.length;
 				if (len > 0) {
 					this.name_selector.name = this.name_selector.name.substring(0, len - 1);
-				} else {
-					needRefresh = false;
 				}
 			} else {
 				var len = this.name_selector.name.length;
@@ -156,9 +158,9 @@ Battleship.Menu = {
 				needRefresh = glfont.is_test_char(key,pos) && (len<Battleship.Model.MAX_NAME_LEN);
 				if (needRefresh)
 				{
-					this.name_selector.name += c;
-					this.name_selector.x = x;
-					this.name_selector.y = y;
+					this.name_selector.name += key;
+					this.name_selector.x = pos.x;
+					this.name_selector.y = pos.y;
 				}
 			}
 		} else {
@@ -172,6 +174,8 @@ Battleship.Menu = {
 				this.right();
 			} else if (key === Battleship.Logic.enum_key.ENTER) {
 				this.toggle();
+			} else if (key === Battleship.Logic.enum_key.BACKSPACE) {
+				// gobbel
 			} else if (key === Battleship.Logic.enum_key.ESC) {
 				if (Battleship.Model.game_state !== Battleship.Model.enum_gamestate.INIT ||
 					this.curr_menu.parent !== null)
@@ -299,7 +303,7 @@ Battleship.Menu = {
 			if (!this.curr_menu.item[i]) continue;
 
 			if (this.curr_menu.item[i].action &&
-				this.curr_menu.item[i].value) {
+				this.curr_menu.item[i].object) {
 				this.curr_menu.item[i].action(
 					this.curr_menu.item[i], 0);
 			}
@@ -350,11 +354,12 @@ Battleship.Menu = {
 
 	toggle_name : function(m, dir) {
 		if (dir !== 0) {
-			this.name_selector = {
+			Battleship.Menu.name_selector = {
 				enabled : true,
 				x : 0,
 				y : 0,
-				name : m.object[m.key]
+				name : m.object[m.key],
+				menu : m
 			};
 		}
 		m.svalue = m.object[m.key];

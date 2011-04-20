@@ -49,7 +49,19 @@ glfont = {
 	 *  @param y The y location of the selector
 	 */
 	test : function(gl, size, x, y) {
+		// Draw all of the letters
 		glfont.draw_string(gl, this._font_test_str, size);
+		// Create a draw a box that appears under a letter
+		if (!this._fontObjects['selector']) {
+			var o = new GLObject('font_selector');
+			this._fontObjects['selector'] = o;
+			glprimitive.box(o, 0, 0, -(size * 0.1), size, size, (size * 0.1));
+		}
+		gl.setDiffuseColor( 0.5, 0.5, 0.5 );
+		gl.setSpecularColor( 0.1, 0.1, 0.1 );
+		gl.setMaterialShininess( 1 );
+		gl.translate(glfont.char_width(size)*x, -glfont.char_height(size)*y, 0);
+		gl.draw(this._fontObjects['selector']);
 	},
 
 	/** Returns how much space is used by a character for the given sized font
@@ -86,7 +98,7 @@ glfont = {
 	 *  		values are untouched
 	*/
 	is_test_char : function(c, pos) {
-		c = toupper(c);
+		c = c.toUpperCase();
 		pos.x = 0;
 		pos.y = 0;
 
@@ -94,7 +106,7 @@ glfont = {
 		var r = false;
 		while (true) {
 			//Reached a \n. Increament line and move on
-			if (tx >= this.TEST_WIDTH) {
+			if (pos.x >= this.TEST_WIDTH) {
 				pos.x = 0;
 				++pos.y;
 				++i;
@@ -152,9 +164,12 @@ glfont = {
 		c = c.toUpperCase(c);
 		if (!this._fontObjects[c]) {
 			this._fontObjects[c] = new GLObject('char_' + c);
-			this._draw_char(this._fontObjects[c], c, size);
+			this._draw_char(this._fontObjects[c], c, 1);
 		}
-		gl.draw(this._fontObjects[c]);
+		gl.pushMatrix();
+			gl.scale(size, size, size);
+			gl.draw(this._fontObjects[c]);
+		gl.popMatrix();
 	},
 
 	_draw_char : function(o, c, size) {

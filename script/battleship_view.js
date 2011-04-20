@@ -314,7 +314,7 @@ Battleship.View = {
 			break;
 			default:
 				if (Battleship.Menu.curr_menu) {
-					if (Battleship.Model.name_selector.enabled) {
+					if (Battleship.Menu.name_selector.enabled) {
 						this._drawNameSelector(gl);
 					} else {
 						this._drawMenu(gl);
@@ -745,8 +745,7 @@ Battleship.View = {
 			gl.setMaterialShininess( this._shinny_r );
 
 			gl.translate(-w, FONT_Y0, 0.0);
-			gl.scale(size, size, size);
-			glfont.draw_string(gl, menu.name, 1);
+			glfont.draw_string(gl, menu.name, size);
 
 			gl.setDiffuseColor( this._diff_w );
 			gl.setSpecularColor( this._spec_w );
@@ -762,7 +761,7 @@ Battleship.View = {
 			if (!menu.item[i]) { continue; }
 			len = menu.item[i].name.length;
 			if (menu.item[i].svalue) {
-				len += menu.item[i].svalue + 2;
+				len += menu.item[i].svalue.length + 2;
 			}
 			max_len = (max_len < len) ? len : max_len;
 		}
@@ -785,7 +784,7 @@ Battleship.View = {
 				gl.pushMatrix();
 					var j;
 					for (j = 0; j < max_len - 1; j++) {
-						glfont.draw_string(gl, "-", 1);
+						glfont.draw_string(gl, "-", size);
 						gl.translate(w, 0.0, 0.0);
 					}
 				gl.popMatrix();
@@ -837,9 +836,80 @@ Battleship.View = {
 			} else {
 				text = "(Enter to select)";
 			}
-			gl.scale(size, size, size);
 			gl.translate(-w*text.length/2.0, FONT_Y1, 0.0);
-			glfont.draw_string(gl, text, 1);
+			glfont.draw_string(gl, text, size);
+		gl.popMatrix();
+	},
+
+	_drawNameSelector : function(gl) {
+		var size = 1.5;
+
+		//Center title horizontally (and put it at top)
+		gl.pushMatrix();
+			var text = "Select Name";
+			var w = glfont.char_width(size)*text.length/2.0;
+			gl.setDiffuseColor( this._diff_r );
+			gl.setSpecularColor( this._spec_r );
+			gl.setMaterialShininess( this._shinny_r );
+
+			//title
+			gl.translate(-w, FONT_Y0, 0.0);
+			glfont.draw_string(gl, text, size);
+
+			gl.setDiffuseColor( this._diff_w );
+			gl.setSpecularColor( this._spec_w );
+			gl.setMaterialShininess( this._shinny_w );
+
+			//draw name
+			size = 1.2;
+			var w2 = glfont.char_width(size)*Battleship.Model.MAX_NAME_LEN/2.0;
+			var h = -2.5 * glfont.char_height(size);
+			gl.translate(w - w2, h, 0.0);
+			glfont.draw_string(gl, Battleship.Menu.name_selector.name, size);
+
+			//Draw bar under current letter
+			var g = 0.2;
+			var len = Battleship.Menu.name_selector.name.length;
+			if (len < Battleship.Model.MAX_NAME_LEN) {
+				if (!this._nameSelectorCurr) {
+					var o = new GLObject('nameselector_curr');
+					this._nameSelectorCurr = o;
+					glprimitive.box(o, 0, 0, 0, glfont.char_width(size), g, g);
+				}
+				gl.pushMatrix();
+					gl.translate(len * glfont.char_width(size), 0, 0);
+					gl.draw(this._nameSelectorCurr);
+				gl.popMatrix();
+			}
+
+			//draw box around name
+			h = glfont.char_height(size);
+			var diff = h - size;
+			if (!this._nameSelectorContainer) {
+				var o = new GLObject('nameselector_container');
+				this._nameSelectorContainer = o;
+				//left
+				glprimitive.box(o, -size/2.0 - g, -size/2.0 - g, 0.0,
+								g, h + size - diff + g*2.0, g);
+				//right
+				glprimitive.box(o, 2.0*w2 + size/2.0, -size/2.0 - g, 0.0,
+									g, h + size - diff + g*2.0, g);
+				//top
+				glprimitive.box(o, -size/2.0, h + size/2.0 - diff, 0.0,
+								2.0*w2 + size, g, g);
+				//bottom
+				glprimitive.box(o, -size/2.0, -size/2.0 - g, 0.0,
+								2.0*w2 + size, 0.2, g);
+			}
+			gl.draw(this._nameSelectorContainer);
+		gl.popMatrix();
+
+		gl.pushMatrix();
+			size = 2.0;
+			gl.translate(-glfont.TEST_WIDTH*glfont.char_width(size)/2.0,
+						glfont.char_height(size),
+						0.0);
+			glfont.test(gl, size, Battleship.Menu.name_selector.x, Battleship.Menu.name_selector.y);
 		gl.popMatrix();
 	},
 

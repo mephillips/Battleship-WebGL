@@ -88,7 +88,7 @@ Battleship = {
 	},
 
 	_mousedown : function(evt) {
-		this.mouse(false, evt);
+		this._mouse(false, evt);
 		return false;
 	},
 
@@ -124,9 +124,8 @@ Battleship = {
 			meta : evt.metaKey
 		};
 		var key = this._mapKey(evt.which || evt.keyCode);
-		Battleship.Logic.keypress(key, mods);
 		// Cancel this event if we have handled the key
-		return (key === 0);
+		return !Battleship.Logic.keypress(key, mods);
 	},
 
 	_mapKey : function(key) {
@@ -139,11 +138,12 @@ Battleship = {
 			case 39: key = Battleship.Logic.enum_key.RIGHT; break;
 			case 102: key = Battleship.Logic.enum_key.ROTATE; break;
 			case 13: key = Battleship.Logic.enum_key.ENTER; break;
+			case 27: key = Battleship.Logic.enum_key.ESC; break;
 			case 8: key = Battleship.Logic.enum_key.BACKSPACE; break;
-			case 120: case 88: key = Battleship.Logic.enum_key.X; break;
-			case 121: case 89: key = Battleship.Logic.enum_key.Y; break;
-			case 122: case 90: key = Battleship.Logic.enum_key.Z; break;
-			default: key = 0; break;
+			case 88: key = Battleship.Logic.enum_key.X; break;
+			case 70: key = Battleship.Logic.enum_key.Y; break;
+			case 90: key = Battleship.Logic.enum_key.Z; break;
+			default: key = String.fromCharCode(key); break;
 		}
 		return key;
 	},
