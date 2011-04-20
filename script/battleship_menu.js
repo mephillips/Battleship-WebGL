@@ -53,7 +53,7 @@ Battleship.Menu = {
 		var fire_width = this._createMenuItem("Width", Battleship.Model.game_rocket, 'width', this.toggle_fire_width);
 		var fire_colour = this._createMenuItem("Colour", Battleship.Model.game_rocket, 'colour', this.toggle_fire_colour);
 		var fire_items = [ fire_enabled, fire_len, fire_width, fire_colour ];
-		var fire_menu = this._createMenuItem("Fire", fire_items);
+		var fire_menu = this._createMenu("Fire", fire_items);
 
 		//Rocket Animation sub menu
 		var rocket_enabled =  this._createMenuItem("Path", Battleship.Model.game_rocket, 'type', this.toggle_rocket);
@@ -89,7 +89,7 @@ Battleship.Menu = {
 		var fog_menu = this._createMenu("Fog", fog_items);
 
 		//lsys submenu
-		var lsys_enabled = this._createMenuItem("Enabled", Battleship.Model.game_lsys, 'enabled', this.toggle_bool);
+		var lsys_enabled = this._createMenuItem("Enabled", Battleship.Model, 'do_lsystem', this.toggle_bool);
 		var lsys_type = this._createMenuItem("Pattern", Battleship.Model.game_lsys, 'type', this.toggle_lsys_type);
 		var lsys_length = this._createMenuItem("Size", Battleship.Model.game_lsys, 'length', this.toggle_lsys_length);
 		var lsys_items = [ lsys_enabled, lsys_type, lsys_length ];
@@ -102,7 +102,7 @@ Battleship.Menu = {
 		var shadow_front_wall = this._createMenuItem("P1 Wall", Battleship.Model.do_shadows, 3, this.toggle_bool);
 		var shadow_floor = this._createMenuItem("Floor", Battleship.Model.do_shadows, 4, this.toggle_bool);
 		var shadow_items = [ shadow_enabled, shadow_table, shadow_back_wall, shadow_front_wall, shadow_floor ];
-		var shadow_menu = this._createMenuItem("Shadows", shadow_items);
+		var shadow_menu = this._createMenu("Shadows", shadow_items);
 
 		//Options menu items
 		var options_textures = this._createMenuItem("Textures", Battleship.Model, 'do_textures', this.toggle_bool);
@@ -350,7 +350,7 @@ Battleship.Menu = {
 		m.svalue = Battleship.Model.fogtype_s[val];
 	},
 
-	toggle_foggen : function(m, dir) { if (dir == 0) { Battleship.Model.do_fog = Battleship.Model.enum_fogtype.FOG_REGEN; } },
+	toggle_foggen : function(m, dir) { if (dir == 0) { Battleship.Model.do_fog = Battleship.Model.enum_fogtype.REGEN; } },
 
 	toggle_name : function(m, dir) {
 		if (dir !== 0) {
@@ -420,13 +420,9 @@ Battleship.Menu = {
 
 	toggle_fire_width : function(m, dir) {
 		var val = m.object[m.key];
-		val = val + dir;
-		if (val > Battleship.Model.MAX_FIRE_WIDTH)
-			val = Battleship.Model.MAX_FIRE_WIDTH;
-		if (val < Battleship.Model.MIN_FIRE_WIDTH)
-			val = Battleship.Model.MIN_FIRE_WIDTH;
+		val = (val + Battleship.Model.NUM_FIRE_WIDTHS + dir) % Battleship.Model.NUM_FIRE_WIDTHS;
 		m.object[m.key] = val;
-		m.svalue = "" + val;
+		m.svalue = Battleship.Model.firewidth_s[val];
 		//Battleship.Rocket.update();
 	},
 

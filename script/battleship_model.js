@@ -173,10 +173,15 @@ Battleship.Model = {
 	NUM_FIRE_WIDTHS : 3,
 	/** The possible rocket paths */
 	enum_firewidth : {
-		SKINNY : 'Skinny',
-		EQUAL	: 'Equal ',
-		WIDE	: 'Wide  '
+		SKINNY : 0,
+		EQUAL	: 1,
+		WIDE	: 3
 	},
+	firewidth_s : [
+		'Skinny',
+		'Equal ',
+		'Wide  '
+	],
 
 	/** Minum length for lsystem */
 	MIN_LSYSTEM_LENGTH : 1,
