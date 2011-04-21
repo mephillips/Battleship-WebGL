@@ -44,6 +44,15 @@ var BLOCK_DIM = 0.9;
  */
 var BLOCK_REAL_DIM = 1.0;
 
+/** Width of the overhang at the top of the game */
+var BORDER_TOP_WIDTH = 1.5;
+/** Amount of space between top of grid and top of game */
+var BORDER_TOP_GAP = 0.5;
+/** Amount of space between front of horizontal grid and front of game */
+var BORDER_BOTTOM_GAP = 0;
+/** Width of the cubes that make up the border */
+var BORDER_WIDTH = 0.2;
+
 /** Length of wide part of a peg */
 var PEG_LEN_1 = BLOCK_DEPTH;
 /** Length of the skinny part of a peg */
@@ -69,6 +78,15 @@ var FONT_Y0 = 11;
 /** The bottom of the screen, for writting font */
 var FONT_Y1 = -12;
 
+/** The width of the table the game board sits on */
+var TABLE_WIDTH = 30;
+/** The height of the table the game board sits on */
+var TABLE_HEIGHT = 1.0;
+/** The depth of the table the game board sits on */
+var TABLE_DEPTH = 26;
+/** The top o the table */
+var TABLE_TOP = (-(BLOCK_DEPTH/2.0+BORDER_WIDTH) + GRID_BOTTOM_Y);
+
 /** The size of the room width/depth the game is being played in */
 var ROOM_DIM = 60;
 
@@ -77,6 +95,13 @@ var ROOM_HEIGHT = 55;
 
 /** The height of the fog cube */
 var FOG_HEIGHT = PEG_LEN_2;
+
+/** X Location of light used to cast shadows */
+var LIGHT_X = 0
+/** Y Location of light used to cast shadows */
+var LIGHT_Y = (ROOM_HEIGHT/2.0)
+/** Z Location of light used to cast shadows */
+var LIGHT_Z = 0
 
  /**
   * @namespace
@@ -113,10 +138,18 @@ Battleship.View = {
 	_destroyer : null,
 	_sub : null,
 	_ptBoat : null,
+	_ceiling : null,
+	_light : null,
+	_floor : null,
+	_tableLegs : null,
+	_tableTop : null,
 
 	/** Textures */
 	_fogTexture : null,
 	_lsysTexture : null,
+	_floorTexture : null,
+	_ceilingTexture : null,
+	_tableTexture : null,
 
 	/** State */
 	/** @private The value of do_fog used to generat the current texture */
@@ -240,7 +273,7 @@ Battleship.View = {
 		gl.uniform1i(gl.useLightingUniform, true);
 		gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
 		gl.setAmbientColor(0.2, 0.2, 0.2);
-		gl.setLightPositon(0.0, 10.0, 0.0);
+		gl.setLightPositon(LIGHT_X, LIGHT_Y, LIGHT_Z);
 		gl.setDiffuseColor( this._diff_w );
 		gl.setSpecularColor( this._spec_w );
 		gl.setMaterialShininess( this._shinny_w );
@@ -313,7 +346,7 @@ Battleship.View = {
 				this._drawWall(gl);
 			break;
 			default:
-				if (Battleship.Menu.curr_menu) {
+				if (false) {//Battleship.Menu.curr_menu) {
 					if (Battleship.Menu.name_selector.enabled) {
 						this._drawNameSelector(gl);
 					} else {
@@ -339,7 +372,7 @@ Battleship.View = {
 					}
 				} else {
 					//if (do_shadows[SHADOW_ALL]) { drawShadows(); }
-					//drawGame();
+					this._drawGame(gl);
 				}
 			break;
 		}
@@ -359,6 +392,24 @@ Battleship.View = {
 			this._lines = o;
 		}
 		gl.draw(this._lines);
+	},
+
+	_drawGame : function(gl) {
+		this._drawCeiling(gl);
+		this._drawFloor(gl);
+
+		//Draw walls
+		gl.pushMatrix();
+			this._drawWall(gl);
+			gl.rotate(0.0, 90, 0.0);
+			this._drawWall(gl);
+			gl.rotate(0.0, 90, 0.0);
+			this._drawWall(gl);
+			gl.rotate(0.0, 90, 0.0);
+			this._drawWall(gl);
+		gl.popMatrix();
+
+		this._drawTable(gl);
 	},
 
 	_drawGrid : function(gl) {
@@ -988,6 +1039,130 @@ Battleship.View = {
 			gl.bindTexture(gl.TEXTURE_2D, this._fogTexture);
 		}
 		gl.draw(this._fog);
+		if (Battleship.Model.do_textures) {
+			gl.uniform1i(gl.useTexturesUniform, false);
+			gl.bindTexture(gl.TEXTURE_2D, null);
+		}
+	},
+
+	_drawTable : function(gl) {
+		var ypos = -TABLE_HEIGHT + TABLE_TOP;
+
+		if (!this._tableTop) {
+			var o = new GLObject('table_top');
+			this._tableTop = o;
+			glprimitive.box(o, -TABLE_WIDTH/2.0,
+							ypos,
+							-TABLE_DEPTH/2.0,
+							TABLE_WIDTH, TABLE_HEIGHT, TABLE_DEPTH);
+		}
+
+		if (!this._tableLegs) {
+			var o = new GLObject('table_legs');
+			this._tableLegs = o;
+			var r = 0.5;
+			var b = 3.0;
+			var i;
+			for (i = 0; i < 2; i++) {
+				o.pushMatrix();
+					if (i === 1) { o.rotate(0.0, 180, 0.0); }
+					o.translate(-TABLE_WIDTH/2.0 + b, ypos - r, -TABLE_DEPTH/2.0 + b);
+					glprimitive.cylinder(o, r, TABLE_DEPTH - 2.0*b);
+					o.translate(0.0, 0.0, 3.0*r);
+					o.rotate(90, 0.0, 0.0);
+					glprimitive.cylinder(o, r, ROOM_HEIGHT/2.0 + ypos - r);
+					o.translate(0.0, TABLE_DEPTH - 2.0*b - 6.0*r, 0.0);
+					glprimitive.cylinder(o, r, ROOM_HEIGHT/2.0 + ypos -r);
+				o.popMatrix();
+			}
+		}
+
+		//top
+		if (Battleship.Model.do_textures) {
+			if (!this._tableTexture) {
+				this._tableTexture = gl.loadTextureDataUrl('data/table.rgb', 256, 256);
+			}
+			gl.uniform1i(gl.useTexturesUniform, true);
+			gl.bindTexture(gl.TEXTURE_2D, this._fogTexture);
+		}
+		gl.draw(this._tableTop);
+		if (Battleship.Model.do_textures) {
+			gl.uniform1i(gl.useTexturesUniform, false);
+			gl.bindTexture(gl.TEXTURE_2D, null);
+		}
+
+		//legs
+		gl.setDiffuseColor([0.1, 0.1, 0.1]);
+		gl.setSpecularColor([0.1, 0.1, 0.1]);
+		gl.setMaterialShininess(1);
+		gl.draw(this._tableLegs);
+	},
+
+	_drawCeiling : function(gl) {
+		var s = ROOM_DIM/5.0;
+		if (!this._ceiling) {
+			var o = new GLObject('cieling');
+			this._ceiling = o;
+			o.begin(GLObject.GL_QUADS);
+				o.setNormal(0.0, -1.0, 0.0);
+				o.setTexCoord(0, 0);
+				o.vertex(-ROOM_DIM/2.0, ROOM_HEIGHT/2.0, -ROOM_DIM/2.0);
+				o.setTexCoord(s, 0);
+				o.vertex(ROOM_DIM/2.0, ROOM_HEIGHT/2.0, -ROOM_DIM/2.0);
+				o.setTexCoord(s, s);
+				o.vertex(ROOM_DIM/2.0, ROOM_HEIGHT/2.0, ROOM_DIM/2.0);
+				o.setTexCoord(0, s);
+				o.vertex(-ROOM_DIM/2.0, ROOM_HEIGHT/2.0, ROOM_DIM/2.0);
+			o.end();
+
+			o = new GLObject('light');
+			this._light = o;
+			//draw light
+			var g = 3.0;
+			glprimitive.box(o, LIGHT_X - g/2.0, LIGHT_Y - 0.5, LIGHT_Z - g/2.0, g, 0.5, g);
+		}
+
+		if (Battleship.Model.do_textures) {
+			if (!this._ceilingTexture) {
+				this._ceilingTexture = gl.loadTextureDataUrl('data/ceiling.rgb', 64, 64);
+			}
+			gl.uniform1i(gl.useTexturesUniform, true);
+			gl.bindTexture(gl.TEXTURE_2D, this._ceilingTexture);
+		}
+		gl.draw(this._ceiling);
+		if (Battleship.Model.do_textures) {
+			gl.uniform1i(gl.useTexturesUniform, false);
+			gl.bindTexture(gl.TEXTURE_2D, null);
+		}
+		gl.draw(this._light);
+	},
+
+	_drawFloor : function(gl) {
+		var s = ROOM_DIM/5.0;
+		if (!this._floor) {
+			var o = new GLObject('floor');
+			this._floor = o;
+			o.begin(GLObject.GL_QUADS);
+				o.setNormal(0.0, 1.0, 0.0);
+				o.setTexCoord(0, s);
+				o.vertex(-ROOM_DIM/2.0, -ROOM_HEIGHT/2.0, ROOM_DIM/2.0);
+				o.setTexCoord(s, s);
+				o.vertex(ROOM_DIM/2.0, -ROOM_HEIGHT/2.0, ROOM_DIM/2.0);
+				o.setTexCoord(s, 0);
+				o.vertex(ROOM_DIM/2.0, -ROOM_HEIGHT/2.0, -ROOM_DIM/2.0);
+				o.setTexCoord(0, 0);
+				o.vertex(-ROOM_DIM/2.0, -ROOM_HEIGHT/2.0, -ROOM_DIM/2.0);
+			o.end();
+		}
+
+		if (Battleship.Model.do_textures) {
+			if (!this._floorTexture) {
+				this._floorTexture = gl.loadTextureDataUrl('data/floor.rgb', 64, 64);
+			}
+			gl.uniform1i(gl.useTexturesUniform, true);
+			gl.bindTexture(gl.TEXTURE_2D, this._floorTexture);
+		}
+		gl.draw(this._floor);
 		if (Battleship.Model.do_textures) {
 			gl.uniform1i(gl.useTexturesUniform, false);
 			gl.bindTexture(gl.TEXTURE_2D, null);
