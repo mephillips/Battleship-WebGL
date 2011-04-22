@@ -86,6 +86,11 @@ var FONT_Y0 = 11;
 /** The bottom of the screen, for writting font */
 var FONT_Y1 = -12;
 
+/** The width of the picture frame */
+var PICTURE_FRAME_R = 0.5;
+/** The width/height of the picture */
+var PICTURE_DIM = 4;
+
 /** The width of the table the game board sits on */
 var TABLE_WIDTH = 30;
 /** The height of the table the game board sits on */
@@ -156,15 +161,11 @@ Battleship.View = {
 	_borderLeft : null,
 	_borderRight : null,
 
-	/** Textures */
+	/** Image Textures */
+	_textures : {},
+	/** Generated textures */
 	_fogTexture : null,
 	_lsysTexture : null,
-	_floorTexture : null,
-	_ceilingTexture : null,
-	_tableTexture : null,
-	_coffeeTexture : null,
-	_leftBoardTexture : null,
-	_righBoardTexture : null,
 
 	/** State */
 	/** @private The value of do_fog used to generat the current texture */
@@ -464,6 +465,8 @@ Battleship.View = {
 				*/
 			gl.popMatrix();
 
+			this._drawPicture(gl, p);
+
 			gl.rotate(0, 180, 0);
 		}
 	},
@@ -639,25 +642,11 @@ Battleship.View = {
 		gl.setDiffuseColor(this._diff_w);
 		gl.setSpecularColor(this._spec_w);
 		gl.setMaterialShininess(this._shinny_w);
-		if (Battleship.Model.do_textures) {
-			if (!this._leftBoardTexture) {
-				this._leftBoardTexture = gl.loadImageTexture('data/left.png');
-			}
-			gl.uniform1i(gl.useTexturesUniform, true);
-			gl.bindTexture(gl.TEXTURE_2D, this._leftBoardTexture);
-		}
+		this._enableTexture(gl, this._loadImageTexture(gl, 'left'));
 		gl.draw(this._borderLeft);
-		if (Battleship.Model.do_textures) {
-			if (!this._rightBoardTexture) {
-				this._rightBoardTexture = gl.loadImageTexture('data/right.png');
-			}
-			gl.bindTexture(gl.TEXTURE_2D, this._rightBoardTexture);
-		}
+		this._enableTexture(gl, this._loadImageTexture(gl, 'right'));
 		gl.draw(this._borderRight);
-		if (Battleship.Model.do_textures) {
-			gl.uniform1i(gl.useTexturesUniform, false);
-			gl.bindTexture(gl.TEXTURE_2D, null);
-		}
+		this._disableTexture(gl);
 	},
 
 	_drawPeg : function(gl) {
@@ -1327,15 +1316,89 @@ Battleship.View = {
 		if (Battleship.Model.do_textures) {
 			//Generate (if needed)
 			this._generateFog(gl);
-
-			gl.uniform1i(gl.useTexturesUniform, true);
-			gl.bindTexture(gl.TEXTURE_2D, this._fogTexture);
+			this._enableTexture(gl, this._fogTexture);
 		}
 		gl.draw(this._fog);
-		if (Battleship.Model.do_textures) {
-			gl.uniform1i(gl.useTexturesUniform, false);
-			gl.bindTexture(gl.TEXTURE_2D, null);
+		this._disableTexture(gl);
+	},
+
+	_drawPicture : function(gl, pnum) {
+		var diff = [0.6, 0.4, 0.0];
+		var spec = [0.1, 0.1, 0.1];
+		var shinny = 1.0;
+
+		gl.pushMatrix();
+
+		if (pnum === 0) {
+			gl.translate(20, 6, ROOM_DIM/2.0 - 0.1);
+		} else {
+			gl.translate(-20, 8, ROOM_DIM/2.0 - 0.1);
 		}
+
+		//frame
+		if (!this._pictureFrame) {
+			var o = new GLObject('picture_frame');
+			this._pictureFrame = o;
+			//left
+			glprimitive.box(o, -PICTURE_DIM/2.0 - PICTURE_FRAME_R,
+							-PICTURE_DIM/2.0 - PICTURE_FRAME_R,
+							-PICTURE_FRAME_R,
+							PICTURE_FRAME_R,
+							PICTURE_DIM + PICTURE_FRAME_R*2.0,
+							PICTURE_FRAME_R);
+			//right
+			glprimitive.box(o, PICTURE_DIM/2.0,
+							-PICTURE_DIM/2.0 - PICTURE_FRAME_R,
+							-PICTURE_FRAME_R,
+							PICTURE_FRAME_R,
+							PICTURE_DIM + PICTURE_FRAME_R * 2.0,
+							PICTURE_FRAME_R);
+			//top
+			glprimitive.box(o, -PICTURE_DIM/2.0,
+							PICTURE_DIM/2.0,
+							-PICTURE_FRAME_R,
+							PICTURE_DIM,
+							PICTURE_FRAME_R, PICTURE_FRAME_R);
+			//top
+			glprimitive.box(o, -PICTURE_DIM/2.0,
+							-PICTURE_DIM/2.0 - PICTURE_FRAME_R,
+							-PICTURE_FRAME_R,
+							PICTURE_DIM,
+							PICTURE_FRAME_R, PICTURE_FRAME_R);
+		}
+		gl.setDiffuseColor( diff );
+		gl.setSpecularColor( spec );
+		gl.setMaterialShininess( shinny );
+		this._enableTexture(gl, this._loadImageTexture(gl, 'table'));
+		gl.draw(this._pictureFrame);
+
+		//picture
+		if (!this._pictureCanvas) {
+			var o = new GLObject('picture_canvas');
+			this._pictureCanvas = o;
+			o.begin(GLObject.GL_QUADS);
+				o.setNormal(0.0, 0.0, -1.0);
+				o.setTexCoord(0, 0);
+				o.vertex(-PICTURE_DIM/2.0, PICTURE_DIM/2.0, -PICTURE_FRAME_R/2.0);
+				o.setTexCoord(0, 1);
+				o.vertex(-PICTURE_DIM/2.0, -PICTURE_DIM/2.0, -PICTURE_FRAME_R/2.0);
+				o.setTexCoord(1, 1);
+				o.vertex(PICTURE_DIM/2.0, -PICTURE_DIM/2.0, -PICTURE_FRAME_R/2.0);
+				o.setTexCoord(1, 0);
+				o.vertex(PICTURE_DIM/2.0, PICTURE_DIM/2.0, -PICTURE_FRAME_R/2.0);
+			o.end();
+		}
+		gl.setDiffuseColor( this._diff_w );
+		gl.setSpecularColor( this._spec_w );
+		gl.setMaterialShininess( this._shinny_w );
+		if (pnum == 0) {
+			this._enableTexture(gl, this._loadImageTexture(gl, 'pic1'));
+		} else {
+			this._enableTexture(gl, this._loadImageTexture(gl, 'pic2'));
+		}
+		gl.draw(this._pictureCanvas);
+		this._disableTexture(gl);
+		gl.popMatrix();
 	},
 
 	_drawTable : function(gl) {
@@ -1371,18 +1434,9 @@ Battleship.View = {
 		}
 
 		//top
-		if (Battleship.Model.do_textures) {
-			if (!this._tableTexture) {
-				this._tableTexture = gl.loadImageTexture('data/table.png', 256, 256);
-			}
-			gl.uniform1i(gl.useTexturesUniform, true);
-			gl.bindTexture(gl.TEXTURE_2D, this._tableTexture);
-		}
+		this._enableTexture(gl, this._loadImageTexture(gl, 'table'));
 		gl.draw(this._tableTop);
-		if (Battleship.Model.do_textures) {
-			gl.uniform1i(gl.useTexturesUniform, false);
-			gl.bindTexture(gl.TEXTURE_2D, null);
-		}
+		this._disableTexture(gl);
 
 		//legs
 		gl.setDiffuseColor([0.1, 0.1, 0.1]);
@@ -1412,21 +1466,18 @@ Battleship.View = {
 			gl.rotate(0.0, 30, 0.0);
 			glprimitive.mug(gl, 2.0, 15);
 			if (Battleship.Model.do_textures) {
-				if (!this._coffeeTexture) {
-					this._coffeeTexture = gl.loadImageTexture('data/coffee.png');
+				if (!this._coffeeObject) {
 					this._coffeeObject = new GLObject('coffee');
 					glprimitive.disk(this._coffeeObject, 2.0, 15);
 				}
-				gl.uniform1i(gl.useTexturesUniform, true);
-				gl.bindTexture(gl.TEXTURE_2D, this._ceilingTexture);
+				this._enableTexture(gl, this._loadImageTexture(gl, 'coffee'));
 				gl.setDiffuseColor([0.6, 0.3, 0.1]);
 				gl.setSpecularColor([0.1, 0.1, 0.1]);
 				gl.setMaterialShininess(1);
 				gl.rotate(-90, 0.0, 0.0);
 				gl.translate(0.0, 0.0, 2.1);
 				gl.draw(this._coffeeObject);
-				gl.uniform1i(gl.useTexturesUniform, false);
-				gl.bindTexture(gl.TEXTURE_2D, null);
+				this._disableTexture(gl);
 			}
 		gl.popMatrix();
 	},
@@ -1455,18 +1506,9 @@ Battleship.View = {
 			glprimitive.box(o, LIGHT_X - g/2.0, LIGHT_Y - 0.5, LIGHT_Z - g/2.0, g, 0.5, g);
 		}
 
-		if (Battleship.Model.do_textures) {
-			if (!this._ceilingTexture) {
-				this._ceilingTexture = gl.loadImageTexture('data/ceiling.png');
-			}
-			gl.uniform1i(gl.useTexturesUniform, true);
-			gl.bindTexture(gl.TEXTURE_2D, this._ceilingTexture);
-		}
+		this._enableTexture(gl, this._loadImageTexture(gl, 'ceiling'));
 		gl.draw(this._ceiling);
-		if (Battleship.Model.do_textures) {
-			gl.uniform1i(gl.useTexturesUniform, false);
-			gl.bindTexture(gl.TEXTURE_2D, null);
-		}
+		this._disableTexture(gl);
 		gl.draw(this._light);
 	},
 
@@ -1488,18 +1530,9 @@ Battleship.View = {
 			o.end();
 		}
 
-		if (Battleship.Model.do_textures) {
-			if (!this._floorTexture) {
-				this._floorTexture = gl.loadImageTexture('data/floor.png');
-			}
-			gl.uniform1i(gl.useTexturesUniform, true);
-			gl.bindTexture(gl.TEXTURE_2D, this._floorTexture);
-		}
+		this._enableTexture(gl, this._loadImageTexture(gl, 'floor'));
 		gl.draw(this._floor);
-		if (Battleship.Model.do_textures) {
-			gl.uniform1i(gl.useTexturesUniform, false);
-			gl.bindTexture(gl.TEXTURE_2D, null);
-		}
+		this._disableTexture(gl);
 	},
 
 	_drawWall : function(gl) {
@@ -1526,12 +1559,28 @@ Battleship.View = {
 		if (Battleship.Model.do_textures && Battleship.Model.do_lsystem) {
 			//Generate (if needed)
 			this._generateLsystem(gl);
-
-			gl.uniform1i(gl.useTexturesUniform, true);
-			gl.bindTexture(gl.TEXTURE_2D, this._lsysTexture);
+			this._enableTexture(gl, this._lsysTexture);
 		}
 		gl.draw(this._wall);
-		if (Battleship.Model.do_textures && Battleship.Model.do_lsystem) {
+		this._disableTexture(gl);
+	},
+
+	_loadImageTexture : function(gl, id) {
+		if (Battleship.Model.do_textures && !this._textures[id]) {
+			this._textures[id] = gl.loadImageTexture('data/' + id + '.png');
+		}
+		return this._textures[id];
+	},
+
+	_enableTexture : function(gl, texture) {
+		if (Battleship.Model.do_textures) {
+			gl.uniform1i(gl.useTexturesUniform, true);
+			gl.bindTexture(gl.TEXTURE_2D, texture);
+		}
+	},
+
+	_disableTexture : function(gl) {
+		if (Battleship.Model.do_textures) {
 			gl.uniform1i(gl.useTexturesUniform, false);
 			gl.bindTexture(gl.TEXTURE_2D, null);
 		}
