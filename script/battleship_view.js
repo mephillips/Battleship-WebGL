@@ -304,6 +304,13 @@ Battleship.View = {
 		// Translation
 		if (!Battleship.Menu.curr_menu)
 		{
+			if (Battleship.Model.do_test === Battleship.Model.enum_testtype.NONE) {
+				this._drawStatus(gl);
+				gl.translate(gameTranslate[0], gameTranslate[1] - 4, gameTranslate[2]);
+				gl.rotate(gameRotate[0], 0, 0);
+				gl.rotate(0, gameRotate[1], 0);
+				gl.rotate(0, 0, gameRotate[2]);
+			}
 			//user rotation
 			gl.rotate(this._userRotate[0], 0, 0);
 			gl.rotate(0, this._userRotate[1], 0);
@@ -362,7 +369,7 @@ Battleship.View = {
 				this._drawWall(gl);
 			break;
 			default:
-				if (false) {//Battleship.Menu.curr_menu) {
+				if (Battleship.Menu.curr_menu) {
 					if (Battleship.Menu.name_selector.enabled) {
 						this._drawNameSelector(gl);
 					} else {
@@ -411,10 +418,9 @@ Battleship.View = {
 	},
 
 	_drawGame : function(gl) {
+		// Draw the room
 		this._drawCeiling(gl);
 		this._drawFloor(gl);
-
-		//Draw walls
 		gl.pushMatrix();
 			this._drawWall(gl);
 			gl.rotate(0.0, 90, 0.0);
@@ -424,12 +430,12 @@ Battleship.View = {
 			gl.rotate(0.0, 90, 0.0);
 			this._drawWall(gl);
 		gl.popMatrix();
-
 		this._drawTable(gl);
 		this._drawClock(gl);
 		this._drawMug(gl);
 
 		var p;
+		var game_state = Battleship.Model.game_state;
 		for (p = 0; p < 2; p++)
 		{
 			gl.translate(0.0, 0.0, BOARD_GAP);
@@ -441,13 +447,11 @@ Battleship.View = {
 
 			gl.pushMatrix();
 				gl.translate(0.0, GRID_TOP_Y, GRID_TOP_Z);
-				/*
-				if (game_state == GAME_PLAYING ||
-						game_state == GAME_AI_PLAYING)
+				if (game_state === Battleship.Model.enum_gamestate.PLAYING ||
+					game_state === Battleship.Model.enum_gamestate.AI_PLAYING)
 				{
-					drawGridSelect(p);
+					this._drawGridSelect(gl, p);
 				}
-				*/
 				this._drawGrid(gl);
 
 				gl.translate(0.0, -GRID_TOP_Y + GRID_BOTTOM_Y, -GRID_TOP_Z + GRID_BOTTOM_Z);
@@ -456,13 +460,11 @@ Battleship.View = {
 				this._drawGrid(gl);
 
 				//fog
-				/*
-				if (player[p].fog &&
-						!(game_state == GAME_PLACE_SHIPS && p == curr_player))
+				if (Battleship.Model.player[p].fog &&
+					!(game_state === Battleship.Model.enum_gamestate.PLACE_SHIPS && p === Battleship.Model.curr_player))
 				{
-					drawFog();
+					this._drawFog(gl);
 				}
-				*/
 			gl.popMatrix();
 
 			this._drawPicture(gl, p);
@@ -549,6 +551,28 @@ Battleship.View = {
 		gl.setFragmentColor(1.0, 1.0, 1.0, 0.4);
 		gl.draw(this._grid);
 		gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
+	},
+
+	_drawGridSelect : function(gl, pnum) {
+		var diff = [0.0, 0.2, 0.9];
+		var spec = [0.0, 0.0, 0.0];
+		var shinny = 1;
+
+		if (!this._gridSelector) {
+			var o = new GLObject('grid_selector');
+			this._gridSelector = o;
+			o.pushMatrix();
+				glprimitive.box(o, 0, 0, 0, BLOCK_DIM, BLOCK_DIM, BLOCK_DEPTH);
+			glPopMatrix();
+		}
+		gl.setDiffuseColor(diff);
+		gl.setSpecularColor(spec);
+		gl.setMaterialShininess(shinny);
+		gl.translate(
+			-Battleship.Model.GRID_DIM/2.0 + BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_x,
+			BLOCK_REAL_DIM * (GRID_DIM - 1)-BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_y,
+			-BLOCK_DEPTH/2.0);
+		gl.draw(this._gridSelector);
 	},
 
 	_drawBorder : function(gl) {
@@ -1443,6 +1467,117 @@ Battleship.View = {
 		gl.setSpecularColor([0.1, 0.1, 0.1]);
 		gl.setMaterialShininess(1);
 		gl.draw(this._tableLegs);
+	},
+
+	_drawStatus : function(gl) {
+		var size = 0.8;
+		var w = glfont.char_width(size);
+		var player = Battleship.Model.player[Battleship.Modle.curr_player];
+		gl.pushMatrix();
+		switch (Battleship.Model.game_state) {
+			case Battleship.Model.enum_gamestate.PLACE_SHIPS:
+				//Draw text
+				var text = "Place Your Ships";
+				var len = text.length;
+				gl.translate(-w*len/2.0, glfont_char_height(size)*1.5, 5.0);
+				glfont.draw_string(text, size);
+
+				//Draw player name
+				var len2 = player.name.length;
+				gl.translate(w*(len/2.0 - len2/2.0), glfont.char_height(size)*2.0, 0.0);
+				glfont.draw_string(player.name, size);
+			break;
+			case Battleship.Model.enum_gamestate.PLAYING:
+			case Battleship.Model.enum_gamestate.AI_PLAYING:
+				//Draw message
+				gl.translate(FONT_X0, FONT_Y0 + 1, 0.0);
+				glfont.draw_string("Ready to fire!", size);
+				//Draw grid coordinate
+				gl.translate(0.0, -glfont.char_height(size)*2.0, 0.0);
+				var c = ['(', '\0', '-', '\0', ')', '\0'];
+				c[1] = String.fromCharCode(playre.sel_x + 65);
+				c[3] = String.fromCharCode(player.sel_y + 48);
+				glfont.draw_string(c.join(), size);
+
+				//Draw player name
+				var len = player.name.length;
+				gl.translate(-FONT_X0 + FONT_X1 - len* w,
+								glfont.char_height(size)*2.0, 0.0);
+				glfont.draw_string(player.name, size);
+				gl.translate(len*w, -glfont.char_height(size)*2.0, 0.0);
+
+				//Draw player type
+				var text = Battleship.Model.aitype_s[player.ai]
+				len = text.length;
+				gl.translate(-w*len, 0.0, 0.0);
+				glfont.draw_string(text, size);
+			break;
+			case Battleship.Model.enum_gamestate.GAME_MESSAGE:
+			case Battleship.Model.enum_gamestate.GAME_OVER:
+				var diff_water = [0.0, 0.2, 0.9, 0.8];
+				var spec_water = [0.0, 0.0, 0.0, 0.8];
+				var shinny_water = 1;
+
+				size = 0.4*game_message.size;
+				w = glfont.char_width(size);
+
+				if (game_message.type == GRID_MISS) {
+					gl.setDiffuseColor(diff_water);
+					gl.setSpecularColor(spec_water);
+					gl.setMaterialShininess(shinny_water);
+					gl.setFragmentColor(1.0, 1.0, 1.0, 0.8);
+				} else {
+					gl.setDiffuseColor( this._diff_r );
+					gl.setSpecularColor( this._spec_r );
+					gl.setMaterialShininess( this._shinny_r );
+				}
+
+				gl.translate(0.0, 0.0, GRID_DIM*BLOCK_REAL_DIM + SLOT_WIDTH);
+				var text = null;
+				if (Battleship.Model.game_message.ship) {
+					text = "Sunk!";
+					var len = Battleship.Model.game_message.ship.length;
+					gl.translate(-w*len/2.0,
+							glfont.char_height(size)*1.5,
+							0.0);
+					glfont.draw_string(Battleship.Model.game_message.ship, size);
+					gl.translate(w*len/2.0 - w*text.length/2.0,
+							-glfont.char_height(size)*2.0,
+							0.0);
+					glfont.draw_string(text, size);
+				} else if (Battleship.Model.game_message.type === Battleship.Modle.enum_gridstate.EMPTY) {
+					//Game over
+					text = "Game Over";
+					var len = text.length;
+					gl.translate(-w*len/2.0,
+							glfont.char_height(size)*2.5,
+							0.0);
+					glfont.draw_string(text, size);
+					//Players name
+					gl.translate(w*len/2.0 - w*player.name.length/2.0,
+							-glfont.char_height(size)*2.0,
+							0.0);
+					glfont.draw_string(player.name, size);
+					//Wins
+					text = "Wins!";
+					gl.translate(w*player.name.length/2.0 -w*text.length/2.0,
+								-glfont.char_height(size)*2.0,
+								0.0);
+					glfont.draw_string(text, size);
+				} else {
+					if (game_message.type == GRID_MISS) {
+						text = "Miss";
+					} else {
+						text = "Hit";
+					}
+					gl.translate(-w*text.length/2.0, 0.0, 0.0);
+					glfont.draw_string(text, size);
+				}
+
+				gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
+			break;
+		}
+		gl.popMatrix();
 	},
 
 	_drawClock : function(gl) {
