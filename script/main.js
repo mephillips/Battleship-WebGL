@@ -30,6 +30,7 @@
 Battleship = {
 	_canvas : null,
 	_gl : null,
+	_timers : {},
 
 	main : function() {
 		var canvas = document.getElementById('battleship');
@@ -51,6 +52,8 @@ Battleship = {
 
 		// Setup implementation specific methods
 		Battleship.View.refresh = this._view_refresh.bind(this);
+		Battleship.Logic.start_timer = this._start_timer.bind(this);
+		Battleship.Logic.stop_timers = this._stop_timers.bind(this);
 
 		Battleship.Logic.init();
 
@@ -73,6 +76,49 @@ Battleship = {
 	 */
 	_view_refresh : function() {
 		window.requestAnimFrame(this._draw.bind(this), this._canvas);
+	},
+
+	/** Start a timer (implementation dependent)
+	 *
+	 *  This function should be implement in the main file corrispoding
+	 *  to a particualr gui frontend.
+	 *
+	 *  The function should start a timer. The timer will call the
+	 *  given function every delay ms until the function returns false.
+	 *
+	 *  @param delay How often to call the timer
+	 *  @param func The function to call
+	 */
+	_start_timer : function(delay, func) {
+		var id = window.setInterval(function() {
+			var success = false;
+			try {
+				success = func();
+			} catch (e) {
+				console.log('Exception during timer callback:', e);
+			}
+			if (!success) {
+				window.clearInterval(id);
+				delete this._timers[id];
+			}
+		}.bind(this), delay);
+		this._timers[id] = id;
+	},
+
+	/** Stops all timers (implementation dependent)
+	 *
+	 *  This function should be implement in the main file corrispoding
+	 *  to a particualr gui frontend.
+	 *
+	 *  The function should stop all current timers. As quickly as possible.
+	 *
+	 */
+	_stop_timers : function() {
+		for (var key in this._timers) {
+			if (this._timers.hasOwnProperty(key)) {
+				window.clearInterval(key);
+			}
+		}
 	},
 
 	/**

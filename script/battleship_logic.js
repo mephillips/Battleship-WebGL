@@ -24,6 +24,27 @@
  *
  * Contains the logic portion of the Battleship game.
  */
+
+/** Delay used for animation call back */
+var ANIMATION_SPEED = 55;
+/** Delay used for AI call back */
+var AI_SPEED = 100;
+/** Addition timer delay for demo mode */
+var DEMO_DELAY = 20;
+
+/** The final size of message text */
+var MAX_MSG_SIZE = 5;
+/** The initial size of message text */
+var MIN_MSG_SIZE = 1;
+/** How long to leave message text persistant */
+var MAX_MSG_DELAY = 35;
+/** The starting delay value for hit/miss messages*/
+var HIT_MSG_DELAY = (MAX_MSG_DELAY - 6);
+/** The starting delay value for sunk messages */
+var SUNK_MSG_DELAY = (MAX_MSG_DELAY - 10);
+/** The starting delay value for game over message */
+var WIN_MSG_DELAY = 0;
+
  /**
   * @namespace
   */
@@ -67,6 +88,15 @@ Battleship.Logic = {
 			shift : false,
 			meta : false };
 		this._mouse_button = 0;
+
+		var i;
+		this._board_motion = { rrate : [], rend : [], trate : [], tend : [] }
+		for (i = 0; i < 3; i++) {
+			this._board_motion.rrate[i] = 0;
+			this._board_motion.rend[i] = 0;
+			this._board_motion.trate[i] = 0;
+			this._board_motion.tend[i] = 0;
+		}
 
 		Battleship.Menu.load(Battleship.Menu.main_menu);
 	},
@@ -121,10 +151,10 @@ Battleship.Logic = {
 	 demo : function() {
 		Battleship.Model.demo_mode = true;
 
-		Battleship.Model.player[0].ai = 3.0*Math.rand() + 1;
+		Battleship.Model.player[0].ai = Math.floor(3.0*Math.random()) + 1;
 		Battleship.Model.player[0].auto_place = true;
 		Battleship.Model.player[0].fog = false;
-		Battleship.Model.player[1].ai = 3.0*Math.rand() + 1;
+		Battleship.Model.player[1].ai = Math.floor(3.0*Math.random()) + 1;
 		Battleship.Model.player[1].auto_place = true;
 		Battleship.Model.player[1].fog = false;
 
@@ -310,7 +340,7 @@ Battleship.Logic = {
 				Battleship.Model.demo_mode = false;
 				this.restart();
 				return true;
-			} else if (!Battleship.Model.curr_menu) {
+			} else if (!Battleship.Menu.curr_menu) {
 				//options menu
 				Battleship.Menu.load(Battleship.Menu.options_menu);
 				return true;
@@ -428,7 +458,7 @@ Battleship.Logic = {
 	_next_state : function() {
 		switch (Battleship.Model.game_state) {
 			case Battleship.Model.enum_gamestate.INIT:
-				Battleship.Model.curr_menu = NULL;
+				Battleship.Menu.curr_menu = null;
 				Battleship.Model.game_state = Battleship.Model.enum_gamestate.PLACE_SHIPS;
 
 				//put first ship in placing state
@@ -438,7 +468,7 @@ Battleship.Logic = {
 				//do ai placing of ships
 				Battleship.Model.curr_player = 0;
 				if (Battleship.Model.player[0].auto_place) { this._autoplace_ships(); }
-				Battleship.Modle.curr_player = 1;
+				Battleship.Model.curr_player = 1;
 				if (Battleship.Model.player[1].auto_place) { this._autoplace_ships(); }
 				Battleship.Model.curr_player = 0;
 
@@ -534,5 +564,140 @@ Battleship.Logic = {
 				console.log("Error: Unknown or unexpected state %i\n", Battleship.Model.game_state);
 			break;
 		}
+	},
+
+	_board_move : function(axis, to, rate) {
+		this._board_motion.tend[axis] = to;
+		var curr = Battleship.View.get_translate(axis, 'g');
+		this._board_motion.trate[axis] = (to > curr) ? rate : -rate;
+		this._start_transition();
+	},
+
+	_board_rotate : function(axis, to, rate) {
+		this._board_motion.rend[axis] = to;
+		var curr = Battleship.View.get_rotate(axis, 'g');
+		this._board_motion.rrate[axis] = (to > curr) ? rate : -rate;
+		this._start_transition();
+	},
+
+	_start_transition : function() {
+		if (Battleship.Model.game_state === Battleship.Model.enum_gamestate.TRANSITION) {
+			return;
+		}
+
+		if (!Battleship.Model.do_trans_animation) {
+			this._cancel_animation = true;
+		}
+		Battleship.Logic.start_timer(ANIMATION_SPEED, this.animate_transition.bind(this));
+	},
+
+	_try_place_ship : function(num) {
+		var curr_ship = Battleship.Model.player[Battleship.Model.curr_player].ship[num];
+		var hl = (curr_ship.down) ? 1 : curr_ship.length;
+		var vl = (!curr_ship.down) ? 1 : curr_ship.length;
+
+		//check for ship
+		var conflict = false;
+		var i, j;
+		for (i = 0; !conflict && i < hl; i++) {
+			for (j = 0; !conflict && j < vl; j++) {
+				if (curr_ship.y + j >= Battleship.Model.GRID_DIM || curr_ship.x + i >= Battleship.Model.GRID_DIM) {
+					conflict = true;
+				} else {
+					var shipAt = Battleship.Model.player[Battleship.Model.curr_player].ship_at[curr_ship.x + i][curr_ship.y +j];
+					conflict = (shipAt !== Battleship.Model.enum_shiptype.NO_SHIP);
+				}
+			}
+		}
+
+		if (!conflict) {
+			for (i = 0; i < hl; i++) {
+				for (j = 0; j < vl; j++) {
+					Battleship.Model.player[Battleship.Model.curr_player].ship_at
+						[curr_ship.x + i][curr_ship.y +j] = num;
+				}
+			}
+			curr_ship.state = Battleship.Model.enum_shipstate.PLACED;
+		}
+
+		return !conflict;
+	},
+
+	_switch_player : function(pnum) {
+		if (Battleship.Model.curr_player != pnum) {
+			Battleship.Model.curr_player = pnum;
+			this._board_rotate(1, (Battleship.Model.curr_player === 0) ? 0 : 180, 10.0);
+		}
+	},
+
+	_start_fireing : function() {
+		Battleship.Model.game_state = Battleship.Model.enum_gamestate.FIREING;
+		//var speed = ANIMATION_SPEED + 80 - game_rocket.speed*20;
+		Battleship.Logic.start_timer(ANIMATION_SPEED, this._animate_fireing.bind(this));
+	},
+
+	_autoplace_ships : function() {
+		var i;
+		var tries;
+		for (i = 0; i < Battleship.Model.NUM_SHIPS; i++) {
+			tries = 0;
+			do {
+				Battleship.Model.player[Battleship.Model.curr_player].ship[i].x = Math.floor(Battleship.Model.GRID_DIM*Math.random());
+				Battleship.Model.player[Battleship.Model.curr_player].ship[i].y = Math.floor(Battleship.Model.GRID_DIM*Math.random());
+				Battleship.Model.player[Battleship.Model.curr_player].ship[i].down = Math.random() > 0.5;
+				if (++tries >= 5000) {
+					throw new Error('Faild to autoplace ship ' + i);
+				}
+			} while (!this._try_place_ship(i));
+		}
+
+	},
+
+	animate_transition : function() {
+		if (Battleship.Menu.curr_menu || !Battleship.Model.do_trans_animation) {
+			this._cancel_animation = true;
+		}
+
+		var trans_saved_state = Battleship.Model.enum_gamestate.PLACE_SHIPS;
+		if (Battleship.Model.game_state !== Battleship.Model.enum_gamestate.TRANSITION)
+		{
+			trans_saved_state = Battleship.Model.game_state;
+			game_state = Battleship.Model.enum_gamestate.TRANSITION;
+		}
+
+		var count = 0;
+		var i = 0;
+		for (i = 0; i < 3; i++) {
+			var curr = Battleship.View.get_rotate(i, 'g');
+			if (this._cancel_animation ||
+			(this._board_motion.rrate[i] < 0.0 && curr <= this._board_motion.rend[i]) ||
+			(this._board_motion.rrate[i] > 0.0 && curr >= this._board_motion.rend[i]) ||
+			(this._board_motion.rrate[i] == 0.0)
+			) {
+				Battleship.View.set_rotate(i, this._board_motion.rend[i], 'g');
+				++count;
+			} else {
+				Battleship.View.set_rotate(i, this._board_motion.rrate[i], 'G');
+			}
+
+			curr = Battleship.View.get_translate(i, 'g');
+			if (this._cancel_animation ||
+			(this._board_motion.trate[i] < 0.0 && curr <= this._board_motion.tend[i]) ||
+			(this._board_motion.trate[i] > 0.0 && curr >= this._board_motion.tend[i]) ||
+			(this._board_motion.trate[i] == 0.0)
+			) {
+				Battleship.View.set_translate(i, this._board_motion.tend[i], 'g');
+				++count;
+			} else {
+				Battleship.View.set_translate(i, this._board_motion.trate[i],'G');
+			}
+		}
+		Battleship.View.refresh();
+
+		var done = (count === 6);
+		if (this._cancel_animation) { this._cancel_animation = false; }
+
+		if (done) { Battleship.Model.game_state = trans_saved_state; }
+		return !done;
 	}
 };

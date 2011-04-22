@@ -268,6 +268,54 @@ Battleship.View = {
 		}
 	},
 
+	get_translate : function(axis, type) {
+		if (axis < 0 || axis > 2) {
+			console.log("Invalid axis to get translate.\n");
+			return 0.0;
+		}
+		var r = 0.0;
+		switch (type) {
+			case 'u' :
+				if (Battleship.Menu.curr_menu) {
+					r = this._menuTranslate[axis];
+				} else {
+					r = this._userTranslate[axis];
+				}
+			break;
+			case 'g' :
+				r = this._gameTranslate[axis];
+			break;
+			default:
+				console.log("Unknow type to get translate.\n");
+			break;
+		}
+		return r;
+	},
+
+	get_rotate : function(axis, type) {
+		if (axis < 0 || axis > 2) {
+			console.log("Invalid axis to get rotate.\n");
+			return 0.0;
+		}
+		var r = 0.0;
+		switch (type) {
+			case 'u' :
+				if (Battleship.Menu.curr_menu) {
+					r = this._menuRotate[axis];
+				} else {
+					r = this._userRotate[axis];
+				}
+			break;
+			case 'g' :
+				r = this._gameRotate[axis];
+			break;
+			default:
+				console.log("Unknow type to get rotate.\n");
+			break;
+		}
+		return r;
+	},
+
 	set_perspective : function(gl, width, height) {
 		if (width !== this._width && height !== this._height) {
 
@@ -306,10 +354,10 @@ Battleship.View = {
 		{
 			if (Battleship.Model.do_test === Battleship.Model.enum_testtype.NONE) {
 				this._drawStatus(gl);
-				gl.translate(gameTranslate[0], gameTranslate[1] - 4, gameTranslate[2]);
-				gl.rotate(gameRotate[0], 0, 0);
-				gl.rotate(0, gameRotate[1], 0);
-				gl.rotate(0, 0, gameRotate[2]);
+				gl.translate(this._gameTranslate[0], this._gameTranslate[1] - 4, this._gameTranslate[2]);
+				gl.rotate(this._gameRotate[0], 0, 0);
+				gl.rotate(0, this._gameRotate[1], 0);
+				gl.rotate(0, 0, this._gameRotate[2]);
 			}
 			//user rotation
 			gl.rotate(this._userRotate[0], 0, 0);
@@ -1472,20 +1520,20 @@ Battleship.View = {
 	_drawStatus : function(gl) {
 		var size = 0.8;
 		var w = glfont.char_width(size);
-		var player = Battleship.Model.player[Battleship.Modle.curr_player];
+		var player = Battleship.Model.player[Battleship.Model.curr_player];
 		gl.pushMatrix();
 		switch (Battleship.Model.game_state) {
 			case Battleship.Model.enum_gamestate.PLACE_SHIPS:
 				//Draw text
 				var text = "Place Your Ships";
 				var len = text.length;
-				gl.translate(-w*len/2.0, glfont_char_height(size)*1.5, 5.0);
-				glfont.draw_string(text, size);
+				gl.translate(-w*len/2.0, glfont.char_height(size)*1.5, 5.0);
+				glfont.draw_string(gl, text, size);
 
 				//Draw player name
 				var len2 = player.name.length;
 				gl.translate(w*(len/2.0 - len2/2.0), glfont.char_height(size)*2.0, 0.0);
-				glfont.draw_string(player.name, size);
+				glfont.draw_string(gl, player.name, size);
 			break;
 			case Battleship.Model.enum_gamestate.PLAYING:
 			case Battleship.Model.enum_gamestate.AI_PLAYING:
@@ -1497,20 +1545,20 @@ Battleship.View = {
 				var c = ['(', '\0', '-', '\0', ')', '\0'];
 				c[1] = String.fromCharCode(playre.sel_x + 65);
 				c[3] = String.fromCharCode(player.sel_y + 48);
-				glfont.draw_string(c.join(), size);
+				glfont.draw_string(gl, c.join(), size);
 
 				//Draw player name
 				var len = player.name.length;
 				gl.translate(-FONT_X0 + FONT_X1 - len* w,
 								glfont.char_height(size)*2.0, 0.0);
-				glfont.draw_string(player.name, size);
+				glfont.draw_string(gl, player.name, size);
 				gl.translate(len*w, -glfont.char_height(size)*2.0, 0.0);
 
 				//Draw player type
 				var text = Battleship.Model.aitype_s[player.ai]
 				len = text.length;
 				gl.translate(-w*len, 0.0, 0.0);
-				glfont.draw_string(text, size);
+				glfont.draw_string(gl, text, size);
 			break;
 			case Battleship.Model.enum_gamestate.GAME_MESSAGE:
 			case Battleship.Model.enum_gamestate.GAME_OVER:
@@ -1540,30 +1588,30 @@ Battleship.View = {
 					gl.translate(-w*len/2.0,
 							glfont.char_height(size)*1.5,
 							0.0);
-					glfont.draw_string(Battleship.Model.game_message.ship, size);
+					glfont.draw_string(gl, Battleship.Model.game_message.ship, size);
 					gl.translate(w*len/2.0 - w*text.length/2.0,
 							-glfont.char_height(size)*2.0,
 							0.0);
-					glfont.draw_string(text, size);
-				} else if (Battleship.Model.game_message.type === Battleship.Modle.enum_gridstate.EMPTY) {
+					glfont.draw_string(gl, text, size);
+				} else if (Battleship.Model.game_message.type === Battleship.Model.enum_gridstate.EMPTY) {
 					//Game over
 					text = "Game Over";
 					var len = text.length;
 					gl.translate(-w*len/2.0,
 							glfont.char_height(size)*2.5,
 							0.0);
-					glfont.draw_string(text, size);
+					glfont.draw_string(gl, text, size);
 					//Players name
 					gl.translate(w*len/2.0 - w*player.name.length/2.0,
 							-glfont.char_height(size)*2.0,
 							0.0);
-					glfont.draw_string(player.name, size);
+					glfont.draw_string(gl, player.name, size);
 					//Wins
 					text = "Wins!";
 					gl.translate(w*player.name.length/2.0 -w*text.length/2.0,
 								-glfont.char_height(size)*2.0,
 								0.0);
-					glfont.draw_string(text, size);
+					glfont.draw_string(gl, text, size);
 				} else {
 					if (game_message.type == GRID_MISS) {
 						text = "Miss";
@@ -1571,7 +1619,7 @@ Battleship.View = {
 						text = "Hit";
 					}
 					gl.translate(-w*text.length/2.0, 0.0, 0.0);
-					glfont.draw_string(text, size);
+					glfont.draw_string(gl, text, size);
 				}
 
 				gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
