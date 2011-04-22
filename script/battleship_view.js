@@ -611,14 +611,14 @@ Battleship.View = {
 			this._gridSelector = o;
 			o.pushMatrix();
 				glprimitive.box(o, 0, 0, 0, BLOCK_DIM, BLOCK_DIM, BLOCK_DEPTH);
-			glPopMatrix();
+			o.popMatrix();
 		}
 		gl.setDiffuseColor(diff);
 		gl.setSpecularColor(spec);
 		gl.setMaterialShininess(shinny);
 		gl.translate(
 			-Battleship.Model.GRID_DIM/2.0 + BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_x,
-			BLOCK_REAL_DIM * (GRID_DIM - 1)-BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_y,
+			BLOCK_REAL_DIM * (Battleship.Model.GRID_DIM - 1)-BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_y,
 			-BLOCK_DEPTH/2.0);
 		gl.draw(this._gridSelector);
 	},
@@ -1105,7 +1105,7 @@ Battleship.View = {
 		}
 	},
 
-	_drawShips : function(gl) {
+	_drawShips : function(gl, pnum) {
 		var SHIP_LOC =
 		[
 			[-BLOCK_REAL_DIM/2.0, 0, 0, 0, 0, 0],
@@ -1115,22 +1115,82 @@ Battleship.View = {
 			[-BLOCK_REAL_DIM/2.0-BLOCK_REAL_DIM*2, 0, BLOCK_REAL_DIM*Battleship.Model.MAX_SHIP_LEN+1, 0, 0, 0]
 		];
 
-		gl.setDiffuseColor(this._diff_ship);
-		gl.setSpecularColor(this._spec_ship);
-		gl.setMaterialShininess(this._shinny_ship);
-
 		var i;
 		for (i = 0; i < Battleship.Model.NUM_SHIPS; i++)
 		{
 			gl.pushMatrix();
 
-			//move to other players holder
-			gl.translate(SHIP_LOC[i][0], SHIP_LOC[i][1], SHIP_LOC[i][2]);
-			gl.rotate(SHIP_LOC[i][3], 0, 0);
-			gl.rotate(0, SHIP_LOC[i][4], 0);
-			gl.rotate(0, 0, SHIP_LOC[i][5]);
+			//move to orign of grid
+			gl.translate(-(Battleship.Model.GRID_DIM/2.0)*BLOCK_REAL_DIM,
+				GRID_BOTTOM_Y + BLOCK_DEPTH/2.0,
+				GRID_BOTTOM_Z + BLOCK_REAL_DIM/2.0);
 
-			this._drawShip(gl, i);
+			//draw ships that are on the grid
+			if (Battleship.Model.player[pnum].ship[i].state !== Battleship.Model.enum_shipstate.NOT_PLACED) {
+				if (Battleship.Model.player[pnum].ship[i].state === Battleship.Model.enum_shipstate.SHIP_PLACING) {
+					gl.translate(0.0, 1.0, 0.0);
+				}
+
+				if (Battleship.Model.player[pnum].ship[i].down) {
+					//translate to right grid
+					gl.translate(
+						Battleship.Model.player[pnum].ship[i].x*BLOCK_REAL_DIM + BLOCK_REAL_DIM/2.0,
+						0.0,
+						Battleship.Model.player[pnum].ship[i].y*BLOCK_REAL_DIM - BLOCK_REAL_DIM/2.0);
+				} else {
+					gl.translate(
+						Battleship.Model.player[pnum].ship[i].x*BLOCK_REAL_DIM,
+						0.0,
+						Battleship.Model.player[pnum].ship[i].y*BLOCK_REAL_DIM);
+					//rotate ship
+					gl.rotate(0.0, 90, 0.0);
+				}
+			} else {
+				//draw ships that are in the holder
+				//move to other players holder
+				gl.translate(SHIP_LOC[i][0], SHIP_LOC[i][1], SHIP_LOC[i][2]);
+				gl.rotate(SHIP_LOC[i][3], 0, 0);
+				gl.rotate(0, SHIP_LOC[i][4], 0);
+				gl.rotate(0, 0, SHIP_LOC[i][5]);
+			}
+
+			//don't draw the ship if fog is on
+			if (!Battleship.Model.player[pnum].fog ||
+				(Battleship.Model.game_state === Battleship.Model.enum_gamestate.PLACE_SHIPS && pnum === Battleship.Model.curr_player))
+			{
+				gl.setDiffuseColor(this._diff_ship);
+				gl.setSpecularColor(this._spec_ship);
+				gl.setMaterialShininess(this._shinny_ship);
+				this._drawShip(gl, i);
+			}
+
+			//draw hit pegs
+			//translate to center of square
+			if (Battleship.Model.player[pnum].ship[i].down) {
+				gl.translate(0.0, 0.0, BLOCK_REAL_DIM/2.0);
+			} else {
+				gl.translate(0.0, 0.0, BLOCK_REAL_DIM/2.0);
+			}
+			gl.rotate(-90, 0, 0);
+
+			var j;
+			var hscale = (Battleship.Model.player[pnum].ship[i].down) ? 0 : 1;
+			var vscale = (Battleship.Model.player[pnum].ship[i].down) ? 1 : 0;
+
+			//get peg ready
+			gl.setDiffuseColor( this._diff_r );
+			gl.setSpecularColor( this._spec_r );
+			gl.setMaterialShininess( this._shinny_r );
+			for (j = 0; j < Battleship.Model.player[pnum].ship[i].length; j++) {
+				if (Battleship.Model.player[pnum].grid
+						[Battleship.Model.player[pnum].ship[i].x + j*hscale]
+						[Battleship.Model.player[pnum].ship[i].y + j*vscale]
+						=== Battleship.Model.enum_gridstate.HIT
+				) {
+					this._drawPeg(gl);
+				}
+				gl.translate(0.0, -BLOCK_REAL_DIM, 0.0);
+			}
 
 			gl.popMatrix();
 		}
@@ -1539,11 +1599,11 @@ Battleship.View = {
 			case Battleship.Model.enum_gamestate.AI_PLAYING:
 				//Draw message
 				gl.translate(FONT_X0, FONT_Y0 + 1, 0.0);
-				glfont.draw_string("Ready to fire!", size);
+				glfont.draw_string(gl, "Ready to fire!", size);
 				//Draw grid coordinate
 				gl.translate(0.0, -glfont.char_height(size)*2.0, 0.0);
 				var c = ['(', '\0', '-', '\0', ')', '\0'];
-				c[1] = String.fromCharCode(playre.sel_x + 65);
+				c[1] = String.fromCharCode(player.sel_x + 65);
 				c[3] = String.fromCharCode(player.sel_y + 48);
 				glfont.draw_string(gl, c.join(), size);
 

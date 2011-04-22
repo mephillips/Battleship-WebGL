@@ -380,7 +380,7 @@ Battleship.Logic = {
 				} else if (key === this.enum_key.ENTER) {
 					if (this._try_place_ship(curr_ship_t)) {
 						//If the ship is placed and it is the last one move on
-						if (curr_ship_t === NUM_SHIPS - 1) {
+						if (curr_ship_t === Battleship.Model.NUM_SHIPS - 1) {
 							this._next_state();
 						} else {
 							Battleship.Model.player[Battleship.Model.curr_player].ship[curr_ship_t + 1].state = Battleship.Model.enum_shipstate.PLACING;
@@ -413,30 +413,30 @@ Battleship.Logic = {
 					needRefresh = false;
 				}
 			break;
-			case GAME_TRANSITION:
-			case GAME_FIREING:
-			case GAME_MESSAGE:
-				cancel_animation = true;
+			case Battleship.Model.enum_gamestate.TRANSITION:
+			case Battleship.Model.enum_gamestate.FIREING:
+			case Battleship.Model.enum_gamestate.MESSAGE:
+				this._cancel_animation = true;
 			break;
-			case GAME_AI_PLAYING:
+			case Battleship.Model.enum_gamestate.AI_PLAYING:
 				if (mod.ai) {
-					cancel_animation = true;;
+					this._cancel_animation = true;;
 					return;
 				}
 			//note lack of break
-			case GAME_PLAYING:
-				if (key == BATTLESHIP_KEYS[BATTLESHIP_KEY_LEFT]) {
+			case Battleship.Model.enum_gamestate.PLAYING:
+				if (key === this.enum_key.LEFT) {
 					this._fix_select(-1, 0);
-				} else if (key === BATTLESHIP_KEYS[BATTLESHIP_KEY_RIGHT]) {
+				} else if (key === this.enum_key.RIGHT) {
 					this._fix_select(1, 0);
-				} else if (key === BATTLESHIP_KEYS[BATTLESHIP_KEY_UP]) {
+				} else if (key === this.enum_key.UP) {
 					this._fix_select(0, -1);
-				} else if (key === BATTLESHIP_KEYS[BATTLESHIP_KEY_DOWN]) {
+				} else if (key === this.enum_key.DOWN) {
 					this._fix_select(0, 1);
-				} else if (key === BATTLESHIP_KEYS[BATTLESHIP_KEY_ENTER]) {
+				} else if (key === this.enum_key.ENTER) {
 					if (Battleship.Model.player[1 - Battleship.Model.curr_player].grid
 							[Battleship.Model.player[Battleship.Model.curr_player].sel_x][Battleship.Model.player[Battleship.Model.curr_player].sel_y]
-							=== GRID_EMPTY)
+							=== Battleship.Model.enum_gridstate.EMPTY)
 					{
 						this._next_state();
 						needRefresh = false;
@@ -445,7 +445,7 @@ Battleship.Logic = {
 					needRefresh = false;
 				}
 			break;
-			case GAME_OVER:
+			case Battleship.Model.enum_gamestate.GAME_OVER:
 				this._next_state();
 			break;
 			default:
