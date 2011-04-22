@@ -26,6 +26,9 @@
  *
  */
 
+/** Increaseing this value will move the two players boards apart */
+var BOARD_GAP = 0;
+
 /** How far up on the board to draw the vertical grid */
 var GRID_TOP_Y = 2.0;  	// - For the normal on the diagonl stuff. This
 /** How far out fromt he origin to draw the vertical gird */
@@ -52,6 +55,11 @@ var BORDER_TOP_GAP = 0.5;
 var BORDER_BOTTOM_GAP = 0;
 /** Width of the cubes that make up the border */
 var BORDER_WIDTH = 0.2;
+
+/** The width of the slots at the side of the board */
+var SLOT_WIDTH = 4;
+/** The height (along z) of thelarger slot on the right side of the board */
+var SLOT_HEIGHT = 6;
 
 /** Length of wide part of a peg */
 var PEG_LEN_1 = BLOCK_DEPTH;
@@ -143,6 +151,10 @@ Battleship.View = {
 	_floor : null,
 	_tableLegs : null,
 	_tableTop : null,
+	_coffeeObject : null,
+	_borderMain : null,
+	_borderLeft : null,
+	_borderRight : null,
 
 	/** Textures */
 	_fogTexture : null,
@@ -150,6 +162,9 @@ Battleship.View = {
 	_floorTexture : null,
 	_ceilingTexture : null,
 	_tableTexture : null,
+	_coffeeTexture : null,
+	_leftBoardTexture : null,
+	_righBoardTexture : null,
 
 	/** State */
 	/** @private The value of do_fog used to generat the current texture */
@@ -410,6 +425,47 @@ Battleship.View = {
 		gl.popMatrix();
 
 		this._drawTable(gl);
+		this._drawClock(gl);
+		this._drawMug(gl);
+
+		var p;
+		for (p = 0; p < 2; p++)
+		{
+			gl.translate(0.0, 0.0, BOARD_GAP);
+
+			this._drawPegs(gl, p);
+			this._drawExtraPegs(gl, p);
+			this._drawBorder(gl);
+			this._drawShips(gl, p);
+
+			gl.pushMatrix();
+				gl.translate(0.0, GRID_TOP_Y, GRID_TOP_Z);
+				/*
+				if (game_state == GAME_PLAYING ||
+						game_state == GAME_AI_PLAYING)
+				{
+					drawGridSelect(p);
+				}
+				*/
+				this._drawGrid(gl);
+
+				gl.translate(0.0, -GRID_TOP_Y + GRID_BOTTOM_Y, -GRID_TOP_Z + GRID_BOTTOM_Z);
+				gl.rotate(90, 0, 0);
+				gl.rotate(0, 180, 0);
+				this._drawGrid(gl);
+
+				//fog
+				/*
+				if (player[p].fog &&
+						!(game_state == GAME_PLACE_SHIPS && p == curr_player))
+				{
+					drawFog();
+				}
+				*/
+			gl.popMatrix();
+
+			gl.rotate(0, 180, 0);
+		}
 	},
 
 	_drawGrid : function(gl) {
@@ -492,6 +548,118 @@ Battleship.View = {
 		gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
 	},
 
+	_drawBorder : function(gl) {
+		var diff = [0.1, 0.1, 0.1];
+		var spec = [0.1, 0.1, 0.1];
+		var shinny = 1;
+
+		if (!this._borderMain) {
+			var GRID_DIM = Battleship.Model.GRID_DIM;
+			var G = BORDER_WIDTH;
+			var left = -GRID_DIM/2.0 * BLOCK_REAL_DIM - SLOT_WIDTH + G;
+			var bottom = GRID_BOTTOM_Y - BLOCK_DEPTH/2.0 - G;
+			var top = GRID_TOP_Y + GRID_DIM * BLOCK_REAL_DIM + BORDER_TOP_GAP + G;
+
+			//Top
+			var o = new GLObject('border_main');
+			this._borderMain = o;
+			//Left Side
+			glprimitive.box(o, left, bottom, 0, G, top - bottom, BORDER_TOP_WIDTH);
+			//Right Side
+			glprimitive.box(o, -left - G, bottom, 0, G, top - bottom, BORDER_TOP_WIDTH);
+			//Top
+			glprimitive.box(o, left, top - G, 0, -2*left, G, BORDER_TOP_WIDTH);
+			//Planes in the Middle of top Board (or the back)
+			//char 0 to -G if BOARD_GAP != 0
+			glprimitive.box(o, left, bottom, 0, 2*-left, top - bottom, G);
+			//Bottom
+			top = 0;
+			var front = GRID_DIM * BLOCK_REAL_DIM + GRID_BOTTOM_Z + G + BORDER_BOTTOM_GAP;
+			//Left Side
+			glprimitive.box(o, left, bottom, 0, G, top - bottom, front);
+			//Right
+			glprimitive.box(o, -left - G, bottom, 0, G, top - bottom, front);
+			//Bottom
+			glprimitive.box(o, left, bottom, 0, -2*left, G, front);
+			top = GRID_BOTTOM_Y + BLOCK_DEPTH/2.0;
+			//front
+			glprimitive.box(o, left, bottom, front - G, -2*left, top - bottom, G);
+			//Peg Divider Front facing player
+			glprimitive.box(o, -left - SLOT_WIDTH + G, bottom, SLOT_HEIGHT - G, SLOT_WIDTH - G, top - bottom, G);
+			//Status thing
+			o.begin(GLObject.GL_QUADS);
+				o.setNormal(0, 1, 1);
+				o.vertex(left + G, bottom + G, GRID_BOTTOM_Z);
+				o.vertex(-left - G, bottom + G, GRID_BOTTOM_Z);
+				o.vertex(-left - G, GRID_TOP_Y, G);
+				o.vertex(left + G, GRID_TOP_Y, G);
+			o.end();
+
+			//Right decal
+			left = -GRID_DIM/2.0*BLOCK_REAL_DIM - SLOT_WIDTH + BLOCK_REAL_DIM;
+			top = GRID_TOP_Y + GRID_DIM*BLOCK_REAL_DIM - 0.1;
+			bottom = GRID_TOP_Y + 0.1;
+			front = GRID_TOP_Z;
+			o = new GLObject('border_right');
+			this._borderRight = o;
+			o.begin(GLObject.GL_QUADS);
+				o.setNormal(0, 0, 1);
+				o.setTexCoord(0.0, 0.0);
+				o.vertex(left, top, front);
+				o.setTexCoord(0.0, 1.0);
+				o.vertex(left, bottom, front);
+				o.setTexCoord(1.0, 1.0);
+				o.vertex(left + 2.5*BLOCK_REAL_DIM, bottom, front);
+				o.setTexCoord(1.0, 0.0);
+				o.vertex(left + 2.5*BLOCK_REAL_DIM, top, front);
+			o.end();
+
+			//Left decal
+			left = GRID_DIM/2.0*BLOCK_REAL_DIM+SLOT_WIDTH/2.0-1.5*BLOCK_REAL_DIM;
+			o = new GLObject('border_left');
+			this._borderLeft = o;
+			o.begin(GLObject.GL_QUADS);
+				o.setNormal(0, 0, 1);
+				o.setTexCoord(0.0, 0.0);
+				o.vertex(left, top, front);
+				o.setTexCoord(0.0, 1.0);
+				o.vertex(left, bottom, front);
+				o.setTexCoord(1.0, 1.0);
+				o.vertex(left + 2.5*BLOCK_REAL_DIM, bottom, front);
+				o.setTexCoord(1.0, 0.0);
+				o.vertex(left + 2.5*BLOCK_REAL_DIM, top, front);
+			o.end();
+		}
+
+		gl.setDiffuseColor(diff);
+		gl.setSpecularColor(spec);
+		gl.setMaterialShininess(shinny);
+		gl.draw(this._borderMain);
+
+		gl.setDiffuseColor(this._diff_w);
+		gl.setSpecularColor(this._spec_w);
+		gl.setMaterialShininess(this._shinny_w);
+		if (Battleship.Model.do_textures) {
+			if (!this._leftBoardTexture) {
+				this._leftBoardTexture = gl.loadImageTexture('data/left.png');
+			}
+			gl.uniform1i(gl.useTexturesUniform, true);
+			gl.bindTexture(gl.TEXTURE_2D, this._leftBoardTexture);
+		}
+		gl.draw(this._borderLeft);
+		if (Battleship.Model.do_textures) {
+			if (!this._rightBoardTexture) {
+				this._rightBoardTexture = gl.loadImageTexture('data/right.png');
+			}
+			gl.bindTexture(gl.TEXTURE_2D, this._rightBoardTexture);
+		}
+		gl.draw(this._borderRight);
+		if (Battleship.Model.do_textures) {
+			gl.uniform1i(gl.useTexturesUniform, false);
+			gl.bindTexture(gl.TEXTURE_2D, null);
+		}
+	},
+
 	_drawPeg : function(gl) {
 		if (!this._peg) {
 			var o = new GLObject('peg');
@@ -508,6 +676,131 @@ Battleship.View = {
 			this._peg = o;
 		}
 		gl.draw(this._peg);
+	},
+
+	_drawPegs : function(gl, pnum) {
+		var white = true;
+		var GRID_DIM = Battleship.Model.GRID_DIM;
+		pnum = 1 - pnum; //want other players stats
+
+		//set default material
+		gl.setDiffuseColor(this._diff_w);
+		gl.setSpecularColor(this._spec_w);
+		gl.setMaterialShininess(this._shinny_w);
+
+		gl.pushMatrix();
+		//Go to top left
+		gl.translate(-(GRID_DIM/2.0)*BLOCK_REAL_DIM + BLOCK_REAL_DIM/2.0,
+			GRID_DIM*BLOCK_REAL_DIM + GRID_TOP_Y - BLOCK_REAL_DIM/2.0,
+			GRID_TOP_Z + BLOCK_DEPTH/2.0 - PEG_LEN_2);
+		var x, y;
+		for (x = 0; x < GRID_DIM; x++)
+		{
+			gl.pushMatrix();
+			for (y = 0; y < GRID_DIM; y++)
+			{
+				//check for miss/hit
+				var miss = Battleship.Model.player[pnum].grid[x][y] === Battleship.Model.enum_gridstate.MISS;
+				var hit = Battleship.Model.player[pnum].grid[x][y] === Battleship.Model.enum_gridstate.HIT;
+
+				//set colour
+				if (miss && !white)
+				{
+					gl.setDiffuseColor(this._diff_w);
+					gl.setSpecularColor(this._spec_w);
+					gl.setMaterialShininess(this._shinny_w);
+					white = true;
+				}
+				else if (hit && white)
+				{
+					gl.setDiffuseColor(this._diff_r);
+					gl.setSpecularColor(this._spec_r);
+					gl.setMaterialShininess(this._shinny_w);
+					white = false;
+				}
+
+				//draw peice
+				if (miss || hit) {
+					this._drawPeg(gl);
+				}
+
+				gl.translate(0.0, -BLOCK_REAL_DIM, 0.0);
+			}
+			gl.popMatrix();
+			gl.translate(BLOCK_REAL_DIM, 0.0, 0.0);
+		}
+		gl.popMatrix();
+	},
+
+	_drawExtraPegs : function(gl, pnum) {
+		//desribes location of red pegs, each location is reltitive to the privious
+		var GRID_DIM = Battleship.Model.GRID_DIM;
+		var MAX_HITS = Battleship.Model.MAX_HITS;
+		var MAX_MISSES = Battleship.Model.MAX_MISSES;
+		var red =
+		[
+			[((GRID_DIM+1)/2.0)*BLOCK_REAL_DIM, GRID_BOTTOM_Y, GRID_BOTTOM_Z, 0, 0, 0],
+			[0, 0, PEG_DIAM_1, 0, 90, 0],
+			[-0.5, 0, 0.5, 0, -45, 0],
+			[-0.5, 0, PEG_LEN_1 + PEG_LEN_2, 0, -45, 0],
+			[-0.5, 0, 0, 0, 0, 0],
+			[-0.5, 0, -0.5, 0, 0, 0],
+			[0.6, PEG_DIAM_2, 0, 0, -45, 0],
+			[0, 0, 0, 0, -100, 0],
+			[-2.2, -2*PEG_DIAM_2, -0.6, 0, 55, 0],
+			[1.0, 0, 0.0, 0, 0, 0],
+			[0.5, 0, 0, 0, 45, 0],
+			[-0.5, 0.5, 0, 15, 0, 0],
+			[-0.8, -0.2, 0.2, 0, -160, 0],
+			[0.5, 0.5, -1, 15, 250, 0],
+			[0.5, 0.2, -0.2, 0, 120, 0],
+			[0.4, 0, -0.4, 0, 185, 0],
+			[2.4, 0.0, 0.5, 0, 240, 0]
+		];
+
+		var num_hit_pegs = MAX_HITS - Battleship.Model.player[pnum].num_hits;
+		var num_miss_pegs = (MAX_MISSES - (MAX_HITS) - Battleship.Model.player[pnum].num_misses)/2;
+
+		//red pegs
+		gl.setDiffuseColor( this._diff_r );
+		gl.setSpecularColor( this._spec_r );
+		gl.setMaterialShininess( this._shinny_r );
+		gl.pushMatrix();
+		var i;
+		for (i = 0; i < num_hit_pegs; i++) {
+			gl.translate(red[i][0], red[i][1], red[i][2]);
+			gl.rotate(red[i][3], 0, 0);
+			gl.rotate(0, red[i][4], 0);
+			gl.rotate(0, 0, red[i][5]);
+			this._drawPeg(gl);
+		}
+		gl.popMatrix();
+
+		//white pegs
+		gl.setDiffuseColor( this._diff_w );
+		gl.setSpecularColor( this._spec_w );
+		gl.setMaterialShininess( this._shinny_w );
+		gl.pushMatrix();
+		gl.translate(0.0, 0.0, SLOT_HEIGHT - GRID_BOTTOM_Z);
+		var j;
+		for (i = 0, j = 0; i < MAX_HITS && j < num_miss_pegs; i++, j++) {
+			gl.translate(red[i][0], red[i][1], red[i][2]);
+			gl.rotate(red[i][3], 0, 0);
+			gl.rotate(0, red[i][4], 0);
+			gl.rotate(0, 0, red[i][5]);
+			this._drawPeg(gl);
+		}
+		gl.popMatrix();
+		gl.pushMatrix();
+		gl.translate(0.0, 0.0, SLOT_HEIGHT);
+		for (i = 0; i < MAX_HITS && j < num_miss_pegs; i++, j++) {
+			gl.translate(red[i][0], red[i][1], red[i][2]);
+			gl.rotate(red[i][3], 0, 0);
+			gl.rotate(0, red[i][4], 0);
+			gl.rotate(0, 0, red[i][5]);
+			this._drawPeg(gl);
+		}
+		gl.popMatrix();
 	},
 
 	_drawCarrier : function(gl) {
@@ -1080,10 +1373,10 @@ Battleship.View = {
 		//top
 		if (Battleship.Model.do_textures) {
 			if (!this._tableTexture) {
-				this._tableTexture = gl.loadTextureDataUrl('data/table.rgb', 256, 256);
+				this._tableTexture = gl.loadImageTexture('data/table.png', 256, 256);
 			}
 			gl.uniform1i(gl.useTexturesUniform, true);
-			gl.bindTexture(gl.TEXTURE_2D, this._fogTexture);
+			gl.bindTexture(gl.TEXTURE_2D, this._tableTexture);
 		}
 		gl.draw(this._tableTop);
 		if (Battleship.Model.do_textures) {
@@ -1096,6 +1389,48 @@ Battleship.View = {
 		gl.setSpecularColor([0.1, 0.1, 0.1]);
 		gl.setMaterialShininess(1);
 		gl.draw(this._tableLegs);
+	},
+
+	_drawClock : function(gl) {
+		gl.pushMatrix();
+			gl.translate(
+				-Battleship.Model.GRID_DIM/2.0 * BLOCK_REAL_DIM - SLOT_WIDTH - 2,
+				0.0,
+				1 + GRID_BOTTOM_Z );
+			gl.rotate(0.0, 40, 0.0);
+			gl.translate(-1.0, 0.2, 0.0);
+			glprimitive.clock(gl, 2.0, 15);
+		gl.popMatrix();
+	},
+
+	_drawMug : function(gl) {
+		gl.pushMatrix();
+			gl.translate(
+				Battleship.Model.GRID_DIM/2.0 * BLOCK_REAL_DIM + SLOT_WIDTH + 2,
+				0.0,
+				-2 - GRID_BOTTOM_Z );
+			gl.rotate(0.0, 30, 0.0);
+			glprimitive.mug(gl, 2.0, 15);
+			/*
+			if (Battleship.Model.do_textures) {
+				if (!this._coffeeTexture) {
+					this._coffeeTexture = gl.loadTextureDataUrl('data/coffie.rgb', 64, 64);
+					this._coffeeObject = new GLObject('coffee');
+					glprimitive.disk(this._coffeeObject, 2.0, 15);
+				}
+				gl.uniform1i(gl.useTexturesUniform, true);
+				gl.bindTexture(gl.TEXTURE_2D, this._ceilingTexture);
+				gl.setDiffuseColor([0.6, 0.3, 0.1]);
+				gl.setSpecularColor([0.1, 0.1, 0.1]);
+				gl.setMaterialShininess(1);
+				gl.rotate(-90, 0.0, 0.0);
+				gl.translate(0.0, 0.0, 2.1);
+				gl.draw(this._coffeeObject);
+				gl.uniform1i(gl.useTexturesUniform, false);
+				gl.bindTexture(gl.TEXTURE_2D, null);
+			}
+			*/
+		gl.popMatrix();
 	},
 
 	_drawCeiling : function(gl) {
