@@ -1567,7 +1567,7 @@ Battleship.View = {
 
 	_loadImageTexture : function(gl, id) {
 		if (Battleship.Model.do_textures && !this._textures[id]) {
-			this._textures[id] = gl.loadImageTexture('data/' + id + '.png');
+			this._textures[id] = gl.loadImageTexture('data/' + id + '.png', Battleship.View.refresh);
 		}
 		return this._textures[id];
 	},

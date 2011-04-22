@@ -241,12 +241,13 @@ webgl_ext = {
 	 *
 	 * @param url	URL to a source image.
 	 */
-	loadImageTexture : function(url) {
+	loadImageTexture : function(url, callback) {
 		var texture = this.createTexture();
 		var image = new Image();
 		image.texture = texture;
 		image.gl = this;
 		image.onload = webgl_ext._loadImageTexture;
+		image.cb = callback;
 		image.src = url;
 		return texture;
 	},
@@ -261,6 +262,7 @@ webgl_ext = {
 			var gl = this.gl;
 			var texture = this.texture;
 			var image = this;
+			var callback = this.cb;
 
 			gl.bindTexture(gl.TEXTURE_2D, texture);
 			gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
@@ -269,6 +271,8 @@ webgl_ext = {
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
 			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 			gl.bindTexture(gl.TEXTURE_2D, null);
+
+			if (callback) { callback(); }
 		} catch (e) {
 			console.log('webgl_ext', e);
 		}
