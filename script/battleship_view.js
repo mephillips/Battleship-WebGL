@@ -1411,10 +1411,9 @@ Battleship.View = {
 				-2 - GRID_BOTTOM_Z );
 			gl.rotate(0.0, 30, 0.0);
 			glprimitive.mug(gl, 2.0, 15);
-			/*
 			if (Battleship.Model.do_textures) {
 				if (!this._coffeeTexture) {
-					this._coffeeTexture = gl.loadTextureDataUrl('data/coffie.rgb', 64, 64);
+					this._coffeeTexture = gl.loadImageTexture('data/coffee.png');
 					this._coffeeObject = new GLObject('coffee');
 					glprimitive.disk(this._coffeeObject, 2.0, 15);
 				}
@@ -1429,7 +1428,6 @@ Battleship.View = {
 				gl.uniform1i(gl.useTexturesUniform, false);
 				gl.bindTexture(gl.TEXTURE_2D, null);
 			}
-			*/
 		gl.popMatrix();
 	},
 
@@ -1459,7 +1457,7 @@ Battleship.View = {
 
 		if (Battleship.Model.do_textures) {
 			if (!this._ceilingTexture) {
-				this._ceilingTexture = gl.loadTextureDataUrl('data/ceiling.rgb', 64, 64);
+				this._ceilingTexture = gl.loadImageTexture('data/ceiling.png');
 			}
 			gl.uniform1i(gl.useTexturesUniform, true);
 			gl.bindTexture(gl.TEXTURE_2D, this._ceilingTexture);
@@ -1492,7 +1490,7 @@ Battleship.View = {
 
 		if (Battleship.Model.do_textures) {
 			if (!this._floorTexture) {
-				this._floorTexture = gl.loadTextureDataUrl('data/floor.rgb', 64, 64);
+				this._floorTexture = gl.loadImageTexture('data/floor.png');
 			}
 			gl.uniform1i(gl.useTexturesUniform, true);
 			gl.bindTexture(gl.TEXTURE_2D, this._floorTexture);

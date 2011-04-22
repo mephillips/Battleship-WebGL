@@ -964,7 +964,7 @@ glprimitive = {
 		if (size !== lastSize || lastD !== detail) {
 			if (this._mugData) {
 				this._mugData.mug.destroy(gl);
-				this._mugData.coffee.destory(gl);
+				//this._mugData.coffee.destory(gl);
 			}
 			this._mugData = { size : size, detail : detail };
 
@@ -989,11 +989,13 @@ glprimitive = {
 			o.translate(0.0, 0.0, 2*size);
 			glprimitive.half_torus2(o, size/8.0, size - size/8.0,detail,detail);
 			//Coffee
+			/*
 			o = new GLObject('mug_coffee');
 			this._mugData.coffee = o;
 			o.translate(0, size, 0);
 			o.rotate(-90, 0, 0);
 			glprimitive.disk(o, size - size/4.0, detail, detail);
+			*/
 		}
 
 		gl.setDiffuseColor( 0.7, 0.7, 0.7 );
@@ -1001,10 +1003,12 @@ glprimitive = {
 		gl.setMaterialShininess( 15.0 );
 		gl.draw(this._mugData.mug);
 
+		/*
 		gl.setDiffuseColor( 0.4, 0.2, 0.0 );
 		gl.setSpecularColor( 0.1, 0.1, 0.1 );
 		gl.setMaterialShininess( 1.0 );
 		gl.draw(this._mugData.coffee);
+		*/
 	}
 };
 

@@ -60,7 +60,6 @@ webgl_ext = {
 		// Add methods
 		gl.loadImageTexture = this.loadImageTexture;
 		gl.loadTextureData = this.loadTextureData;
-		gl.loadTextureDataUrl = this.loadTextureDataUrl;
 		gl.setMatrixUniforms = this.setMatrixUniforms;
 		gl.setPerspective = this.setPerspective;
 		gl.identity = this.identity;
@@ -238,51 +237,6 @@ webgl_ext = {
 	},
 
 	/**
-	 * Create a new WebGLTexture using rgb data at a given url
-	 *
-	 * @param url	URL to a source image.
-	 */
-	loadTextureDataUrl : function(url, w, h) {
-		var gl = this;
-		var texture = this.createTexture();
-		var request = new XMLHttpRequest();
-		request.open('GET', url, true);
-		request.onreadystatechange = function() {
-			try {
-				if (request.readyState === 4) {
-					var stringData = request.responseText;
-					console.log(w, h, w*h*3, stringData.length);
-					var data = new Array(w*h*3);
-					var i;
-					for (i = 0; i < stringData.length; ++i) {
-						data[i] = stringData.charCodeAt(i);
-					}
-
-					gl.bindTexture(gl.TEXTURE_2D, texture);
-					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-					gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-					gl.texImage2D(
-						gl.TEXTURE_2D,		// target
-						0,					// level
-						gl.RGB,				// internal format
-						w, h,				// with, height
-						0,					// border
-						gl.RGB,				// format
-						gl.UNSIGNED_BYTE,	// type
-						new Uint8Array(data) );
-					gl.bindTexture(gl.TEXTURE_2D, null);
-				}
-			} catch (e) {
-				console.log('Failed to fetch loader script: ', e);
-			}
-		}
-		request.send();
-		return texture;
-	},
-
-	/**
 	 * Create a new WebGLTexture using the image at the given url.
 	 *
 	 * @param url	URL to a source image.
@@ -310,10 +264,10 @@ webgl_ext = {
 
 			gl.bindTexture(gl.TEXTURE_2D, texture);
 			gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,image);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+			gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
 			gl.bindTexture(gl.TEXTURE_2D, null);
 		} catch (e) {
 			console.log('webgl_ext', e);
