@@ -548,7 +548,7 @@ Battleship.Logic = {
 					Battleship.Model.game_state = Battleship.Model.enum_gamestate.PLAYING;
 					if (!Battleship.Model.player[Battleship.Model.curr_player].ai) {
 						this._fix_select(1, 0);
-					} else if (player[curr_player].ai != AI_EASY) {
+					} else if (Battleship.Model.player[Battleship.Model.curr_player].ai != Battleship.Model.enum_aitype.EASY) {
 						this._ai_follow_hit();
 					}
 					this._switch_player(1 - Battleship.Model.curr_player);
@@ -588,7 +588,7 @@ Battleship.Logic = {
 		if (!Battleship.Model.do_trans_animation) {
 			this._cancel_animation = true;
 		}
-		Battleship.Logic.start_timer(ANIMATION_SPEED, this.animate_transition.bind(this));
+		Battleship.Logic.start_timer(ANIMATION_SPEED, this._animate_transition.bind(this));
 	},
 
 	_try_place_ship : function(num) {
@@ -623,6 +623,57 @@ Battleship.Logic = {
 		return !conflict;
 	},
 
+	_fire : function() {
+		var go = false;
+		Battleship.Model.game_message.size = MIN_MSG_SIZE;
+		Battleship.Model.game_message.delay = HIT_MSG_DELAY;
+		Battleship.Model.game_message.ship = null;
+
+		var player = Battleship.Model.player[Battleship.Model.curr_player];
+		var nextplayer = Battleship.Model.player[1 - Battleship.Model.curr_player];
+		var sel_x = player.sel_x;
+		var sel_y = player.sel_y;
+		if (nextplayer.ship_at[sel_x][sel_y] === Battleship.Model.enum_shiptype.NO_SHIP) {
+			Battleship.Model.game_message.type = Battleship.Model.enum_gridstate.MISS;
+
+			nextplayer.grid[sel_x][sel_y] = Battleship.Model.enum_gridstate.MISS;
+			++player.num_misses;
+		} else {
+			Battleship.Model.game_message.type = Battleship.Model.enum_gridstate.HIT;
+
+			//add hit
+			nextplayer.grid[sel_x][sel_y] = Battleship.Model.enum_gridstate.HIT;
+			++player.num_hits;
+
+			//add hit to ship
+			var ship = nextplayer.ship_at[sel_x][sel_y];
+			++nextplayer.ship[ship].num_hits;
+
+			//shink
+			if (nextplayer.ship[ship].num_hits === nextplayer.ship[ship].length) {
+				Battleship.Model.game_message.ship = Battleship.Model.shiptype_s[ship];
+				Battleship.Model.game_message.delay = SUNK_MSG_DELAY;
+
+				nextplayer.ship[ship].state = Battlship.Model.enum_shipstate.SUNK;
+				++nextplayer.num_sunk;
+				if (nextplayer.num_sunk === Battleship.Model.NUM_SHIPS) {
+					Battleship.Model.game_message.delay = WIN_MSG_DELAY;
+					Battleship.Model.game_message.ship = null;
+					Battleship.Model.game_message.type = Battleship.Model.enum_gridstate.EMPTY;
+					go = true;
+				}
+			}
+		}
+		return go;
+	},
+
+	_fix_select : function(xm, ym) {
+		var GRID_DIM = Battleship.Model.GRID_DIM;
+		var player = Battleship.Model.player[Battleship.Model.curr_player];
+		player.sel_x = (player.sel_x + (xm + GRID_DIM)) % GRID_DIM;
+		player.sel_y = (player.sel_y + (ym + GRID_DIM)) % GRID_DIM;
+	},
+
 	_switch_player : function(pnum) {
 		if (Battleship.Model.curr_player != pnum) {
 			Battleship.Model.curr_player = pnum;
@@ -634,6 +685,15 @@ Battleship.Logic = {
 		Battleship.Model.game_state = Battleship.Model.enum_gamestate.FIREING;
 		//var speed = ANIMATION_SPEED + 80 - game_rocket.speed*20;
 		Battleship.Logic.start_timer(ANIMATION_SPEED, this._animate_fireing.bind(this));
+	},
+
+	_start_message : function() {
+		Battleship.Model.game_state = Battleship.Model.enum_gamestate.MESSAGE;
+		var speed = ANIMATION_SPEED;
+		if (Battleship.Model.demo_mode) {
+			speed += DEMO_DELAY;
+		}
+		Battleship.Logic.start_timer(speed, this._animate_message.bind(this));
 	},
 
 	_autoplace_ships : function() {
@@ -653,7 +713,7 @@ Battleship.Logic = {
 
 	},
 
-	animate_transition : function() {
+	_animate_transition : function() {
 		if (Battleship.Menu.curr_menu || !Battleship.Model.do_trans_animation) {
 			this._cancel_animation = true;
 		}
@@ -698,6 +758,49 @@ Battleship.Logic = {
 		if (this._cancel_animation) { this._cancel_animation = false; }
 
 		if (done) { Battleship.Model.game_state = trans_saved_state; }
+		return !done;
+	},
+
+	_animate_fireing : function() {
+		if (Battleship.Menu.curr_menu || Battleship.Model.game_rocket.type === Battleship.Model.enum_rockettype.OFF) {
+			this._cancel_animation = true;
+		}
+
+		Battleship.View.refresh();
+
+		var done = true; //(this._cancel_animation || !Battleship.Rocket.move());
+		this._cancel_animation = false;
+		if (done) { this._next_state(); }
+		return !done;
+	},
+
+	_animate_message : function() {
+		if (Battleship.Menu.curr_menu || !Battleship.Model.do_msg_animation) {
+			this._cancel_animation = true;
+		}
+
+		//If the animation is canclled call back once more at full size
+		if (this._cancel_animation && Battleship.Model.game_message.size < MAX_MSG_SIZE)
+		{
+			Battleship.Model.game_message.size = MAX_MSG_SIZE;
+			Battleship.View.refresh();
+			return true;
+		} else if (Battleship.Model.game_message.size < MAX_MSG_SIZE) {
+			//Grow the text
+			++Battleship.Model.game_message.size;
+			Battleship.View.refresh();
+		} else if (Battleship.Model.game_message.delay < MAX_MSG_DELAY) {
+			//Wait a bit
+			++Battleship.Model.game_message.delay;
+		}
+
+		var done = (this._cancel_animation || Battleship.Model.game_message.delay === MAX_MSG_DELAY);
+		//stop sound if animation stoppe
+		if (this._cancel_animation) {
+			//battleship_sound_stop();
+		}
+		this._cancel_animation = false;
+		if (done) { this._next_state(); }
 		return !done;
 	}
 };

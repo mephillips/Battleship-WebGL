@@ -338,9 +338,6 @@ Battleship.View = {
 		gl.setFragmentColor(1.0, 1.0, 1.0, 1.0);
 		gl.setAmbientColor(0.2, 0.2, 0.2);
 		gl.setLightPositon(LIGHT_X, LIGHT_Y, LIGHT_Z);
-		gl.setDiffuseColor( this._diff_w );
-		gl.setSpecularColor( this._spec_w );
-		gl.setMaterialShininess( this._shinny_w );
 
 		gl.identity();
 		gl.translate(0, 0, -50);
@@ -371,6 +368,10 @@ Battleship.View = {
 			gl.rotate(0, 0, this._menuRotate[2]);
 			gl.translate(this._menuTranslate[0], this._menuTranslate[1], this._menuTranslate[2]);
 		}
+
+		gl.setDiffuseColor(this._diff_w);
+		gl.setSpecularColor(this._spec_w);
+		gl.setMaterialShininess(this._shinny_w);
 
 		// Draw axis
 		if (this._do_lines) {
@@ -616,11 +617,13 @@ Battleship.View = {
 		gl.setDiffuseColor(diff);
 		gl.setSpecularColor(spec);
 		gl.setMaterialShininess(shinny);
-		gl.translate(
-			-Battleship.Model.GRID_DIM/2.0 + BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_x,
-			BLOCK_REAL_DIM * (Battleship.Model.GRID_DIM - 1)-BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_y,
-			-BLOCK_DEPTH/2.0);
-		gl.draw(this._gridSelector);
+		gl.pushMatrix();
+			gl.translate(
+				-Battleship.Model.GRID_DIM/2.0 + BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_x,
+				BLOCK_REAL_DIM * (Battleship.Model.GRID_DIM - 1)-BLOCK_REAL_DIM * Battleship.Model.player[pnum].sel_y,
+				-BLOCK_DEPTH/2.0);
+			gl.draw(this._gridSelector);
+		gl.popMatrix();
 	},
 
 	_drawBorder : function(gl) {
@@ -1091,8 +1094,7 @@ Battleship.View = {
 	},
 
 	_drawShip : function(gl, snum) {
-		var ship = Battleship.Model.enum_shiptype[Battleship.Model.SHIP_IDS[snum]];
-		switch (ship)
+		switch (snum)
 		{
 			case Battleship.Model.enum_shiptype.CARRIER: this._drawCarrier(gl); break;
 			case Battleship.Model.enum_shiptype.BATTLESHIP: this._drawBattleship(gl); break;
@@ -1100,7 +1102,7 @@ Battleship.View = {
 			case Battleship.Model.enum_shiptype.SUB: this._drawSub(gl); break;
 			case Battleship.Model.enum_shiptype.PT: this._drawPT(gl); break;
 			default:
-				console.log("Invalid ship to drawShip %i %s\n", snum, Battleship.Model.SHIP_IDS[snum]);
+				console.log("Invalid ship to drawShip %i\n", snum);
 			break;
 		}
 	},
@@ -1620,16 +1622,18 @@ Battleship.View = {
 				gl.translate(-w*len, 0.0, 0.0);
 				glfont.draw_string(gl, text, size);
 			break;
-			case Battleship.Model.enum_gamestate.GAME_MESSAGE:
+			case Battleship.Model.enum_gamestate.MESSAGE:
 			case Battleship.Model.enum_gamestate.GAME_OVER:
-				var diff_water = [0.0, 0.2, 0.9, 0.8];
-				var spec_water = [0.0, 0.0, 0.0, 0.8];
+				var diff_water = [0.0, 0.2, 0.9];
+				var spec_water = [0.0, 0.0, 0.0];
 				var shinny_water = 1;
+
+				var game_message = Battleship.Model.game_message;
 
 				size = 0.4*game_message.size;
 				w = glfont.char_width(size);
 
-				if (game_message.type == GRID_MISS) {
+				if (game_message.type === Battleship.Model.enum_gridstate.MISS) {
 					gl.setDiffuseColor(diff_water);
 					gl.setSpecularColor(spec_water);
 					gl.setMaterialShininess(shinny_water);
@@ -1640,7 +1644,7 @@ Battleship.View = {
 					gl.setMaterialShininess( this._shinny_r );
 				}
 
-				gl.translate(0.0, 0.0, GRID_DIM*BLOCK_REAL_DIM + SLOT_WIDTH);
+				gl.translate(0.0, 0.0, Battleship.Model.GRID_DIM*BLOCK_REAL_DIM + SLOT_WIDTH);
 				var text = null;
 				if (Battleship.Model.game_message.ship) {
 					text = "Sunk!";
@@ -1673,7 +1677,7 @@ Battleship.View = {
 								0.0);
 					glfont.draw_string(gl, text, size);
 				} else {
-					if (game_message.type == GRID_MISS) {
+					if (game_message.type === Battleship.Model.enum_gridstate.MISS) {
 						text = "Miss";
 					} else {
 						text = "Hit";
