@@ -541,10 +541,10 @@ Battleship.Logic = {
 			break;
 			case Battleship.Model.enum_gamestate.AI_PLAYING:
 			case Battleship.Model.enum_gamestate.PLAYING:
-				//if (game_rocket.type != ROCKET_OFF) {
-				//	this._board_rotate(1, 90, 10.0);
-				//}
-				//battleship_view_ready_rocket();
+				if (Battleship.Model.game_rocket.type !== Battleship.Model.enum_rockettype.OFF) {
+					this._board_rotate(1, 90, 10.0);
+				}
+				Battleship.View.ready_rocket();
 				this._start_fireing();
 			break;
 			case Battleship.Model.enum_gamestate.FIREING:
@@ -965,7 +965,7 @@ Battleship.Logic = {
 
 	_start_fireing : function() {
 		Battleship.Model.game_state = Battleship.Model.enum_gamestate.FIREING;
-		//var speed = ANIMATION_SPEED + 80 - game_rocket.speed*20;
+		var speed = ANIMATION_SPEED + 80 - Battleship.Model.game_rocket.speed*20;
 		Battleship.Logic.start_timer(ANIMATION_SPEED, this._animate_fireing.bind(this));
 	},
 
@@ -1050,7 +1050,7 @@ Battleship.Logic = {
 
 		Battleship.View.refresh();
 
-		var done = true; //(this._cancel_animation || !Battleship.Rocket.move());
+		var done = (this._cancel_animation || !Battleship.Rocket.move());
 		this._cancel_animation = false;
 		if (done) { this._next_state(); }
 		return !done;

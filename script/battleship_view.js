@@ -110,11 +110,14 @@ var ROOM_HEIGHT = 55;
 var FOG_HEIGHT = PEG_LEN_2;
 
 /** X Location of light used to cast shadows */
-var LIGHT_X = 0
+var LIGHT_X = 0;
 /** Y Location of light used to cast shadows */
-var LIGHT_Y = (ROOM_HEIGHT/2.0)
+var LIGHT_Y = (ROOM_HEIGHT/2.0);
 /** Z Location of light used to cast shadows */
-var LIGHT_Z = 0
+var LIGHT_Z = 0;
+
+	/** The number of points in a rocket path */
+var PATH_SIZE = 5;
 
  /**
   * @namespace
@@ -139,6 +142,36 @@ Battleship.View = {
 	_spec_ship : [0.1, 0.1, 0.1],
 	_shinny_ship : 1,
 
+	/** The rocket paths used by the game
+	 *  Note thate the first path in this array (which would corrispond to
+	 *  ROCKET_OFF is used by the rocket menu
+	 */
+	rocket_path : [
+		[
+			PATH_SIZE,
+			6.0, -10, 0.0,
+			3.0, -4, 0.0,
+			3.0, 0, 0.0,
+			3.0, 4, 0.0,
+			6.0, 10, 0.0,
+		],
+		[
+			PATH_SIZE,
+			0, TABLE_TOP - 2, GRID_BOTTOM_Z + Battleship.Model.GRID_DIM*BLOCK_REAL_DIM,
+			0, 14, GRID_BOTTOM_Z + Battleship.Model.GRID_DIM*BLOCK_REAL_DIM*0.5,
+			0, 15, 0.0,
+			0, 14, -(GRID_BOTTOM_Z + Battleship.Model.GRID_DIM*BLOCK_REAL_DIM*0.5),
+			0, TABLE_TOP + BLOCK_DEPTH, 0
+		],
+		[
+			PATH_SIZE,
+			0, TABLE_TOP - 2, GRID_BOTTOM_Z + Battleship.Model.GRID_DIM*BLOCK_REAL_DIM,
+			10, 8, GRID_BOTTOM_Z + Battleship.Model.GRID_DIM*BLOCK_REAL_DIM*0.5,
+			10, 8, 0,
+			10, 8, -(GRID_BOTTOM_Z + Battleship.Model.GRID_DIM*BLOCK_REAL_DIM + 2),
+			0, TABLE_TOP + BLOCK_DEPTH, 0
+		],
+	],
 
 	/** Display objects */
 	_lines : null,
@@ -172,6 +205,8 @@ Battleship.View = {
 	_fogType : null,
 	/** @private The value of game_lsys used to generat the current lsys tex */
 	_lastLsys : null,
+	/** @private Used by the rocket test to move the rocket */
+	_rocketTestCount : 0,
 
 	init : function() {
 		this._menuTranslate = [ 0, 0, 0 ];
@@ -180,6 +215,13 @@ Battleship.View = {
 		this._userRotate = [ 0, 0, 0 ];
 		this._gameTranslate = [ 0, 0, 0 ];
 		this._gameRotate = [ 0, 0, 0 ];
+
+		if (!this._first_time) {
+			this._first_time = false;
+			Battleship.Rocket.init();
+			Battleship.Rocket.set_detail(0.1);
+			this.ready_rocket();
+		}
 	},
 
 	/** Gets the current size of the window
@@ -200,14 +242,12 @@ Battleship.View = {
 	 *  (captial U and G to increment instead of set)
 	 */
 	set_translate : function(axis, amount, type) {
-		if (axis < 0 || axis > 2)
-		{
+		if (axis < 0 || axis > 2) {
 			console.log("View.set_translate: Invalid axis %s.", axis);
 			return;
 		}
 
-		switch (type)
-		{
+		switch (type) {
 			case 'u' :
 				if (Battleship.Menu.curr_menu) {
 					this._menuTranslate[axis] = amount;
@@ -238,14 +278,12 @@ Battleship.View = {
 	 *  (captial U and G to increment instead of set)
 	 */
 	set_rotate : function(axis, amount, type) {
-		if (axis < 0 || axis > 2)
-		{
+		if (axis < 0 || axis > 2) {
 			console.log("View.set_rotate: Invalid axis %s.", axis);
 			return;
 		}
 
-		switch (type)
-		{
+		switch (type) {
 			case 'u' :
 				if (Battleship.Menu.curr_menu) {
 					this._menuRotate[axis] = amount;
@@ -417,6 +455,17 @@ Battleship.View = {
 				gl.translate(0.0, 0.0, 40);
 				this._drawWall(gl);
 			break;
+			case Battleship.Model.enum_testtype.ROCKET:
+				Battleship.Rocket.draw(gl, true);
+				++this._rocketTestCount;
+				if (this._rocketTestCount > 10) {
+					this._rocketTestCount = 0;
+					if (!Battleship.Rocket.move()) {
+						Battleship.Model.game_rocket.type = (Battleship.Model.game_rocket.type + 1) % Battleship.Model.NUM_ROCKET_TYPES;
+						this.ready_rocket();
+					}
+				}
+			break;
 			default:
 				if (Battleship.Menu.curr_menu) {
 					if (Battleship.Menu.name_selector.enabled) {
@@ -431,15 +480,12 @@ Battleship.View = {
 							gl.translate(0.0, 30.0, 200);
 							this._drawWall(gl);
 						} else if (menuName === "Rocket" || menuName === "Fire") {
-							/*
-							gl.translatef(7.0, 0.0, 0);
-							if (battleship_rocket_get_path() != rocket_path[0])
-								battleship_rocket_set_path(rocket_path[0]);
-							//glRotatef(-90, 0.0, 1.0, 0.0);
-							drawRocket();
-							if (!battleship_rocket_move())
-								battleship_rocket_reset();
-							*/
+							gl.translate(7.0, 0.0, 0);
+							//gl.rotate(0.0, -90, 0.0);
+							this._drawRocket(gl);
+							if (!Battleship.Rocket.move()) {
+								Battleship.Rocket.reset();
+							}
 						}
 					}
 				} else {
@@ -517,6 +563,10 @@ Battleship.View = {
 			gl.popMatrix();
 
 			this._drawPicture(gl, p);
+
+			if (p === Battleship.Model.curr_player && Battleship.Model.game_state === Battleship.Model.enum_gamestate.FIREING) {
+				this._drawRocket(gl);
+			}
 
 			gl.rotate(0, 180, 0);
 		}
@@ -1810,6 +1860,25 @@ Battleship.View = {
 		}
 		gl.draw(this._wall);
 		this._disableTexture(gl);
+	},
+
+	ready_rocket : function() {
+		if (Battleship.Model.game_rocket.type === Battleship.Model.enum_rockettype.OFF) { return; }
+
+		var path = this.rocket_path[Battleship.Model.game_rocket.type];
+		path[(PATH_SIZE*3 + 1) - 1] =
+		-(GRID_BOTTOM_Z + BLOCK_REAL_DIM * Battleship.Model.player[Battleship.Model.curr_player].sel_y)
+		- BLOCK_REAL_DIM*0.5;
+		path[(PATH_SIZE*3 + 1) - 3] =
+		(Battleship.Model.GRID_DIM*0.5 - Battleship.Model.player[Battleship.Model.curr_player].sel_x)*BLOCK_REAL_DIM
+		- BLOCK_REAL_DIM*0.5;
+
+		Battleship.Rocket.set_path(path);
+	},
+
+	_drawRocket : function(gl) {
+		if (Battleship.Model.game_rocket.type === Battleship.Model.enum_rockettype.OFF) { return; }
+		Battleship.Rocket.draw(gl, Battleship.Model.game_rocket.show_path);
 	},
 
 	_loadImageTexture : function(gl, id) {

@@ -392,7 +392,7 @@ Battleship.Menu = {
 			val = Battleship.Model.MIN_ROCKET_SIZE;
 		m.object[m.key] = val;
 		m.svalue = "" + val;
-		//Battleship.Rocket.update();
+		Battleship.Rocket.update();
 	},
 
 	toggle_rocket_speed : function(m, dir) {
@@ -415,7 +415,7 @@ Battleship.Menu = {
 			val = Battleship.Model.MIN_FIRE_LENGTH;
 		m.object[m.key] = val;
 		m.svalue = "" + val;
-		//Battleship.Rocket.update();
+		Battleship.Rocket.update();
 	},
 
 	toggle_fire_width : function(m, dir) {
@@ -423,7 +423,7 @@ Battleship.Menu = {
 		val = (val + Battleship.Model.NUM_FIRE_WIDTHS + dir) % Battleship.Model.NUM_FIRE_WIDTHS;
 		m.object[m.key] = val;
 		m.svalue = Battleship.Model.firewidth_s[val];
-		//Battleship.Rocket.update();
+		Battleship.Rocket.update();
 	},
 
 	toggle_fire_colour : function(m, dir) {},

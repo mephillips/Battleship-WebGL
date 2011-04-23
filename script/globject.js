@@ -248,7 +248,8 @@ GLVertexData.prototype.store = function(gl) {
 		texCoordObject,
 		indexObject,
 		this._indices.length,
-		this._finalType );
+		this._finalType,
+		this.vertices.length );
 	this.reset();
 	return result;
 }
@@ -317,13 +318,14 @@ GLVertexData.prototype.generateIndices = function() {
 /**
  * A class which handles storing and drawing of vertex buffer data
  */
-GLVertexObject = function(id, vertexObject, normalObject, texCoordObject, indexObject, numIndices, type) {
+GLVertexObject = function(id, vertexObject, normalObject, texCoordObject, indexObject, numIndices, type, numVertex) {
 	this._id = id;
 	this._vertexObject = vertexObject;
 	this._normalObject = normalObject;
 	this._texCoordObject = texCoordObject;
 	this._indexObject = indexObject;
 	this._numIndices = numIndices;
+	this._numVertex = numVertex;
 	this._type = type;
 }
 /**
@@ -361,12 +363,12 @@ GLVertexObject.prototype.draw = function(gl) {
  * Free vertex buffes held by this object
  */
 GLVertexObject.prototype.destroy = function(gl) {
-	GLVertexData._totalV -= this.vertices.length;
+	GLVertexData._totalV -= this._numVertex;
 	GLVertexData._totalO -= 1;
 	console.log('GLVertexObject.destroy id: %s totalV: %i totalO: %i',
 		this._id,
-		this._totalV,
-		this._totalO );
+		GLVertexData._totalV,
+		GLVertexData._totalO );
 
 	if (this._vertexObject) {
 		gl.deleteBuffer(this._vertexObject);

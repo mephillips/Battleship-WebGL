@@ -238,11 +238,13 @@ Battleship.Model = {
 	init : function() {
 		var p, i, j;
 		for (p = 0; p < 2; p++) {
-			this.player[p] = {
-				grid : new Array(this.GRID_DIM),
-				ship_at : new Array(this.GRID_DIM),
-				ship : new Array(this.NUM_SHIPS)
-			};
+			if (!this.player[p]) {
+				this.player[p] = {
+					grid : new Array(this.GRID_DIM),
+					ship_at : new Array(this.GRID_DIM),
+					ship : new Array(this.NUM_SHIPS)
+				};
+			}
 			//clear grid state
 			for (i = 0; i < this.GRID_DIM; i++) {
 				this.player[p].grid[i] = new Array(this.GRID_DIM);

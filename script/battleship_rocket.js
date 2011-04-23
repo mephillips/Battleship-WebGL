@@ -62,8 +62,12 @@ Battleship.Rocket = {
 
 	/** GLObject for drawing rocket path */
 	_rocketPathObj : null,
+	/** GLObject for drawing rocket nose*/
+	_rocketNoseObj : null,
 	/** GLObject for drawing rocket */
-	_rocketObj : null,
+	_rocketWingObj : null,
+	/** GLObject for drawing rocket wings */
+	_rocketWingObj : null,
 
 	/** Inititlizes the rocket */
 	init : function() {
@@ -77,6 +81,9 @@ Battleship.Rocket = {
 		this.curr_point = 0;
 		this.num_points = 0;
 		this.stopped = true;
+		this.rot_x = 0;
+		this.rot_y = 0;
+		this.rot_z = 0;
 
 		this.update();
 		//psystem_init(&fire, rocket_size - 0.05, rocket_size/2.0, rocket_size*6);
@@ -156,7 +163,7 @@ Battleship.Rocket = {
 	draw : function(gl, showPath) {
 		gl.setDiffuseColor(Battleship.View._diff_w);
 		gl.setSpecularColor(Battleship.View._spec_w);
-		gl.setMaterialShininess(Battleship.View_shinny_w);
+		gl.setMaterialShininess(Battleship.View._shinny_w);
 
 		if (showPath) {
 			if (!this._rocketPathObj) {
@@ -202,6 +209,99 @@ Battleship.Rocket = {
 			gl.draw(this._rocketPathObj);
 			gl.lineWidth(1.0);
 		}
+
+		gl.pushMatrix();
+			//Tranlate to the point and center the rocket
+			gl.translate(this.loc[0], this.loc[1], this.loc[2]);
+
+			//Orient correctly
+			gl.rotate(0, 0, this.rot_z);
+			gl.rotate(0, this.rot_y, 0);
+			if (!this.reverse) {
+				gl.rotate(0, -90, 0);
+			} else {
+				gl.rotate(0, 90, 0);
+			}
+
+			//spin
+			this.rot_x = (this.rot_x + 5) % 360;
+			gl.rotate(0.0, 0.0, this.rot_x);
+
+			// rocket size
+			var scaleFactor = this.rocket_size/Battleship.Model.MAX_ROCKET_SIZE;
+			gl.scale(scaleFactor, scaleFactor, scaleFactor);
+
+			//The nouse
+			gl.setDiffuseColor(Battleship.View._diff_r);
+			gl.setSpecularColor(Battleship.View._spec_r);
+			gl.setMaterialShininess(Battleship.View._shinny_r);
+			if (!this._rocketNoseObj) {
+				var o = new GLObject('rocket_nose');
+				this._rocketNoseObj = o;
+				o.scale(1.0, 1.0, 2.5);
+				glprimitive.sphere(o, 1);
+			}
+			gl.draw(this._rocketNoseObj);
+
+			//Body
+			gl.setDiffuseColor(Battleship.View._diff_w);
+			gl.setSpecularColor(Battleship.View._spec_w);
+			gl.setMaterialShininess(Battleship.View._shinny_w);
+			if (!this._rocketBodyObj) {
+				var o = new GLObject('rocket_body');
+				this._rocketBodyObj = o;
+				glprimitive.cylinder(o, 1, 8);
+				//o.translate(0.0, 0.0, 8);
+				//glprimitive.cone(o, 0.5, 1, -8);
+			}
+			gl.draw(this._rocketBodyObj);
+
+			if (!this._rocketWingObj) {
+				var o = new GLObject('rocket_wing');
+				this._rocketWingObj = o;
+				o.begin(GLObject.GL_TRIANGLES);
+					//left
+					o.setNormal(0.0, 1.0, 0.0);
+					o.vertex(1, 0.0, -2*1);
+					o.vertex(1, 0.0, 0.0);
+					o.vertex(3*1, 0.0, 0.0);
+					//right
+					o.setNormal(0.0, -1.0, 0.0);
+					o.vertex(3*1, -1/5, 0.0);
+					o.vertex(1, -1/5, 0.0);
+					o.vertex(1, -1/5, -2*1);
+				o.end();
+				o.begin(GLObject.GL_QUADS);
+					//back
+					o.setNormal(0.0, 0.0, 1.0);
+					o.vertex(1, 0.0, 0.0);
+					o.vertex(1, -1/5.0, 0.0);
+					o.vertex(3*1, -1/5.0, 0.0);
+					o.vertex(3*1, 0.0, 0.0);
+					//front
+					o.setNormal(0.5, 0.0, -0.5);
+					o.vertex(3*1, 0.0, 0.0);
+					o.vertex(3*1, -1/5.0, 0.0);
+					o.vertex(1, -1/5.0, -2.0*1);
+					o.vertex(1, 0.0, -2.0*1);
+				o.end();
+			}
+			gl.translate(0.0, 0.0, 8);
+			var i = 0;
+			for (i = 0; i < 4; i++) {
+				if (i % 2 == 0) {
+					gl.setDiffuseColor(Battleship.View._diff_r);
+					gl.setSpecularColor(Battleship.View._spec_r);
+					gl.setMaterialShininess(Battleship.View._shinny_r);
+				} else {
+					gl.setDiffuseColor(Battleship.View._diff_w);
+					gl.setSpecularColor(Battleship.View._spec_w);
+					gl.setMaterialShininess(Battleship.View._shinny_w);
+				}
+				gl.draw(this._rocketWingObj);
+				gl.rotate(0.0, 0.0, 90);
+			}
+		gl.popMatrix();
 	},
 
 	/** Sets the detail of the path (how many intermidiate points are used)
@@ -229,10 +329,11 @@ Battleship.Rocket = {
 	},
 
 	/** Returns the rockte path */
-	get_path : function() { return path; },
+	get_path : function() { return this.path; },
 
 	/** Updates some rocket paramaters based on current game value */
 	update : function() {
+		this.rocket_size = Battleship.Model.game_rocket.size;
 	},
 
 	/** Figures out how the rocket needs to be rotated to point in
@@ -262,7 +363,7 @@ Battleship.Rocket = {
 			} else if (x < 0 && y > 0 && z <= 0) {
 				nz = -1;
 				ny = -1;
-				this._reverse = true;
+				this.reverse = true;
 			} else if (x < 0 && y < 0) {
 				rz = 180;
 			} else if (z > 0 && x > 0) {
@@ -277,14 +378,14 @@ Battleship.Rocket = {
 				ry = 180;
 			} else if (y < 0 && z <= 0) {
 				x = Math.abs(x); y = Math.abs(y); z = Math.abs(z);
-				rot_z = -Math.acos(x/h)*180/Math.PI;
-				rot_y = Math.acos(h/h2)*180/Math.PI;
+				this.rot_z = -Math.acos(x/h)*180/Math.PI;
+				this.rot_y = Math.acos(h/h2)*180/Math.PI;
 				return;
 			}
 
 			x = Math.abs(x); y = Math.abs(y); z = Math.abs(z);
-			rot_z = nz*Math.acos(x/h)*180/Math.PI + rz;
-			rot_y = ny*Math.acos(h/h2)*180/Math.PI + ry;
+			this.rot_z = nz*Math.acos(x/h)*180/Math.PI + rz;
+			this.rot_y = ny*Math.acos(h/h2)*180/Math.PI + ry;
 		}
 	},
 
