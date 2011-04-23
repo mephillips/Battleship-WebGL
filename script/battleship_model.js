@@ -55,7 +55,7 @@ Battleship.Model = {
 		AI_PLAYING : 4,
 		FIREING : 5,
 		MESSAGE : 6,
-		OVER : 7
+		GAME_OVER : 7
 	},
 
 	NUM_AI_TYPES : 4,
@@ -106,15 +106,22 @@ Battleship.Model = {
 	NUM_SHIPS : 5,
 	/** The types of ships */
 	enum_shiptype : {
-		CARRIER : 'Carrier',
-		BATTLESHIP : 'Batteship',
-		DESTROYER : 'Destroyer',
-		SUB : 'Sub',
-		PT : 'PT Boat',
-		NO_SHIP : 'NO_SHIP'
+		CARRIER : 0,
+		BATTLESHIP : 1,
+		DESTROYER : 2,
+		SUB : 3,
+		PT : 4,
+		NO_SHIP : 5
 	},
-	SHIP_IDS : [ 'CARRIER', 'BATTLESHIP', 'DESTROYER', 'SUB', 'PT', 'NO_SHIP' ],
 	SHIP_LENGTHS : [ 5, 4, 3, 3, 2 ],
+	shiptype_s : [
+		'Carrier',
+		'Batteship',
+		'Destroyer',
+		'Sub',
+		'PT Boat',
+		'NO_SHIP'
+	],
 
 	NUM_FOG_TYPES : 4,
 	/** The possible types of fog */
@@ -195,7 +202,7 @@ Battleship.Model = {
 	/** Inder into the player array of the current player */
 	curr_player : null,
 	/** The current game message */
-	game_message : null,
+	game_message : {},
 	/** Name selector */
 	name_selector : null,
 	/** A structure containg information on the current lsys */
@@ -293,7 +300,7 @@ Battleship.Model = {
 			};
 
 			this.game_lsys = {
-				type : 7,
+				type : 1,
 				length : this.MIN_LSYSTEM_LENGTH
 			};
 

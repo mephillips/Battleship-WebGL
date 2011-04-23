@@ -69,6 +69,16 @@ Battleship.Logic = {
 		Z : 'z'
 	},
 
+	_mouse_x : 0,
+	_mouse_y : 0,
+	_mouse_z : 0,
+	_mouse_mod : null,
+	_mouse_button : 0,
+	_board_montion : null,
+	_cancel_animation : false,
+	_ai_move : [],
+	_game_over : false,
+
 	/** Called to perform game initilization.
 	 *
 	 *	This function initilizes game variables and must be
@@ -89,7 +99,7 @@ Battleship.Logic = {
 			meta : false };
 		this._mouse_button = 0;
 
-		var i;
+		var i, j;
 		this._board_motion = { rrate : [], rend : [], trate : [], tend : [] }
 		for (i = 0; i < 3; i++) {
 			this._board_motion.rrate[i] = 0;
@@ -98,7 +108,34 @@ Battleship.Logic = {
 			this._board_motion.tend[i] = 0;
 		}
 
-		Battleship.Menu.load(Battleship.Menu.main_menu);
+		this._cancel_animation = false;
+		for (i = 0; i < 2; i++) {
+			this._ai_move[i] = {
+				chosen : false,
+				mod : (Math.random() > 0.5 ? 0 : 1),
+				state : 0,
+				num_hits : 0,
+				hit : [],
+				x : 0,
+				y: 0
+			}
+			for (j = 0; j < Battleship.Model.NUM_SHIPS; ++j) {
+				this._ai_move[i].hit[j] = {
+					x : 0,
+					y : 0,
+					dir : new Array(4),
+					curr_dir : 0
+				}
+			}
+		}
+
+		this._game_over = false;
+		Battleship.Model.game_state = Battleship.Model.enum_gamestate.INIT;
+		if (Battleship.Model.demo_mode) {
+			Battleship.Logic.demo();
+		} else {
+			Battleship.Menu.load(Battleship.Menu.main_menu);
+		}
 	},
 
 	/** Called to perform game initilization.
@@ -419,7 +456,7 @@ Battleship.Logic = {
 				this._cancel_animation = true;
 			break;
 			case Battleship.Model.enum_gamestate.AI_PLAYING:
-				if (mod.ai) {
+				if (!mod.ai) {
 					this._cancel_animation = true;;
 					return;
 				}
@@ -566,31 +603,6 @@ Battleship.Logic = {
 		}
 	},
 
-	_board_move : function(axis, to, rate) {
-		this._board_motion.tend[axis] = to;
-		var curr = Battleship.View.get_translate(axis, 'g');
-		this._board_motion.trate[axis] = (to > curr) ? rate : -rate;
-		this._start_transition();
-	},
-
-	_board_rotate : function(axis, to, rate) {
-		this._board_motion.rend[axis] = to;
-		var curr = Battleship.View.get_rotate(axis, 'g');
-		this._board_motion.rrate[axis] = (to > curr) ? rate : -rate;
-		this._start_transition();
-	},
-
-	_start_transition : function() {
-		if (Battleship.Model.game_state === Battleship.Model.enum_gamestate.TRANSITION) {
-			return;
-		}
-
-		if (!Battleship.Model.do_trans_animation) {
-			this._cancel_animation = true;
-		}
-		Battleship.Logic.start_timer(ANIMATION_SPEED, this._animate_transition.bind(this));
-	},
-
 	_try_place_ship : function(num) {
 		var curr_ship = Battleship.Model.player[Battleship.Model.curr_player].ship[num];
 		var hl = (curr_ship.down) ? 1 : curr_ship.length;
@@ -654,7 +666,7 @@ Battleship.Logic = {
 				Battleship.Model.game_message.ship = Battleship.Model.shiptype_s[ship];
 				Battleship.Model.game_message.delay = SUNK_MSG_DELAY;
 
-				nextplayer.ship[ship].state = Battlship.Model.enum_shipstate.SUNK;
+				nextplayer.ship[ship].state = Battleship.Model.enum_shipstate.SUNK;
 				++nextplayer.num_sunk;
 				if (nextplayer.num_sunk === Battleship.Model.NUM_SHIPS) {
 					Battleship.Model.game_message.delay = WIN_MSG_DELAY;
@@ -679,6 +691,276 @@ Battleship.Logic = {
 			Battleship.Model.curr_player = pnum;
 			this._board_rotate(1, (Battleship.Model.curr_player === 0) ? 0 : 180, 10.0);
 		}
+	},
+
+	_ai_play : function() {
+		//Don't play while menu is open
+		//Its also possible the user will change from AI to human using options menu
+		if (Battleship.Menu.curr_menu || !Battleship.Model.player[Battleship.Model.curr_player].ai)
+		{
+			this._cancel_animation = false;
+			Battleship.Model.game_state = Battleship.Model.enum_gamestate.PLAYING;
+			return false;
+		}
+
+		var ai = this._ai_move[Battleship.Model.curr_player];
+		var r = true;
+
+		//Find a new place to shoot
+		if (!ai.chosen) {
+			this._ai_pick_move();
+		}
+
+		//move there right away if animation is off
+		if (this._cancel_animation || !Battleship.Model.do_ai_animation) {
+			Battleship.Model.player[Battleship.Model.curr_player].sel_x = ai.x;
+			Battleship.Model.player[Battleship.Model.curr_player].sel_y = ai.y;
+		}
+
+		//A place has been chosen and the cursor is on it. Fire.
+		var mod = { ai : true };
+		if (Battleship.Model.player[Battleship.Model.curr_player].sel_x === ai.x &&
+			Battleship.Model.player[Battleship.Model.curr_player].sel_y === ai.y
+		) {
+			//this needs to come before hit checking code. because hit checking
+			//code may correctly set it back to true
+			ai.chosen = false;
+			this._cancel_animation = false;
+			this.keypress(this.enum_key.ENTER, mod);
+			r = false;
+		} else {
+			//A place has been chosen but the cursor is not on it. So move.
+			//move to location
+			if (Battleship.Model.player[Battleship.Model.curr_player].sel_x < ai.x) {
+				this.keypress(this.enum_key.RIGHT, mod);
+			} else if (Battleship.Model.player[Battleship.Model.curr_player].sel_x > ai.x) {
+				this.keypress(this.enum_key.LEFT, mod);
+			} else if (Battleship.Model.player[Battleship.Model.curr_player].sel_y < ai.y) {
+				this.keypress(this.enum_key.DOWN, mod);
+			} else if (Battleship.Model.player[Battleship.Model.curr_player].sel_y > ai.y) {
+				this.keypress(this.enum_key.UP, mod);
+			}
+		}
+
+		return r;
+	},
+
+	_ai_pick_move : function() {
+		var ai = this._ai_move[Battleship.Model.curr_player];
+		ai.x = Math.floor(Battleship.Model.GRID_DIM*Math.random());
+		ai.y = Math.floor(Battleship.Model.GRID_DIM*Math.random());
+		var initx = ai.x;
+		var inity = ai.y;
+		while (true) {
+			if (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y] === Battleship.Model.enum_gridstate.EMPTY) {
+				//Only hard AI does useful picking.
+				//Technically AI state should never reach 4
+				if (Battleship.Model.player[Battleship.Model.curr_player].ai != Battleship.Model.enum_aitype.HARD || ai.state === 3) {
+					break;
+				}
+
+				//the ai has narrowed the board down to open blocks of 2
+				var left = (ai.x == 0) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x - 1][ai.y] !== Battleship.Model.enum_gridstate.EMPTY);
+				var right = (ai.x === Battleship.Model.GRID_DIM - 1) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x + 1][ai.y] !== Battleship.Model.enum_gridstate.EMPTY);
+				var up = (ai.y === 0) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y - 1] != Battleship.Model.enum_gridstate.EMPTY);
+				var down = (ai.y === Battleship.Model.GRID_DIM - 1) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y + 1] != Battleship.Model.enum_gridstate.EMPTY);
+
+				var open = 4 - (up + down + left + right);
+
+				//Ensures 2 space gap between pieces (but don't pick a place
+				//that has fewer than 3 open)
+				if (ai.state === 0 && ((ai.y + ai.mod) % 3 === ai.x % 3) && open > 2) {
+					break;
+				} else if (ai.state == 1 && open > 1) {
+					//Try all spaces that have 2 open space around them
+					break;
+				} else if (ai.state == 2 && open > 0) {
+					//Now try all space that have one open space
+					break;
+				}
+			}
+
+			++ai.x;
+			if (ai.x >= Battleship.Model.GRID_DIM) {
+				++ai.y;
+				ai.x = 0;
+				if (ai.y >= Battleship.Model.GRID_DIM) {
+					ai.y = 0;
+				}
+			}
+
+			//The hard AI has 3 search states. It determines that it needs
+			//to move to the next when there are no moves left for the one its
+			//on.
+			if (ai.x === initx && ai.y === inity) {
+				if (ai.state === 4 || Battleship.Model.player[Battleship.Model.curr_player].ai !== Battleship.Model.enum_aitype.HARD) {
+					console.log("Error: Board is full\n");
+					return;
+				}
+				++ai.state;
+			}
+		}
+		ai.chosen = true;
+	},
+
+	_ai_follow_hit : function() {
+		var ai = this._ai_move[Battleship.Model.curr_player];
+		var ship = Battleship.Model.player[1 - Battleship.Model.curr_player].ship_at[ai.x][ai.y];
+		if (ship !== Battleship.Model.enum_shiptype.NO_SHIP) {
+			//This loop both checks the hit queue for sunk ships and
+			//determines if the ship that has been hit is in the queue
+			var newShip = true;
+			var ship2;
+			var i = 0;
+			for ( ; ; ) {
+				if (i >= ai.num_hits) { break;}
+
+				ship2 = Battleship.Model.player[1 - Battleship.Model.curr_player].ship_at[ai.hit[i].x][ai.hit[i].y];
+				//Check if the new ship is in the queue
+				if (ship === ship2) {
+					newShip = false;
+				}
+
+				//Has the ship been sunk?
+				if (Battleship.Model.player[1 - Battleship.Model.curr_player].ship[ship2].state === Battleship.Model.enum_shipstate.SUNK) {
+					--ai.num_hits;
+					ai.hit[i] = ai.hit[ai.num_hits];
+					//update ship origin
+					if (i === 0) {
+						ai.x = ai.hit[i].x;
+						ai.y = ai.hit[i].y;
+					}
+				} else {
+					++i;
+				}
+			}
+
+			if (newShip) {
+				//its a new ship add it to the queue
+				ai.hit[ai.num_hits].x = ai.x;
+				ai.hit[ai.num_hits].y = ai.y;
+				//clear attemped directions
+				var i;
+				for (i = 0; i < 4; i++) {
+					ai.hit[ai.num_hits].dir[i] = false;
+				}
+				//pick random direction
+				ai.hit[ai.num_hits].curr_dir = Math.floor(4 * Math.random());
+				++ai.num_hits;
+			}
+		} else if (ai.num_hits > 0) {
+			//Miss, but only care if there is currently something in the hit queue
+
+			//Need to start looking in another direction.
+			ai.hit[0].dir[ai.hit[0].curr_dir] = true;
+
+			//Switch to opposite dir for now. If this has been tired it
+			//wiil be corrected below
+			ai.hit[0].curr_dir = (ai.hit[0].curr_dir + 2) % 4;
+
+			//Move back to origin
+			ai.x = ai.hit[0].x;
+			ai.y = ai.hit[0].y;
+		}
+
+		//Determine next fireing locaiton
+		while (ai.num_hits > 0 && !ai.chosen) {
+			//pick a new direction if need be.
+			var count = 0;
+			while (ai.hit[0].dir[ai.hit[0].curr_dir]) {
+				ai.hit[0].curr_dir = (ai.hit[0].curr_dir + 1) % 4;
+				//start at first hit again
+				ai.x = ai.hit[0].x;
+				ai.y = ai.hit[0].y;
+
+				//just in case
+				if (++count > 4) {
+					console.log("Error: AI failed to sink ship\n");
+					return;
+				}
+			}
+
+			//move
+			switch (ai.hit[0].curr_dir) {
+				//Left
+				case 3:
+					if (ai.x > 0) {
+						--ai.x;
+					} else {
+						ai.hit[0].dir[ai.hit[0].curr_dir] = true;
+					}
+				break;
+				//Right
+				case 1:
+					if (ai.x < Battleship.Model.GRID_DIM - 1) {
+						++ai.x;
+					} else {
+						ai.hit[0].dir[ai.hit[0].curr_dir] = true;
+					}
+				break;
+				//Up
+				case 0:
+					if (ai.y > 0) {
+						--ai.y;
+					} else {
+						ai.hit[0].dir[ai.hit[0].curr_dir] = true;
+					}
+				break;
+				//Down
+				case 2:
+					if (ai.y < Battleship.Model.GRID_DIM - 1) {
+						++ai.y;
+					} else {
+						ai.hit[0].dir[ai.hit[0].curr_dir] = true;
+					}
+				break;
+				default:
+					console.log("Error: Invalid AI direction (%i)\n", ai.hit[0].curr_dir);
+					return;
+				break;
+			}
+
+			if (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y] !== Battleship.Model.enum_gridstate.EMPTY) {
+				ai.hit[0].dir[ai.hit[0].curr_dir] = true;
+			}
+
+			//if the direction is still ok then its a valid move
+			ai.chosen = !ai.hit[0].dir[ai.hit[0].curr_dir];
+		}
+	},
+
+	_board_move : function(axis, to, rate) {
+		this._board_motion.tend[axis] = to;
+		var curr = Battleship.View.get_translate(axis, 'g');
+		this._board_motion.trate[axis] = (to > curr) ? rate : -rate;
+		this._start_transition();
+	},
+
+	_board_rotate : function(axis, to, rate) {
+		this._board_motion.rend[axis] = to;
+		var curr = Battleship.View.get_rotate(axis, 'g');
+		this._board_motion.rrate[axis] = (to > curr) ? rate : -rate;
+		this._start_transition();
+	},
+
+	_start_transition : function() {
+		if (Battleship.Model.game_state === Battleship.Model.enum_gamestate.TRANSITION) {
+			return;
+		}
+
+		if (!Battleship.Model.do_trans_animation) {
+			this._cancel_animation = true;
+		}
+		Battleship.Logic.start_timer(ANIMATION_SPEED, this._animate_transition.bind(this));
+	},
+
+	_start_ai : function() {
+		Battleship.Model.game_state = Battleship.Model.enum_gamestate.AI_PLAYING;
+		var speed = AI_SPEED;
+		if (Battleship.Model.demo_mode) {
+			speed += DEMO_DELAY;
+		}
+		Battleship.Logic.start_timer(speed, this._ai_play.bind(this));
 	},
 
 	_start_fireing : function() {

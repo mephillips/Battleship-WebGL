@@ -193,14 +193,14 @@ Battleship.Menu = {
 						{
 							if (!Battleship.Model.player[i].ai)
 							{
-								Battleship.Model.ai_move[i].chosen = false;
-								Battleship.Model.ai_move[i].num_hits = 0;
+								Battleship.Logic._ai_move[i].chosen = false;
+								Battleship.Logic._ai_move[i].num_hits = 0;
 							}
 						}
 
 						//restart ai player
 						if (Battleship.Model.player[Battlship.Model.curr_player].ai) {
-							Battleship.Logic.start_ai();
+							Battleship.Logic._start_ai();
 						}
 					}
 				} else {
