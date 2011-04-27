@@ -223,12 +223,21 @@ Battleship.Rocket = {
 				gl.rotate(0, 90, 0);
 			}
 
+			//Fire!!!
+			if (Battleship.Model.game_rocket.draw_fire) {
+				gl.pushMatrix();
+					gl.translate(0.0, 0.0, this.rocket_size*7.5);
+					psystem.advance();
+					psystem.draw(gl);
+				gl.popMatrix();
+			}
+
 			//spin
 			this.rot_x = (this.rot_x + 5) % 360;
 			gl.rotate(0.0, 0.0, this.rot_x);
 
 			// rocket size
-			var scaleFactor = this.rocket_size/Battleship.Model.MAX_ROCKET_SIZE;
+			var scaleFactor = this.rocket_size;
 			gl.scale(scaleFactor, scaleFactor, scaleFactor);
 
 			//The nouse
@@ -333,7 +342,20 @@ Battleship.Rocket = {
 
 	/** Updates some rocket paramaters based on current game value */
 	update : function() {
-		this.rocket_size = Battleship.Model.game_rocket.size;
+		this.rocket_size = Battleship.Model.game_rocket.size/Battleship.Model.MAX_ROCKET_SIZE;
+
+		var w = 1.0;
+		switch (Battleship.Model.game_rocket.width) {
+			case Battleship.Model.enum_firewidth.SKINNY: w = 0.5; break;
+			case Battleship.Model.enum_firewidth.EQUAL: w = 1.0; break;
+			case Battleship.Model.enum_firewidth.WIDE: w = 4.0; break;
+		}
+		psystem.init(
+						this.rocket_size - 0.05,
+						this.rocket_size*w,
+						this.rocket_size*(Battleship.Model.game_rocket.len)*2.0,
+						Battleship.Model.game_rocket.colour
+					);
 	},
 
 	/** Figures out how the rocket needs to be rotated to point in

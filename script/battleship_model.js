@@ -314,7 +314,7 @@ Battleship.Model = {
 				len : 3,
 				width : this.enum_firewidth.SKINNY,
 				speed : 4,
-				colour : null
+				colour : 0
 			};
 
 			this.player[0].name = "Player 1";

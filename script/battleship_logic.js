@@ -206,7 +206,7 @@ Battleship.Logic = {
 	restart : function() {
 		this.stop_timers();
 		this.init();
-		this.sound_stop();
+		//this.sound_stop();
 		Battleship.View.refresh();
 	},
 

@@ -426,7 +426,13 @@ Battleship.Menu = {
 		Battleship.Rocket.update();
 	},
 
-	toggle_fire_colour : function(m, dir) {},
+	toggle_fire_colour : function(m, dir) {
+		var val = m.object[m.key];
+		val = (val + psystem.NUM_PSYSTEM_COLOURS + dir) % psystem.NUM_PSYSTEM_COLOURS;
+		m.object[m.key] = val;
+		m.svalue = psystem.colours_s[val];
+		Battleship.Rocket.update();
+	},
 
 	_createMenu : function(name, items) {
 		return {
