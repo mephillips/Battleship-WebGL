@@ -126,11 +126,11 @@ Battleship.Model = {
 	NUM_FOG_TYPES : 4,
 	/** The possible types of fog */
 	enum_fogtype : {
-		OFF 	: 0,
-		LIGHT 	: 1,
-		MEDIUM 	: 2,
-		HEAVY 	: 3,
-		REGEN	: 4
+		OFF : 0,
+		LIGHT : 1,
+		MEDIUM : 2,
+		HEAVY : 3,
+		REGEN : 4
 	},
 	fogtype_s : [
 		'Off   ',

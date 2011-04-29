@@ -100,7 +100,7 @@ Battleship.Logic = {
 		this._mouse_button = 0;
 
 		var i, j;
-		this._board_motion = { rrate : [], rend : [], trate : [], tend : [] }
+		this._board_motion = { rrate : [], rend : [], trate : [], tend : [] };
 		for (i = 0; i < 3; i++) {
 			this._board_motion.rrate[i] = 0;
 			this._board_motion.rend[i] = 0;
@@ -118,14 +118,14 @@ Battleship.Logic = {
 				hit : [],
 				x : 0,
 				y: 0
-			}
+			};
 			for (j = 0; j < Battleship.Model.NUM_SHIPS; ++j) {
 				this._ai_move[i].hit[j] = {
 					x : 0,
 					y : 0,
 					dir : new Array(4),
 					curr_dir : 0
-				}
+				};
 			}
 		}
 
@@ -217,7 +217,7 @@ Battleship.Logic = {
 	 *
 	 *  This function should be called whenever a mouse button is released.
 	 *
- 	 *  @param button	The button which was released. This value should
+	 *  @param button	The button which was released. This value should
 	 *					corrispond to one of the BATTLESHIP_MOUSE_* values.
 	 *  @param mod		What modifiers are were pressed. An object
 	 *					{ shift : bool, ctrl : bool, alt : bool, meta : bool }
@@ -398,22 +398,26 @@ Battleship.Logic = {
 						break;
 					}
 				}
-				if (!curr_ship) return;
+				if (!curr_ship) { return; }
 				var hl = (curr_ship.down) ? 1 : curr_ship.length;
 				var vl = (!curr_ship.down) ? 1 : curr_ship.length;
 
 				if (key === this.enum_key.LEFT) {
-					if (curr_ship.x > 0)
+					if (curr_ship.x > 0) {
 						--(curr_ship.x);
+					}
 				} else if (key === this.enum_key.RIGHT) {
-					if (curr_ship.x + hl < Battleship.Model.GRID_DIM)
+					if (curr_ship.x + hl < Battleship.Model.GRID_DIM) {
 						++(curr_ship.x);
+					}
 				} else if (key === this.enum_key.UP) {
-					if (curr_ship.y > 0)
+					if (curr_ship.y > 0) {
 						--(curr_ship.y);
+					}
 				} else if (key === this.enum_key.DOWN) {
-					if (curr_ship.y + vl < Battleship.Model.GRID_DIM)
+					if (curr_ship.y + vl < Battleship.Model.GRID_DIM) {
 						++(curr_ship.y);
+					}
 				} else if (key === this.enum_key.ENTER) {
 					if (this._try_place_ship(curr_ship_t)) {
 						//If the ship is placed and it is the last one move on
@@ -424,7 +428,7 @@ Battleship.Logic = {
 						}
 					}
 				} else if (key === this.enum_key.BACKSPACE) {
-					if (curr_ship_t != 0) {
+					if (curr_ship_t !== 0) {
 						//Stop placing current ship
 						curr_ship.state = Battleship.Model.enum_shipstate.NOT_PLACED;
 						//Switch to last ship
@@ -436,8 +440,7 @@ Battleship.Logic = {
 						var j;
 						for (i = 0; i < hl; i++) {
 							for (j = 0; j < vl; j++) {
-								Battleship.Model.player[curr_player].ship_at
-									[curr_ship.x + i][curr_ship.y +j] = Battleship.Model.enum_gridstate.NO_SHIP;
+								Battleship.Model.player[curr_player].ship_at[curr_ship.x + i][curr_ship.y +j] = Battleship.Model.enum_gridstate.NO_SHIP;
 							}
 						}
 
@@ -457,7 +460,7 @@ Battleship.Logic = {
 			break;
 			case Battleship.Model.enum_gamestate.AI_PLAYING:
 				if (!mod.ai) {
-					this._cancel_animation = true;;
+					this._cancel_animation = true;
 					return;
 				}
 			//note lack of break
@@ -471,10 +474,9 @@ Battleship.Logic = {
 				} else if (key === this.enum_key.DOWN) {
 					this._fix_select(0, 1);
 				} else if (key === this.enum_key.ENTER) {
-					if (Battleship.Model.player[1 - Battleship.Model.curr_player].grid
-							[Battleship.Model.player[Battleship.Model.curr_player].sel_x][Battleship.Model.player[Battleship.Model.curr_player].sel_y]
-							=== Battleship.Model.enum_gridstate.EMPTY)
-					{
+					var currp = Battleship.Model.player[Battleship.Model.curr_player];
+					var nextp = Battleship.Model.player[1 - Battleship.Model.curr_player];
+					if (nextp.grid[currp.sel_x][currp.sel_y] === Battleship.Model.enum_gridstate.EMPTY) {
 						this._next_state();
 						needRefresh = false;
 					}
@@ -583,7 +585,7 @@ Battleship.Logic = {
 					Battleship.Model.game_state = Battleship.Model.enum_gamestate.PLAYING;
 					if (!Battleship.Model.player[Battleship.Model.curr_player].ai) {
 						this._fix_select(1, 0);
-					} else if (Battleship.Model.player[Battleship.Model.curr_player].ai != Battleship.Model.enum_aitype.EASY) {
+					} else if (Battleship.Model.player[Battleship.Model.curr_player].ai !== Battleship.Model.enum_aitype.EASY) {
 						this._ai_follow_hit();
 					}
 					this._switch_player(1 - Battleship.Model.curr_player);
@@ -623,8 +625,7 @@ Battleship.Logic = {
 		if (!conflict) {
 			for (i = 0; i < hl; i++) {
 				for (j = 0; j < vl; j++) {
-					Battleship.Model.player[Battleship.Model.curr_player].ship_at
-						[curr_ship.x + i][curr_ship.y +j] = num;
+					Battleship.Model.player[Battleship.Model.curr_player].ship_at[curr_ship.x + i][curr_ship.y +j] = num;
 				}
 			}
 			curr_ship.state = Battleship.Model.enum_shipstate.PLACED;
@@ -685,7 +686,7 @@ Battleship.Logic = {
 	},
 
 	_switch_player : function(pnum) {
-		if (Battleship.Model.curr_player != pnum) {
+		if (Battleship.Model.curr_player !== pnum) {
 			Battleship.Model.curr_player = pnum;
 			this._board_rotate(1, (Battleship.Model.curr_player === 0) ? 0 : 180, 10.0);
 		}
@@ -753,15 +754,15 @@ Battleship.Logic = {
 			if (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y] === Battleship.Model.enum_gridstate.EMPTY) {
 				//Only hard AI does useful picking.
 				//Technically AI state should never reach 4
-				if (Battleship.Model.player[Battleship.Model.curr_player].ai != Battleship.Model.enum_aitype.HARD || ai.state === 3) {
+				if (Battleship.Model.player[Battleship.Model.curr_player].ai !== Battleship.Model.enum_aitype.HARD || ai.state === 3) {
 					break;
 				}
 
 				//the ai has narrowed the board down to open blocks of 2
-				var left = (ai.x == 0) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x - 1][ai.y] !== Battleship.Model.enum_gridstate.EMPTY);
+				var left = (ai.x === 0) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x - 1][ai.y] !== Battleship.Model.enum_gridstate.EMPTY);
 				var right = (ai.x === Battleship.Model.GRID_DIM - 1) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x + 1][ai.y] !== Battleship.Model.enum_gridstate.EMPTY);
-				var up = (ai.y === 0) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y - 1] != Battleship.Model.enum_gridstate.EMPTY);
-				var down = (ai.y === Battleship.Model.GRID_DIM - 1) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y + 1] != Battleship.Model.enum_gridstate.EMPTY);
+				var up = (ai.y === 0) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y - 1] !== Battleship.Model.enum_gridstate.EMPTY);
+				var down = (ai.y === Battleship.Model.GRID_DIM - 1) || (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y + 1] !== Battleship.Model.enum_gridstate.EMPTY);
 
 				var open = 4 - (up + down + left + right);
 
@@ -769,10 +770,10 @@ Battleship.Logic = {
 				//that has fewer than 3 open)
 				if (ai.state === 0 && ((ai.y + ai.mod) % 3 === ai.x % 3) && open > 2) {
 					break;
-				} else if (ai.state == 1 && open > 1) {
+				} else if (ai.state === 1 && open > 1) {
 					//Try all spaces that have 2 open space around them
 					break;
-				} else if (ai.state == 2 && open > 0) {
+				} else if (ai.state === 2 && open > 0) {
 					//Now try all space that have one open space
 					break;
 				}
@@ -838,7 +839,6 @@ Battleship.Logic = {
 				ai.hit[ai.num_hits].x = ai.x;
 				ai.hit[ai.num_hits].y = ai.y;
 				//clear attemped directions
-				var i;
 				for (i = 0; i < 4; i++) {
 					ai.hit[ai.num_hits].dir[i] = false;
 				}
@@ -915,7 +915,6 @@ Battleship.Logic = {
 				default:
 					console.log("Error: Invalid AI direction (%i)\n", ai.hit[0].curr_dir);
 					return;
-				break;
 			}
 
 			if (Battleship.Model.player[1 - Battleship.Model.curr_player].grid[ai.x][ai.y] !== Battleship.Model.enum_gridstate.EMPTY) {
@@ -1010,9 +1009,9 @@ Battleship.Logic = {
 		for (i = 0; i < 3; i++) {
 			var curr = Battleship.View.get_rotate(i, 'g');
 			if (this._cancel_animation ||
-			(this._board_motion.rrate[i] < 0.0 && curr <= this._board_motion.rend[i]) ||
-			(this._board_motion.rrate[i] > 0.0 && curr >= this._board_motion.rend[i]) ||
-			(this._board_motion.rrate[i] == 0.0)
+			(this._board_motion.rrate[i] < 0 && curr <= this._board_motion.rend[i]) ||
+			(this._board_motion.rrate[i] > 0 && curr >= this._board_motion.rend[i]) ||
+			(this._board_motion.rrate[i] === 0)
 			) {
 				Battleship.View.set_rotate(i, this._board_motion.rend[i], 'g');
 				++count;
@@ -1024,7 +1023,7 @@ Battleship.Logic = {
 			if (this._cancel_animation ||
 			(this._board_motion.trate[i] < 0.0 && curr <= this._board_motion.tend[i]) ||
 			(this._board_motion.trate[i] > 0.0 && curr >= this._board_motion.tend[i]) ||
-			(this._board_motion.trate[i] == 0.0)
+			(this._board_motion.trate[i] === 0)
 			) {
 				Battleship.View.set_translate(i, this._board_motion.tend[i], 'g');
 				++count;

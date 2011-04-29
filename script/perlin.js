@@ -28,13 +28,13 @@
  * http://freespace.virgin.net/hugo.elias/models/m_perlin.htm
  * http://www.animeimaging.com/asp/PerlinNoise.aspx
  * Shirley,Peter and RMorley Keith ,R. (2001) Realistic Ray Tracing,
- * 	2nd edition. A.K. Peters.
+ * 2nd edition. A.K. Peters.
  */
 
 /**
  * @namespace
  */
-perlin = {
+var perlin = {
 	/** @private The current seed for the random number generator */
 	_seed : 1,
 
@@ -183,8 +183,8 @@ perlin = {
 			freq *= 2;
 			amp *= param.pers;
 		}
-		if (total < -1.0) total = -1.0;
-		if (total > 1.0) total = 1.0;
+		if (total < -1.0) { total = -1.0; }
+		if (total > 1.0) { total = 1.0; }
 
 		return total;
 	}

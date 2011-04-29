@@ -55,7 +55,7 @@ Battleship.Rocket = {
 	num_points : null,
 
 	/** True when the rocket has reached the end of the path */
-	stopped : null,
+	__stopped : null,
 
 	/** The size of the rocket */
 	rocket_size : null,
@@ -65,8 +65,6 @@ Battleship.Rocket = {
 	/** GLObject for drawing rocket nose*/
 	_rocketNoseObj : null,
 	/** GLObject for drawing rocket */
-	_rocketWingObj : null,
-	/** GLObject for drawing rocket wings */
 	_rocketWingObj : null,
 
 	/** Inititlizes the rocket */
@@ -80,7 +78,7 @@ Battleship.Rocket = {
 		this.loc[2] = 0;
 		this.curr_point = 0;
 		this.num_points = 0;
-		this.stopped = true;
+		this.__stopped = true;
 		this.rot_x = 0;
 		this.rot_y = 0;
 		this.rot_z = 0;
@@ -90,7 +88,7 @@ Battleship.Rocket = {
 
 	/** Puts the rocet back at the start of the path */
 	reset : function() {
-		this.stopped = false;
+		this.__stopped = false;
 
 		if (this.points) {
 			this.loc[0] = this.points[0];
@@ -118,16 +116,16 @@ Battleship.Rocket = {
 	},
 
 	/** Returns true if the rocket is at the end of its path */
-	stopped : function() { return this.stopped; },
+	stopped : function() { return this.__stopped; },
 
 	/** Causes the rocket to move
 	 *
-	 * 	Returns true when the rocket has reached the end of its path
+	 * Returns true when the rocket has reached the end of its path
 	 */
 	move : function() {
 		//wrap around
 		if (this.curr_point >= this.num_points - 2 || !this.points) {
-			this.stopped = true;
+			this.__stopped = true;
 			return false;
 		}
 
@@ -164,12 +162,14 @@ Battleship.Rocket = {
 		gl.setSpecularColor(Battleship.View._spec_w);
 		gl.setMaterialShininess(Battleship.View._shinny_w);
 
+		var o;
+		var i;
 		if (showPath) {
 			if (!this._rocketPathObj) {
 				if (this._oldRocketPathObj) {
 					this._oldRocketPathObj.destroy(gl);
 				}
-				var o = new GLObject('rocket_path');
+				o = new GLObject('rocket_path');
 				this._rocketPathObj = o;
 
 				o.begin(GLObject.GL_LINES);
@@ -180,7 +180,6 @@ Battleship.Rocket = {
 							break;
 						}
 
-						var i;
 						var l = [];
 						for (i = 0; i < 3; i++) {
 							l[i] = this._calc_point(c, i, p);
@@ -196,7 +195,6 @@ Battleship.Rocket = {
 				o.end();
 				//Draw Linear path
 				o.begin(GLObject.GL_LINES);
-					var i;
 					for (i = 0; i < this.num_points - 1; i++) {
 						o.vertex(this.points[i*3], this.points[i*3+1], this.points[i*3+2]);
 						o.vertex(this.points[i*3 + 3], this.points[i*3+ 4], this.points[i*3 + 5]);
@@ -244,7 +242,7 @@ Battleship.Rocket = {
 			gl.setSpecularColor(Battleship.View._spec_r);
 			gl.setMaterialShininess(Battleship.View._shinny_r);
 			if (!this._rocketNoseObj) {
-				var o = new GLObject('rocket_nose');
+				o = new GLObject('rocket_nose');
 				this._rocketNoseObj = o;
 				o.scale(1.0, 1.0, 2.5);
 				glprimitive.sphere(o, 1);
@@ -256,7 +254,7 @@ Battleship.Rocket = {
 			gl.setSpecularColor(Battleship.View._spec_w);
 			gl.setMaterialShininess(Battleship.View._shinny_w);
 			if (!this._rocketBodyObj) {
-				var o = new GLObject('rocket_body');
+				o = new GLObject('rocket_body');
 				this._rocketBodyObj = o;
 				glprimitive.cylinder(o, 1, 8);
 				//o.translate(0.0, 0.0, 8);
@@ -265,39 +263,38 @@ Battleship.Rocket = {
 			gl.draw(this._rocketBodyObj);
 
 			if (!this._rocketWingObj) {
-				var o = new GLObject('rocket_wing');
+				o = new GLObject('rocket_wing');
 				this._rocketWingObj = o;
 				o.begin(GLObject.GL_TRIANGLES);
 					//left
 					o.setNormal(0.0, 1.0, 0.0);
-					o.vertex(1, 0.0, -2*1);
+					o.vertex(1, 0.0, -2);
 					o.vertex(1, 0.0, 0.0);
-					o.vertex(3*1, 0.0, 0.0);
+					o.vertex(3, 0.0, 0.0);
 					//right
 					o.setNormal(0.0, -1.0, 0.0);
-					o.vertex(3*1, -1/5, 0.0);
+					o.vertex(3, -1/5, 0.0);
 					o.vertex(1, -1/5, 0.0);
-					o.vertex(1, -1/5, -2*1);
+					o.vertex(1, -1/5, -2);
 				o.end();
 				o.begin(GLObject.GL_QUADS);
 					//back
 					o.setNormal(0.0, 0.0, 1.0);
 					o.vertex(1, 0.0, 0.0);
 					o.vertex(1, -1/5.0, 0.0);
-					o.vertex(3*1, -1/5.0, 0.0);
-					o.vertex(3*1, 0.0, 0.0);
+					o.vertex(3, -1/5.0, 0.0);
+					o.vertex(3, 0.0, 0.0);
 					//front
 					o.setNormal(0.5, 0.0, -0.5);
-					o.vertex(3*1, 0.0, 0.0);
-					o.vertex(3*1, -1/5.0, 0.0);
-					o.vertex(1, -1/5.0, -2.0*1);
-					o.vertex(1, 0.0, -2.0*1);
+					o.vertex(3, 0.0, 0.0);
+					o.vertex(3, -1/5.0, 0.0);
+					o.vertex(1, -1/5.0, -2.0);
+					o.vertex(1, 0.0, -2.0);
 				o.end();
 			}
 			gl.translate(0.0, 0.0, 8);
-			var i = 0;
 			for (i = 0; i < 4; i++) {
-				if (i % 2 == 0) {
+				if (i % 2 === 0) {
 					gl.setDiffuseColor(Battleship.View._diff_r);
 					gl.setSpecularColor(Battleship.View._spec_r);
 					gl.setMaterialShininess(Battleship.View._shinny_r);
@@ -318,11 +315,11 @@ Battleship.Rocket = {
 	set_detail : function(d) { this.detail = d; },
 
 	/** Sets the rockets path
-	 *  @param points
-	 *  			 An array containing the points the rocket should fly through
-	 *  			 in groups of 3 (x, y, z). The first element of the array
-	 *  			 should represent the number of triples in the array.
-	 *  			 So an array with 3 points would by 3 x y z x y z x y z
+	 * @param points
+	 * An array containing the points the rocket should fly through
+	 * in groups of 3 (x, y, z). The first element of the array
+	 * should represent the number of triples in the array.
+	 * So an array with 3 points would by 3 x y z x y z x y z
 	 */
 	set_path : function(p) {
 		this.path = p;
@@ -367,9 +364,7 @@ Battleship.Rocket = {
 		var h = Math.sqrt(x*x + y*y);
 		var h2 = Math.sqrt(z*z + h*h);
 
-		if (Math.abs(h) < 0.001) {
-			//Don't change, dah!
-		} else {
+		if (Math.abs(h) >= 0.001) {
 			this.reverse = false;
 			var rz = 0;
 			var ry = 0;
@@ -411,15 +406,15 @@ Battleship.Rocket = {
 	},
 
 	/** Calculates the next position for the rocket using quadric spline
-	 * 	@param curr The base point
-	 * 	@param comp 0 = x, 1 = y, 2 = z
-	 * 	@param t The distance along the spline
+	 * @param curr The base point
+	 * @param comp 0 = x, 1 = y, 2 = z
+	 * @param t The distance along the spline
 	 *
-	 * 	@return Returns an interpolated point
+	 * @return Returns an interpolated point
 	 */
 	_calc_point : function(curr, comp, t) {
 		//return points[curr*3 + comp]*(1.0 - t) + points[(curr + 1)*3 + comp]*t;
-		return this.points[(curr + 0)*3 + comp]*(1.0 - 2*t + t*t)
+		return this.points[curr*3 + comp]*(1.0 - 2*t + t*t)
 			 + this.points[(curr + 1)*3 + comp]*(2*t - 2*t*t)
 			 + this.points[(curr + 2)*3 + comp]*t*t;
 	}

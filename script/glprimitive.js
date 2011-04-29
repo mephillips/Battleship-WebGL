@@ -37,7 +37,7 @@
 /**
  * @namespace
  */
-glprimitive = {
+var glprimitive = {
 	/** @private The default detail level */
 	_detail : 10,
 
@@ -136,7 +136,7 @@ glprimitive = {
 	/**
 	 * Draw a disk with the given radius
 	 *
- 	 * The disk will be on the x-y plane with normal along positive z.
+	 * The disk will be on the x-y plane with normal along positive z.
 	 *
 	 * @param o			A GLObject to write the disk data into.
 	 * @param radius	The radius of the disk to draw.
@@ -176,7 +176,7 @@ glprimitive = {
      * @param stacks	The number of divisions along the z axis.
      *                   (longitudal)
 	 *
- 	 * freeglut_geometry.c
+	 * freeglut_geometry.c
 	 */
 	sphere : function(o, radius, slices, stacks) {
 		slices = slices || this._detail;
@@ -261,7 +261,7 @@ glprimitive = {
      * @param stacks	The number of divisions along the z axis.
      *                   (longitudal)
 	 *
- 	 * freeglut_geometry.c
+	 * freeglut_geometry.c
 	 */
 	half_sphere : function(o, radius, slices, stacks) {
 		slices = slices || this._detail;
@@ -323,7 +323,7 @@ glprimitive = {
 	/**
 	 * Draws a solid cylinder.
 	 *
- 	 * The cylinder will be centered at the origin moving outward along
+	 * The cylinder will be centered at the origin moving outward along
 	 * positive z. It is oriented so that the whole in the center is on
 	 * the x-y plane.
 	 *
@@ -335,7 +335,7 @@ glprimitive = {
      * @param stacks	The number of divisions along the z axis.
      *                   (longitudal). (Defaults to this._detail)
 	 *
- 	 * freeglut_geometry.c
+	 * freeglut_geometry.c
 	 */
 	cylinder : function(o, radius, len, slices, stacks) {
 		slices = slices || this._detail;
@@ -347,9 +347,7 @@ glprimitive = {
 
 		// Step in z and radius as stacks are drawn.
 		var z0,z1;
-		var r0,r1;
 
-		var z0,z1;
 		var zStep = len / stacks;
 
 
@@ -363,12 +361,10 @@ glprimitive = {
 		z1 = zStep;
 
 		for (i=1; i<=stacks; i++) {
-			if (i==stacks)
-				z1 = len;
+			if (i === stacks) { z1 = len; }
 
 			o.begin(GLObject.GL_QUAD_STRIP);
-			for (j=0; j<=slices; j++ )
-			{
+			for (j=0; j<=slices; j++ ) {
 				o.setNormal(cost[j],        sint[j],        0.0 );
 				o.vertex(cost[j]*radius, sint[j]*radius, z0  );
 				o.vertex(cost[j]*radius, sint[j]*radius, z1  );
@@ -390,7 +386,7 @@ glprimitive = {
 	 * @param o				A GLObject to write the disk data into.
 	 * @param majorRadius	The major radius of the cone
 	 * @param minorRadius	The minor radius of the cone
- 	 * @param len			The length
+	 * @param len			The length
 	 *
 	 * Based on code from freeglut_geometry.c but alterned to match
 	 * the functionality from my original code
@@ -458,13 +454,13 @@ glprimitive = {
      * @param	nSides          Facets around ``tube''
      * @param	nRings          Joints along ``path''
 	 *
- 	 * freeglut_geometry.c
+	 * freeglut_geometry.c
 	 */
 	torus : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
 		nSides = nSides | this._detail;
 		nRings = nRings | this._detail;
-		if ( nSides < 1 ) nSides = 1;
-		if ( nRings < 1 ) nRings = 1;
+		if ( nSides < 1 ) { nSides = 1; }
+		if ( nRings < 1 ) { nRings = 1; }
 
 		var iradius = dInnerRadius;
 		var oradius = dOuterRadius;
@@ -497,7 +493,7 @@ glprimitive = {
 				vertex[offset] = cpsi * ( oradius + cphi * iradius ) ;
 				vertex[offset + 1] = spsi * ( oradius + cphi * iradius ) ;
 				vertex[offset + 2] =                    sphi * iradius  ;
-				normal[offset + 0] = cpsi * cphi ;
+				normal[offset] = cpsi * cphi ;
 				normal[offset + 1] = spsi * cphi ;
 				normal[offset + 2] =        sphi ;
 				phi += dphi;
@@ -543,13 +539,13 @@ glprimitive = {
      * @param	nSides          Facets around ``tube''
      * @param	nRings          Joints along ``path''
 	 *
- 	 * freeglut_geometry.c
+	 * freeglut_geometry.c
 	 */
 	half_torus1 : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
 		nSides = nSides | this._detail;
 		nRings = nRings | this._detail;
-		if ( nSides < 1 ) nSides = 1;
-		if ( nRings < 1 ) nRings = 1;
+		if ( nSides < 1 ) { nSides = 1; }
+		if ( nRings < 1 ) { nRings = 1; }
 
 		var iradius = dInnerRadius;
 		var oradius = dOuterRadius;
@@ -582,7 +578,7 @@ glprimitive = {
 				vertex[offset] = cpsi * ( oradius + cphi * iradius ) ;
 				vertex[offset + 1] = spsi * ( oradius + cphi * iradius ) ;
 				vertex[offset + 2] =                    sphi * iradius  ;
-				normal[offset + 0] = cpsi * cphi ;
+				normal[offset] = cpsi * cphi ;
 				normal[offset + 1] = spsi * cphi ;
 				normal[offset + 2] =        sphi ;
 				phi += dphi;
@@ -629,13 +625,13 @@ glprimitive = {
      * @param	nSides          Facets around ``tube''
      * @param	nRings          Joints along ``path''
 	 *
- 	 * freeglut_geometry.c
+	 * freeglut_geometry.c
 	 */
 	half_torus2 : function(o, dInnerRadius, dOuterRadius, nSides, nRings) {
 		nSides = nSides | this._detail;
 		nRings = nRings | this._detail;
-		if ( nSides < 1 ) nSides = 1;
-		if ( nRings < 1 ) nRings = 1;
+		if ( nSides < 1 ) { nSides = 1; }
+		if ( nRings < 1 ) { nRings = 1; }
 
 		var iradius = dInnerRadius;
 		var oradius = dOuterRadius;
@@ -668,7 +664,7 @@ glprimitive = {
 				vertex[offset] = cpsi * ( oradius + cphi * iradius ) ;
 				vertex[offset + 1] = spsi * ( oradius + cphi * iradius ) ;
 				vertex[offset + 2] =                    sphi * iradius  ;
-				normal[offset + 0] = cpsi * cphi ;
+				normal[offset] = cpsi * cphi ;
 				normal[offset + 1] = spsi * cphi ;
 				normal[offset + 2] =        sphi ;
 				phi += dphi;
@@ -710,25 +706,24 @@ glprimitive = {
 	 * @param cost	An empty array in which to put cos values
 	 * @param n		The size of the table
 	 *
- 	 * freeglut_geometry.c
+	 * freeglut_geometry.c
 	 **/
 	fghCircleTable : function(sint, cost, n) {
 		var i;
 
 		/* Table size, the sign of n flips the circle direction */
-		const size = Math.abs(n);
+		var size = Math.abs(n);
 
 		/* Determine the angle between samples */
 
-		const angle = 2*Math.PI/( ( n == 0 ) ? 1.0 : n );
+		var angle = 2*Math.PI/( ( n === 0 ) ? 1.0 : n );
 
 		/* Compute cos and sin around the circle */
 
 		sint[0] = 0.0;
 		cost[0] = 1.0;
 
-		for (i=1; i<size; i++)
-		{
+		for (i=1; i<size; i++) {
 			sint[i] = Math.sin(angle*i);
 			cost[i] = Math.cos(angle*i);
 		}
@@ -767,6 +762,7 @@ glprimitive = {
 			var i;
 			var r1 = (size-size/16.0);
 			var r2 = (size-size/8.0);
+			var up, over;
 
 			//The front face
 			this._clockData.face = new GLObject('clock_face');
@@ -780,9 +776,9 @@ glprimitive = {
 			o.setNormal(0.0, 0.0, 1.0);
 			for (i = 0; i < 60; i++)
 			{
-				var up = Math.sin(2*i*Math.PI/60);
-				var over = Math.cos(2*i*Math.PI/60);
-				if (i % 5 != 0)
+				up = Math.sin(2*i*Math.PI/60);
+				over = Math.cos(2*i*Math.PI/60);
+				if (i % 5 !== 0)
 				{
 					o.vertex(r1*over, r1*up, 0.1);
 					o.vertex(r2*over, r2*up, 0.1);
@@ -801,8 +797,8 @@ glprimitive = {
 			o.begin(GLObject.GL_LINES);
 			for (i = 0; i < 4; i++)
 			{
-				var up = Math.sin(2*i*Math.PI/4);
-				var over = Math.cos(2*i*Math.PI/4);
+				up = Math.sin(2*i*Math.PI/4);
+				over = Math.cos(2*i*Math.PI/4);
 				o.vertex(r1*over, r1*up, 0.1);
 				o.vertex(r2*over, r2*up, 0.1);
 			}
@@ -819,7 +815,7 @@ glprimitive = {
 			o.begin(GLObject.GL_LINES);
 				o.vertex(0, r2, 0.2);
 				o.vertex(0, 0, 0.2);
-			o.end()
+			o.end();
 
 			o = new GLObject('clock_body');
 			this._clockData.body = o;
@@ -905,7 +901,6 @@ glprimitive = {
 		var time = new Date();
 		var hour = time.getHours() % 12;
 		var min = time.getMinutes();
-		var sec = time.getSeconds();
 
 		gl.setDiffuseColor( 0.0, 0.0, 0.0 );
 		gl.setSpecularColor( 0.0, 0.0, 0.0 );
@@ -1011,4 +1006,3 @@ glprimitive = {
 		*/
 	}
 };
-

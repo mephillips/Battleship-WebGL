@@ -30,13 +30,13 @@
 var BOARD_GAP = 0;
 
 /** How far up on the board to draw the vertical grid */
-var GRID_TOP_Y = 2.0;  	// - For the normal on the diagonl stuff. This
+var GRID_TOP_Y = 2.0;
 /** How far out fromt he origin to draw the vertical gird */
 var GRID_TOP_Z = 0.5;
 /** How far up on the board to draw the horizontal grid */
 var GRID_BOTTOM_Y = -1.5;
 /** How far out fromt he origin to draw the horizonal gird */
-var GRID_BOTTOM_Z = 2.0;  	// - And this should be equal
+var GRID_BOTTOM_Z = 2.0;
 
 /** The depth of grid blocks */
 var BLOCK_DEPTH = 0.8;
@@ -153,7 +153,7 @@ Battleship.View = {
 			3.0, -4, 0.0,
 			3.0, 0, 0.0,
 			3.0, 4, 0.0,
-			6.0, 10, 0.0,
+			6.0, 10, 0.0
 		],
 		[
 			PATH_SIZE,
@@ -170,7 +170,7 @@ Battleship.View = {
 			10, 8, 0,
 			10, 8, -(GRID_BOTTOM_Z + Battleship.Model.GRID_DIM*BLOCK_REAL_DIM + 2),
 			0, TABLE_TOP + BLOCK_DEPTH, 0
-		],
+		]
 	],
 
 	/** Display objects */
@@ -435,7 +435,7 @@ Battleship.View = {
 				gl.scale(2.0, 2.0, 2.0);
 				gl.rotate(30, 0, 0);
 				gl.translate(0.0, 2, -3);
-				this._drawShips(gl);
+				this._drawShips(gl, 0);
 				gl.translate(0.0, GRID_BOTTOM_Y, -GRID_TOP_Z + GRID_BOTTOM_Z);
 				gl.rotate(90, 0, 0);
 				gl.rotate(0, 180, 0);
@@ -592,30 +592,30 @@ Battleship.View = {
 					o.begin(GLObject.GL_QUADS);
 						//Front
 						o.setNormal(0, 0, 1);
-						o.vertex(0, 0, 0 + BLOCK_DEPTH);
-						o.vertex(0 + BLOCK_DIM, 0, BLOCK_DEPTH);
-						o.vertex(0 + BLOCK_DIM, BLOCK_DIM, BLOCK_DEPTH);
-						o.vertex(0, 0 + BLOCK_DIM, 0 + BLOCK_DEPTH);
+						o.vertex(0, 0, BLOCK_DEPTH);
+						o.vertex(BLOCK_DIM, 0, BLOCK_DEPTH);
+						o.vertex(BLOCK_DIM, BLOCK_DIM, BLOCK_DEPTH);
+						o.vertex(0, BLOCK_DIM, BLOCK_DEPTH);
 						//Left
-						if (x == 0)
+						if (x === 0)
 						{
 							o.setNormal(-1, 0, 0);
 							o.vertex(0, 0, 0);
 							o.vertex(0, 0, BLOCK_DEPTH);
-							o.vertex(0, BLOCK_DIM, 0 + BLOCK_DEPTH);
+							o.vertex(0, BLOCK_DIM, BLOCK_DEPTH);
 							o.vertex(0, BLOCK_DIM, 0);
 						}
 						//Rigt
-						if (x == GRID_DIM - 1)
+						if (x === GRID_DIM - 1)
 						{
 							o.setNormal(1, 0, 0);
 							o.vertex(BLOCK_DIM, 0, BLOCK_DEPTH);
 							o.vertex(BLOCK_DIM, 0, 0);
 							o.vertex(BLOCK_DIM, BLOCK_DIM, 0);
-							o.vertex(BLOCK_DIM, BLOCK_DIM, 0 + BLOCK_DEPTH);
+							o.vertex(BLOCK_DIM, BLOCK_DIM, BLOCK_DEPTH);
 						}
 						//Top
-						if (y == GRID_DIM - 1)
+						if (y === GRID_DIM - 1)
 						{
 							o.setNormal(0, 1, 0);
 							o.vertex(0, BLOCK_DIM, 0);
@@ -624,7 +624,7 @@ Battleship.View = {
 							o.vertex(BLOCK_DIM, BLOCK_DIM, 0);
 						}
 						//Bottom
-						if (y == 0)
+						if (y === 0)
 						{
 							o.setNormal(0, -1, 0);
 							o.vertex(0, 0, 0);
@@ -642,7 +642,6 @@ Battleship.View = {
 
 		var diff_water = [0.0, 0.2, 0.9 ];
 		var spec_water = [0.0, 0.0, 0.0 ];
-		var frag_water = [1.0, 1.0, 1.0, 0.4];
 		var shinny_water = 1;
 
 		gl.setDiffuseColor(diff_water);
@@ -1234,12 +1233,12 @@ Battleship.View = {
 			gl.setDiffuseColor( this._diff_r );
 			gl.setSpecularColor( this._spec_r );
 			gl.setMaterialShininess( this._shinny_r );
+			var player, x, y;
 			for (j = 0; j < Battleship.Model.player[pnum].ship[i].length; j++) {
-				if (Battleship.Model.player[pnum].grid
-						[Battleship.Model.player[pnum].ship[i].x + j*hscale]
-						[Battleship.Model.player[pnum].ship[i].y + j*vscale]
-						=== Battleship.Model.enum_gridstate.HIT
-				) {
+				player = Battleship.Model.player[pnum];
+				x = player.ship[i].x + j*hscale;
+				y = player.ship[i].y + j*vscale;
+				if (player.grid[x][y] === Battleship.Model.enum_gridstate.HIT) {
 					this._drawPeg(gl);
 				}
 				gl.translate(0.0, -BLOCK_REAL_DIM, 0.0);
@@ -1274,14 +1273,14 @@ Battleship.View = {
 		var i;
 		var len = 0;
 		var max_len = 0;
-		for (i = 0; i < menu.size; i++)
-		{
-			if (!menu.item[i]) { continue; }
-			len = menu.item[i].name.length;
-			if (menu.item[i].svalue) {
-				len += menu.item[i].svalue.length + 2;
+		for (i = 0; i < menu.size; i++) {
+			if (menu.item[i]) {
+				len = menu.item[i].name.length;
+				if (menu.item[i].svalue) {
+					len += menu.item[i].svalue.length + 2;
+				}
+				max_len = (max_len < len) ? len : max_len;
 			}
-			max_len = (max_len < len) ? len : max_len;
 		}
 
 		//Options are smaller than title
@@ -1387,10 +1386,11 @@ Battleship.View = {
 
 			//Draw bar under current letter
 			var g = 0.2;
+			var o;
 			var len = Battleship.Menu.name_selector.name.length;
 			if (len < Battleship.Model.MAX_NAME_LEN) {
 				if (!this._nameSelectorCurr) {
-					var o = new GLObject('nameselector_curr');
+					o = new GLObject('nameselector_curr');
 					this._nameSelectorCurr = o;
 					glprimitive.box(o, 0, 0, 0, glfont.char_width(size), g, g);
 				}
@@ -1404,7 +1404,7 @@ Battleship.View = {
 			h = glfont.char_height(size);
 			var diff = h - size;
 			if (!this._nameSelectorContainer) {
-				var o = new GLObject('nameselector_container');
+				o = new GLObject('nameselector_container');
 				this._nameSelectorContainer = o;
 				//left
 				glprimitive.box(o, -size/2.0 - g, -size/2.0 - g, 0.0,
@@ -1511,6 +1511,7 @@ Battleship.View = {
 		var diff = [0.6, 0.4, 0.0];
 		var spec = [0.1, 0.1, 0.1];
 		var shinny = 1.0;
+		var o;
 
 		gl.pushMatrix();
 
@@ -1522,7 +1523,7 @@ Battleship.View = {
 
 		//frame
 		if (!this._pictureFrame) {
-			var o = new GLObject('picture_frame');
+			o = new GLObject('picture_frame');
 			this._pictureFrame = o;
 			//left
 			glprimitive.box(o, -PICTURE_DIM/2.0 - PICTURE_FRAME_R,
@@ -1559,7 +1560,7 @@ Battleship.View = {
 
 		//picture
 		if (!this._pictureCanvas) {
-			var o = new GLObject('picture_canvas');
+			o = new GLObject('picture_canvas');
 			this._pictureCanvas = o;
 			o.begin(GLObject.GL_QUADS);
 				o.setNormal(0.0, 0.0, -1.0);
@@ -1576,7 +1577,7 @@ Battleship.View = {
 		gl.setDiffuseColor( this._diff_w );
 		gl.setSpecularColor( this._spec_w );
 		gl.setMaterialShininess( this._shinny_w );
-		if (pnum == 0) {
+		if (pnum === 0) {
 			this._enableTexture(gl, this._loadImageTexture(gl, 'pic1'));
 		} else {
 			this._enableTexture(gl, this._loadImageTexture(gl, 'pic2'));
@@ -1588,9 +1589,10 @@ Battleship.View = {
 
 	_drawTable : function(gl) {
 		var ypos = -TABLE_HEIGHT + TABLE_TOP;
+		var o;
 
 		if (!this._tableTop) {
-			var o = new GLObject('table_top');
+			o = new GLObject('table_top');
 			this._tableTop = o;
 			glprimitive.box(o, -TABLE_WIDTH/2.0,
 							ypos,
@@ -1599,7 +1601,7 @@ Battleship.View = {
 		}
 
 		if (!this._tableLegs) {
-			var o = new GLObject('table_legs');
+			o = new GLObject('table_legs');
 			this._tableLegs = o;
 			var r = 0.5;
 			var b = 3.0;
@@ -1634,12 +1636,14 @@ Battleship.View = {
 		var size = 0.8;
 		var w = glfont.char_width(size);
 		var player = Battleship.Model.player[Battleship.Model.curr_player];
+		var text;
+		var len;
 		gl.pushMatrix();
 		switch (Battleship.Model.game_state) {
 			case Battleship.Model.enum_gamestate.PLACE_SHIPS:
 				//Draw text
-				var text = "Place Your Ships";
-				var len = text.length;
+				text = "Place Your Ships";
+				len = text.length;
 				gl.translate(-w*len/2.0, glfont.char_height(size)*1.5, 5.0);
 				glfont.draw_string(gl, text, size);
 
@@ -1661,14 +1665,14 @@ Battleship.View = {
 				glfont.draw_string(gl, c.join(), size);
 
 				//Draw player name
-				var len = player.name.length;
+				len = player.name.length;
 				gl.translate(-FONT_X0 + FONT_X1 - len* w,
 								glfont.char_height(size)*2.0, 0.0);
 				glfont.draw_string(gl, player.name, size);
 				gl.translate(len*w, -glfont.char_height(size)*2.0, 0.0);
 
 				//Draw player type
-				var text = Battleship.Model.aitype_s[player.ai]
+				text = Battleship.Model.aitype_s[player.ai];
 				len = text.length;
 				gl.translate(-w*len, 0.0, 0.0);
 				glfont.draw_string(gl, text, size);
@@ -1696,10 +1700,10 @@ Battleship.View = {
 				}
 
 				gl.translate(0.0, 0.0, Battleship.Model.GRID_DIM*BLOCK_REAL_DIM + SLOT_WIDTH);
-				var text = null;
+				text = null;
 				if (Battleship.Model.game_message.ship) {
 					text = "Sunk!";
-					var len = Battleship.Model.game_message.ship.length;
+					len = Battleship.Model.game_message.ship.length;
 					gl.translate(-w*len/2.0,
 							glfont.char_height(size)*1.5,
 							0.0);
@@ -1711,7 +1715,7 @@ Battleship.View = {
 				} else if (Battleship.Model.game_message.type === Battleship.Model.enum_gridstate.EMPTY) {
 					//Game over
 					text = "Game Over";
-					var len = text.length;
+					len = text.length;
 					gl.translate(-w*len/2.0,
 							glfont.char_height(size)*2.5,
 							0.0);
@@ -1968,7 +1972,7 @@ Battleship.View = {
 			{
 				var val = perlin.perlin2d(p, i, j);
 				var n = Math.floor((val + 1.0)/2.0*density);
-				data[di + 0] = 200;
+				data[di] = 200;
 				data[di + 1] = 200;
 				data[di + 2] = 200;
 				data[di + 3] = 255 - n;

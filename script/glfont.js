@@ -27,7 +27,7 @@
 /**
  * @namespace
  */
-glfont = {
+var glfont = {
 	/** The width (number of characters) of the font test */
 	TEST_WIDTH : 8,
 	/** The height (rows of characters) of the font test */
@@ -52,16 +52,16 @@ glfont = {
 		// Draw all of the letters
 		glfont.draw_string(gl, this._font_test_str, size);
 		// Create a draw a box that appears under a letter
-		if (!this._fontObjects['selector']) {
+		if (!this._fontObjects.selector) {
 			var o = new GLObject('font_selector');
-			this._fontObjects['selector'] = o;
+			this._fontObjects.selector = o;
 			glprimitive.box(o, 0, 0, -(size * 0.1), size, size, (size * 0.1));
 		}
 		gl.setDiffuseColor( 0.5, 0.5, 0.5 );
 		gl.setSpecularColor( 0.1, 0.1, 0.1 );
 		gl.setMaterialShininess( 1 );
 		gl.translate(glfont.char_width(size)*x, -glfont.char_height(size)*y, 0);
-		gl.draw(this._fontObjects['selector']);
+		gl.draw(this._fontObjects.selector);
 	},
 
 	/** Returns how much space is used by a character for the given sized font
@@ -94,9 +94,9 @@ glfont = {
 	 *  @param x Pointer to the location to return x
 	 *  @param y Pointer to the location to return y
 	 *  @return Returns true if the charater is valid. The x and y location
-	 *  		are returned in x, y only if true is returned otherwise these
-	 *  		values are untouched
-	*/
+	 *			are returned in x, y only if true is returned otherwise these
+	 *			values are untouched
+	 */
 	is_test_char : function(c, pos) {
 		c = c.toUpperCase();
 		pos.x = 0;
@@ -116,7 +116,7 @@ glfont = {
 			if (pos.y >= this.TEST_HEIGHT) { break; }
 
 			//Found the given character
-			if (c == this._font_test_str[i]) {
+			if (c === this._font_test_str[i]) {
 				r = true;
 				break;
 			}
@@ -1026,7 +1026,7 @@ glfont = {
 				glprimitive.sphere(o, r, d, d);
 			break;
 			case '\\':
-				o.translate(size - 2*r, 0.0, 1*r);
+				o.translate(size - 2*r, 0.0, r);
 				o.rotate(0.0, -45, 0.0);
 				glprimitive.cylinder(o, r, size);
 				glprimitive.sphere(o, r, d, d);

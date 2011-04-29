@@ -20,7 +20,7 @@ GLObject = function(id) {
 
 	// Holds the stored GLVertexObjects
 	this._vertexObjects = [];
-}
+};
 
 GLObject.GL_LINES = 1;
 GLObject.GL_LINE_LOOP = 2;
@@ -31,11 +31,11 @@ GLObject.GL_QUAD_STRIP = 8;
 
 GLObject.prototype.setNormal = function(x,y,z) {
 	this._normal = [ x, y, z ];
-}
+};
 
 GLObject.prototype.setTexCoord = function(tx, ty) {
 	this._texCoord = [ tx, ty ];
-}
+};
 /**
  * Begin a drawing type
  */
@@ -69,9 +69,8 @@ GLObject.prototype.begin = function(type) {
 		break;
 		default:
 			throw Error('GLObject ' + this._id + ' unknown type ' + type);
-		break;
 	}
-}
+};
 /**
  * End the current drawing type
  */
@@ -101,28 +100,28 @@ GLObject.prototype.vertex = function(x, y, z) {
 	this._currentData.vertices.push(vertex[2]);
 	this._currentData.texCoords.push(this._texCoord[0]);
 	this._currentData.texCoords.push(this._texCoord[1]);
-}
+};
 GLObject.prototype.pushMatrix = function() {
 	this._mvStack.push(new J3DIMatrix4(this._mvMatrix));
-}
+};
 GLObject.prototype.popMatrix = function() {
 	if (this._mvStack.length > 0) {
 		this._mvMatrix.load(this._mvStack.pop());
 		this._updateNormal();
 	}
-}
+};
 GLObject.prototype.translate = function(x, y, z) {
 	this._mvMatrix.translate(x, y, z);
 	this._updateNormal();
-}
+};
 GLObject.prototype.rotate = function(x, y, z) {
 	this._mvMatrix.rotate(x, y, z);
 	this._updateNormal();
-}
+};
 GLObject.prototype.scale = function(x, y, z) {
 	this._mvMatrix.scale(x, y, z);
 	this._updateNormal();
-}
+};
 GLObject.prototype._updateNormal = function() {
 	this._nMatrix = new J3DIMatrix4(this._mvMatrix);
 	this._nMatrix.invert();
@@ -131,7 +130,7 @@ GLObject.prototype._updateNormal = function() {
 	var data = this._nMatrix.getAsArray();
 	data[3] = 0.0; data[7] = 0.0; data[11] = 0.0; data[15] = 0.0;
 	this._nMatrix.load(data);
-}
+};
 /**
  * Generate vertex buffers for the data in this object.
  * Called automatically by draw.
@@ -165,7 +164,7 @@ GLObject.prototype.draw = function(gl) {
 	for (i = 0; i < this._vertexObjects.length; ++i) {
 		this._vertexObjects[i].draw(gl);
 	}
-}
+};
 /**
  * Free any vertex buffers help by this object.
  */
@@ -177,7 +176,7 @@ GLObject.prototype.destroy = function(gl) {
 	}
 	this._vertexObjects = [];
 	this._vertexData = [];
-}
+};
 
 /**
  * A class which handles storing of vertex information and generation of
@@ -187,7 +186,7 @@ GLVertexData = function(type, id) {
 	this.reset();
 	this._finalType = type;
 	this._id = id;
-}
+};
 /**
  * After this function is called this GLVetexData object is safe to reuse.
  */
@@ -197,7 +196,7 @@ GLVertexData.prototype.reset = function() {
 	this.normals = [];
 	this._indices = [];
 	this._firstVertex = 0;
-}
+};
 GLVertexData._totalV = 0;
 GLVertexData._totalO = 0;
 /**
@@ -252,7 +251,7 @@ GLVertexData.prototype.store = function(gl) {
 		this.vertices.length );
 	this.reset();
 	return result;
-}
+};
 /**
  * Given the current set of vertex data generate an index list.
  *
@@ -313,7 +312,7 @@ GLVertexData.prototype.generateIndices = function() {
 	}
 	this._firstVertex = this.vertices.length;
 	this.drawType = null;
-}
+};
 
 /**
  * A class which handles storing and drawing of vertex buffer data
@@ -327,7 +326,7 @@ GLVertexObject = function(id, vertexObject, normalObject, texCoordObject, indexO
 	this._numIndices = numIndices;
 	this._numVertex = numVertex;
 	this._type = type;
-}
+};
 /**
  * Draw the vertex data represented by this object
  */
@@ -358,7 +357,7 @@ GLVertexObject.prototype.draw = function(gl) {
 
 	gl.bindBuffer(gl.ARRAY_BUFFER, null);
 	gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null);
-}
+};
 /**
  * Free vertex buffes held by this object
  */
@@ -388,4 +387,4 @@ GLVertexObject.prototype.destroy = function(gl) {
 	}
 	this._type = null;
 	this._numIndices = null;
-}
+};

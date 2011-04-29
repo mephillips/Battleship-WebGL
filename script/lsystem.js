@@ -28,7 +28,7 @@
 /**
  * @namespace
  */
-lsystem = {
+var lsystem = {
 	//These are fairly standard lsystem symbols
 	/** Draws a line */
 	LSYSTEM_LINE : 'F',
@@ -225,7 +225,7 @@ lsystem = {
 							this._BR, this._BG, this._BB,
 							0, 0, 0 ];
 				num_colours = 2;
-				if (id === 4) { num_colours = 1 };
+				if (id === 4) { num_colours = 1; }
 			break;
 			case 5:
 			case 6:
@@ -339,7 +339,7 @@ lsystem = {
 		if (state.colour_mode === this.LSYSTEM_COLOUR_DEPTH)
 		{
 			state.ci = Math.floor(state.depth*(state.num_colours/(state.lsys.depth + 1)));
-			state.colour[0] = state.colour_list[state.ci * 3 + 0];
+			state.colour[0] = state.colour_list[state.ci * 3];
 			state.colour[1] = state.colour_list[state.ci * 3 + 1];
 			state.colour[2] = state.colour_list[state.ci * 3 + 2];
 		}
@@ -555,8 +555,8 @@ lsystem = {
 		//deal with negative slopes
 		var xstep;
 		var ystep;
-		if (dx > 0) xstep = 1; else xstep = -1;
-		if (dy > 0) ystep = 1; else ystep = -1;
+		if (dx > 0) { xstep = 1; } else { xstep = -1; }
+		if (dy > 0) { ystep = 1; } else { ystep = -1; }
 		dx = Math.abs(dx);
 		dy = Math.abs(dy);
 
@@ -572,7 +572,7 @@ lsystem = {
 			state.colour[2] = state.colour_list[state.ci * 3 + 2];
 		}
 
-		while (state[x] != x1)
+		while (state[x] !== x1)
 		{
 			this._draw_pixel(state);
 			state[x] += xstep;
