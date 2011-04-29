@@ -206,7 +206,7 @@ Battleship.Logic = {
 	restart : function() {
 		this.stop_timers();
 		this.init();
-		//this.sound_stop();
+		Battleship.Sound.stop();
 		Battleship.View.refresh();
 	},
 
@@ -557,17 +557,15 @@ Battleship.Logic = {
 				if (Battleship.Model.do_msg_animation)
 				{
 					if (Battleship.Model.game_message.type === Battleship.Model.enum_gridstate.MISS) {
-						//Battleship.Sound.play(BATTLESHIP_SOUND_MISS);
+						Battleship.Sound.play(Battleship.Sound.enum_sound.MISS);
 					} else if (Battleship.Model.game_message.type === Battleship.Model.enum_gridstate.HIT) {
-						/*
-						if (game_message.ship) {
-							battleship_sound_play(BATTLESHIP_SOUND_SUNK);
+						if (Battleship.Model.game_message.ship) {
+							Battleship.Sound.play(Battleship.Sound.enum_sound.SUNK);
 						} else {
-							battleship_sound_play(BATTLESHIP_SOUND_HIT);
+							Battleship.Sound.play(Battleship.Sound.enum_sound.HIT);
 						}
-						*/
 					} else if (Battleship.Model.game_message.type === Battleship.Model.enum_gridstate.EMPTY) {
-						//battleship_sound_play(BATTLESHIP_SOUND_WIN);
+						Battleship.Sound.play(Battleship.Sound.enum_sound.WIN);
 					}
 				}
 			break;
@@ -1077,9 +1075,9 @@ Battleship.Logic = {
 		}
 
 		var done = (this._cancel_animation || Battleship.Model.game_message.delay === MAX_MSG_DELAY);
-		//stop sound if animation stoppe
+		//stop sound if animation stops
 		if (this._cancel_animation) {
-			//battleship_sound_stop();
+			Battleship.Sound.stop();
 		}
 		this._cancel_animation = false;
 		if (done) { this._next_state(); }

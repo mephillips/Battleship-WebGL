@@ -86,7 +86,6 @@ Battleship.Rocket = {
 		this.rot_z = 0;
 
 		this.update();
-		//psystem_init(&fire, rocket_size - 0.05, rocket_size/2.0, rocket_size*6);
 	},
 
 	/** Puts the rocet back at the start of the path */

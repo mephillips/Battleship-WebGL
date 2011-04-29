@@ -30,7 +30,7 @@
  */
 psystem = {
 	/** The maximum number of particles */
-	MAX_NUM_PARTICLES : 500,
+	MAX_NUM_PARTICLES : 250,
 
 	/** The average spin */
 	SPIN_MEAN : 15,
