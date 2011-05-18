@@ -48,7 +48,7 @@ Battleship = {
 		canvas.onmouseup = this._mouseup.bind(this);
 		canvas.onmousedown = this._mousedown.bind(this);
 		canvas.onmousemove = this._motion.bind(this);
-		window.onkeypress = this._keypress.bind(this);
+		window.onkeydown = this._keypress.bind(this);
 
 		// Setup implementation specific methods
 		Battleship.View.refresh = this._view_refresh.bind(this);

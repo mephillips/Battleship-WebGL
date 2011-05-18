@@ -494,6 +494,7 @@ Battleship.View = {
 				}
 			break;
 		}
+		gl.finish();
 	},
 
 	_drawLines : function(gl) {
