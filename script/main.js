@@ -48,7 +48,11 @@ Battleship = {
 		canvas.onmouseup = this._mouseup.bind(this);
 		canvas.onmousedown = this._mousedown.bind(this);
 		canvas.onmousemove = this._motion.bind(this);
-		window.onkeydown = this._keypress.bind(this);
+		if (window.parent) {
+			window.parent.onkeydown = this._keypress.bind(this);
+		} else {
+			window.onkeydown = this._keypress.bind(this);
+		}
 
 		// Setup implementation specific methods
 		Battleship.View.refresh = this._view_refresh.bind(this);
@@ -175,19 +179,20 @@ Battleship = {
 	},
 
 	_mapKey : function(key) {
+		console.log(key);
 		switch (key) {
 			case 81: key = Battleship.Logic.enum_key.QUIT; break;
-			case 114: key = Battleship.Logic.enum_key.RESET; break;
+			case 82: key = Battleship.Logic.enum_key.RESET; break;
 			case 38: key = Battleship.Logic.enum_key.UP; break;
 			case 40: key = Battleship.Logic.enum_key.DOWN; break;
 			case 37: key = Battleship.Logic.enum_key.LEFT; break;
 			case 39: key = Battleship.Logic.enum_key.RIGHT; break;
-			case 102: key = Battleship.Logic.enum_key.ROTATE; break;
+			case 70: key = Battleship.Logic.enum_key.ROTATE; break;
 			case 13: key = Battleship.Logic.enum_key.ENTER; break;
 			case 27: key = Battleship.Logic.enum_key.ESC; break;
 			case 8: key = Battleship.Logic.enum_key.BACKSPACE; break;
 			case 88: key = Battleship.Logic.enum_key.X; break;
-			case 70: key = Battleship.Logic.enum_key.Y; break;
+			case 89: key = Battleship.Logic.enum_key.Y; break;
 			case 90: key = Battleship.Logic.enum_key.Z; break;
 			default: key = String.fromCharCode(key); break;
 		}

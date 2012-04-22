@@ -109,13 +109,24 @@ Battleship.Menu = {
 		var options_sound = this._createMenuItem("Sound", Battleship.Model, 'do_sound', this.toggle_bool);
 		var options_quit = this._createMenuItem("Main Menu", null, null, this.quit_curr_game);
 
+		//Keys menu
+		var keys1 = this._createMenuItem("Rotate View: Crtl X/Y/Z", null, null, this.quit_curr_game);
+		var keys2 = this._createMenuItem("Move View: Alt X/Y/Z", null, null, this.quit_curr_game);
+		var keys3 = this._createMenuItem("Reset View: R", null, null, this.quit_curr_game);
+		var keys4 = this._createMenuItem("Place Ship: Enter", null, null, this.quit_curr_game);
+		var keys5 = this._createMenuItem("Rotate Ship: f", null, null, this.quit_curr_game);
+		var keys6 = this._createMenuItem("Remove Ship: Backspace", null, null, this.quit_curr_game);
+		var keys7 = this._createMenuItem("Menu: ESC", null, null, this.quit_curr_game);
+		var keys8 = this._createMenuItem("Quit - Q", null, null, this.quit_curr_game);
+
 		var main_new = this._createMenuItem("New Game", null, null, this.newgame);
 		var main_onep = this._createMenuItem("1 Player", null, null, this.onep);
 		var main_twop = this._createMenuItem("2 Player", null, null, this.twop);
 		var main_demo = this._createMenuItem("Demo Mode", null, null, this.demogame);
 		var main_quit = this._createMenuItem("Quit", null, null, this.quitgame);
 		var main_options = this._createMenu("Options", [ gopts_menu, animation_menu, fog_menu, lsys_menu, shadow_menu, options_textures, options_sound ]);
-		var main_items = [ main_new, main_onep, main_twop, main_demo, main_options, main_quit ];
+		var main_keys = this._createMenu("Keys", [ keys1, keys2, keys3, keys4, keys5, keys6, keys7, keys8 ]);
+		var main_items = [ main_new, main_onep, main_twop, main_demo, main_options, main_keys, main_quit ];
 		this.main_menu = this._createMenu(Battleship.Model.BATTLESHIP_NAME + ' ' + Battleship.Model.BATTLESHIP_VERSION, main_items);
 
 		var options_items = [ gopts_menu, animation_menu, fog_menu, lsys_menu, shadow_menu, options_textures, options_sound, options_quit ];
