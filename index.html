@@ -42,52 +42,13 @@ THE SOFTWARE.
 	<script src="script/battleship_sound.js"></script>
 </script>
 </head>
-<body onload="Battleship.main()">
-	<canvas id="battleship" width="1024" height="768">
+<body style="margin: 0" onload="Battleship.main()">
+	<canvas id="battleship" width="800" height="600">
 		Your web browser does not support the canvas tag.
 	</canvas>
 	<audio id="bs_sound_hit" src="data/hit.wav"></audio>
 	<audio id="bs_sound_miss" src="data/miss.wav"></audio>
 	<audio id="bs_sound_sunk" src="data/sunk.wav"></audio>
 	<audio id="bs_sound_win" src="data/win.wav"></audio>
-	<div id="battleship_notes" style="position: absolute; top: 0; right: 0; width: 220px; font-size: 12pt">
-		<h3>Todo</h3>
-		<ul>
-			<li>Clean up</li>
-		</ul>
-		<h3>Working on</h3>
-		<ul>
-			<li>Sound</li>
-		</ul>
-		<h3>Done</h3>
-		<ul>
-			<li>2011-04-27 - Particle System</li>
-			<li>2011-04-25 - Game Logic (mostly working)</li>
-			<li>2011-04-23 - <a href="index.html?do_test=Rocket">Rocket</a> (minus fire)</li>
-			<li>2011-04-21 - Game layout</li>
-			<li>2011-04-20 - Meun and Name Selector (mostly done)</li>
-			<li>2011-04-17 - <a href="index.html?do_test=Lsystem">Lsystem</a>(Also a bit slow in JavaScript)</li>
-			<li>2011-04-17 - <a href="index.html?do_test=Fog">Fog Test</a> (Perlin Noise. Pretty slow in JavaScript)</li>
-			<li>2011-04-16 - <a href="index.html?do_test=Ships">Ships Test</a></li>
-			<li>2011-04-16 - <a href="index.html?do_test=Font">Font Test</a></li>
-			<li>2011-04-16 - <a href="index.html?do_test=Peg">Peg Test</a></li>
-			<li>2011-04-15 - <a href="index.html?do_test=Mug">Mug Test</a>(Minus coffee texture)</li>
-			<li>2011-04-15 - <a href="index.html?do_test=Clock">Clock Test</a></li>
-			<li>2011-04-14 - <a href="index.html?do_lines=true&do_test=Primitive">Primitives Test</a></li>
-			<li>2011-04-13 - Torus Primitive</li>
-			<li>2011-04-11 - Cone/Cylinder Primitive</li>
-			<li>Rotation<br/>
-				<p>Crtl + Left Mouse or Crtl + 'x/X': X - Axis</p>
-				<p>Crtl + Middle Mouse or Crtl + 'y/Y': Y - Axis</p>
-				<p>Crtl + Right Mouse or 'Crtl + z/Z' key: Z - Axis</p>
-			</li>
-			<li>Translation<br/>
-				<p>Alt + Left Mouse or Alt + 'x/X': X - Axis</p>
-				<p>Alt + Middle Mouse or Alt + 'y/Y': Y - Axis</p>
-				<p>Alt + Right Mouse or Alt + 'z/Z': Z - Axis</p>
-			</li>
-			<li>Reset: 'r'</li>
-		</ul>
-	</div>
 </body>
 </html>
