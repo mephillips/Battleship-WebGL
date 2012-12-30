@@ -208,6 +208,7 @@ GLVertexData._totalO = 0;
 GLVertexData.prototype.store = function(gl) {
 	GLVertexData._totalV += this.vertices.length;
 	GLVertexData._totalO += 1;
+	/*
 	console.log('GLVertexData.store id: %s, type: %s, normals: %i, vertixes: %i, indices: %i totalV: %i totalO: %i',
 		this._id,
 		this._finalType,
@@ -216,6 +217,7 @@ GLVertexData.prototype.store = function(gl) {
 		this._indices.length,
 		GLVertexData._totalV,
 		GLVertexData._totalO );
+	*/
 
 	var normalObject = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, normalObject);

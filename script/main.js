@@ -179,7 +179,6 @@ Battleship = {
 	},
 
 	_mapKey : function(key) {
-		console.log(key);
 		switch (key) {
 			case 81: key = Battleship.Logic.enum_key.QUIT; break;
 			case 82: key = Battleship.Logic.enum_key.RESET; break;

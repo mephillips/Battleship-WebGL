@@ -123,10 +123,9 @@ Battleship.Menu = {
 		var main_onep = this._createMenuItem("1 Player", null, null, this.onep);
 		var main_twop = this._createMenuItem("2 Player", null, null, this.twop);
 		var main_demo = this._createMenuItem("Demo Mode", null, null, this.demogame);
-		var main_quit = this._createMenuItem("Quit", null, null, this.quitgame);
 		var main_options = this._createMenu("Options", [ gopts_menu, animation_menu, fog_menu, lsys_menu, shadow_menu, options_textures, options_sound ]);
 		var main_keys = this._createMenu("Keys", [ keys1, keys2, keys3, keys4, keys5, keys6, keys7, keys8 ]);
-		var main_items = [ main_new, main_onep, main_twop, main_demo, main_options, main_keys, main_quit ];
+		var main_items = [ main_new, main_onep, main_twop, main_demo, main_options, main_keys ];
 		this.main_menu = this._createMenu(Battleship.Model.BATTLESHIP_NAME + ' ' + Battleship.Model.BATTLESHIP_VERSION, main_items);
 
 		var options_items = [ gopts_menu, animation_menu, fog_menu, lsys_menu, shadow_menu, options_textures, options_sound, options_quit ];
@@ -328,8 +327,6 @@ Battleship.Menu = {
 	twop : function(menu, dir) { if (dir === 0) { Battleship.Logic.twop(); } },
 
 	demogame : function(menu, dir) { if (dir === 0) { Battleship.Logic.demo(); } },
-
-	quitgame : function(menu, dir) { if (dir === 0) { Battleship.Logic.quit(); } },
 
 	toggle_bool : function(m, dir) {
 		if (dir != 0) {
